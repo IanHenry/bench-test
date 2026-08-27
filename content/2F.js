@@ -599,7 +599,7 @@ const BENCH = {
     },
     '2025-Full7686': {
       source: { from: ['2F2'] },
-      why: 'A spectrum shows how much of each frequency is present and says nothing about where in its cycle each one starts. Two waveforms can therefore look quite different and still give the same spectrum, which is why this question has two right answers rather than one.',
+      why: 'A spectrum shows how much of each frequency is present and says nothing about where in its cycle each one starts. Two waveforms can therefore look quite different and still give the same spectrum, which is why the question asks for a pair of plots rather than one.',
       working: ['the two peaks sit at about 1.5 MHz and 4.5 MHz',
                 '4.5 / 1.5 = 3, so it is a fundamental and its third harmonic',
                 'so look for three cycles of the dotted trace to one of the dashed',

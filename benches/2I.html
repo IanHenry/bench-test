@@ -2857,7 +2857,8 @@ const BENCH = {
     '2025-Full7635': {
       why: 'Oscillation builds only if each trip round the loop returns at least as much as it started with. Gain has to exceed the losses, not match half of them or fall short.',
       source: { from: ['2I5'] },
-      seedNote: 'Wind the drive control down to increase the loss round the loop and watch the oscillation die.'
+      seed: { re: 4700, vcc: 5 },
+      seedNote: 'The panel shows the gain the loop needs beside the gain the stage can manage. This setting cuts the standing current right down, and the gain available falls with it while the figure it has to beat stays where it is.'
     },
     '2025-Full7738': {
       why: 'The comparison is with the loss in the feedback network, not with the transistor\u2019s beta. Beta describes the device; what matters is whether the whole loop breaks even.',
@@ -2874,7 +2875,8 @@ const BENCH = {
     '2025-Full7765': {
       why: 'If the feedback network loses more than the amplifier can replace, each trip round the loop is smaller than the last and the oscillation dies out. It will not start at all.',
       source: { from: ['2I5'] },
-      seedNote: 'That is exactly what the drive control demonstrates here.'
+      seed: { re: 4700, vcc: 5 },
+      seedNote: 'Compare the two figures on the oscillator panel. The trace builds while the stage can manage more than the loop needs, and decays when it cannot.'
     },
     '2025-Full7766': {
       why: 'An emitter follower does not invert, so the signal arrives back at the input already in phase. The feedback network therefore has to add nothing. A common emitter stage inverts, and its network has to supply the other 180 degrees.',

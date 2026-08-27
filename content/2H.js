@@ -751,9 +751,9 @@ const BENCH = {
       seedNote: 'Set the bench to 5 &micro;H and 50 pF, then drag C down to 5 pF to see the other end of the range.'
     },
     '2025-Full132': {
-      why: 'The frequency depends on the product of L and C, so making either one larger brings it down. Increasing one while decreasing the other can leave it unchanged, which is why the two mixed options are wrong.',
+      why: 'Resonance depends on the product of L and C, and the product is under a square root on the bottom of the fraction, so making either one larger brings the frequency down. The other three options all decrease something, and decreasing either L or C sends the frequency up instead.',
       source: { eq: ['f0'], from: ['2H1'],
-                note: 'Only the product LC appears, which is why the two mixed options fail.' },
+                note: 'Only the product LC appears, so it makes no difference which of the two you change.' },
       seedNote: 'The values in this question sit outside the sliders, but drag L and C in opposite directions and watch the frequency stay put.'
     },
     '2025-Full144': {
