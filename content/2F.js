@@ -585,11 +585,12 @@ const BENCH = {
       seedNote: 'A 12 kHz tone sampled at 16k folds back to 4 kHz. Set the bench to it and read the spectrum.'
     },
     '2025-Full7645': {
-      why: 'Sampling at 80M samples a second puts the limit at 40 MHz, so the filter has to have stopped passing anything by the time it reaches that. The correct response is the one that has rolled off before 40 MHz rather than one still passing signal beyond it.',
+      why: 'Sampling at 80M samples a second puts the folding point at 40 MHz, so anything still getting through above that comes back inside the wanted range. That rules out two of the four. Of the two left, the better one is whichever keeps the most spectrum while still being well down by 40 MHz, because a filter that closes too early throws away band you could have used.',
       source: { eq: ['nyq'], from: ['2F1'] },
-      working: ['limit = 80M samples/s / 2',
-                '= 40 MHz',
-                'so the filter has to have stopped by 40 MHz, which is Response 2']
+      working: ['folding point = 80M samples/s / 2 = 40 MHz',
+                'responses 3 and 4 are still at full output at 40 MHz, so both fold back',
+                'response 1 is well clear by 40 MHz but gives up everything above 20 MHz',
+                'response 2 is around 60 dB down by 40 MHz and still passes to 30 MHz']
     },
     '2025-Full7401': {
       why: 'The transform takes a block of samples and reports how much of each frequency was in them, which is what puts the signals in frequency order. Option A describes a transformer, option C a data demodulator and option D the quadrature mixing that produces I and Q.',
@@ -598,7 +599,11 @@ const BENCH = {
     },
     '2025-Full7686': {
       source: { from: ['2F2'] },
-      why: 'The spectrum shows a sinewave and one harmonic, so the time domain plot must be the sum of two sinewaves where one is a whole multiple of the other. Look for the one that repeats at the lower of the two frequencies but is not a clean sine.'
+      why: 'A spectrum shows how much of each frequency is present and says nothing about where in its cycle each one starts. Two waveforms can therefore look quite different and still give the same spectrum, which is why this question has two right answers rather than one.',
+      working: ['the two peaks sit at about 1.5 MHz and 4.5 MHz',
+                '4.5 / 1.5 = 3, so it is a fundamental and its third harmonic',
+                'so look for three cycles of the dotted trace to one of the dashed',
+                'plots 1 and 4 both show that, and differ only in where the harmonic starts']
     },
     '2025-Full7864': {
       source: { from: ['2F2'] },
@@ -606,7 +611,11 @@ const BENCH = {
     },
     '2025-Full7890': {
       source: { from: ['2F2'] },
-      why: 'Follow the signals. The block turning a waveform drawn against time into one drawn against frequency is doing the transform. Sampling and conversion happen earlier in the chain, and Nyquist filtering is a filter rather than a block that changes the domain.'
+      why: 'Follow what is drawn on the arrows rather than guessing from the block numbers. Each arrow shows the signal at that point, and the answer is the block where the picture changes from something drawn against time to something drawn against frequency.',
+      working: ['into block 1: an analogue waveform against time',
+                'out of block 1: a stream of pulses, so block 1 is the converter',
+                'out of block 2: levels in dB against frequency in MHz',
+                'turning time into frequency is a Fourier transformation']
     }
   },
 

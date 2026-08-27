@@ -769,10 +769,11 @@ const BENCH = {
       why: 'Series L, C and R with a capacitance across the whole group is the standard equivalent circuit for a crystal. The extra capacitor across it is the giveaway, because a plain series resonant circuit does not have one.'
     },
     '2025-Full134': {
-      why: 'Read the centre frequency and the width between the half power points off the curve, then divide one by the other. That is the form of Q you are given in the exam.',
+      why: 'The curve is marked with everything needed: where it is centred, and how wide it is between the two points where the response has fallen to 0.707 of the peak. Q is the first divided by the second, so both figures have to be in the same units before dividing.',
       working: ['Q = f<sub>C</sub> / (f<sub>U</sub> &minus; f<sub>L</sub>)',
-                'read both figures off the response curve',
-                'which gives 50'],
+                'the curve is centred on 10 MHz and is 200 kHz wide at 0.707 of the peak',
+                '= 10 MHz / 200 kHz = 10,000 kHz / 200 kHz',
+                '= 50'],
       source: { eq: ['Q'], from: ['2H4'] },
       seed: { R: 6.283, L: 14.14e-6, C: 141.4e-12 },
       seedNote: 'The bench is set to a Q of about 50 so you can compare the shape with the one in the question.'
