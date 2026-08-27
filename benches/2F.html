@@ -305,6 +305,8 @@
   .colophon { font-size:14px; color:var(--ink-faint); border-top:1px solid var(--rule);
               padding-top:16px; max-width:72ch; }
   .colophon a { color:var(--phase); }
+  .colophon .home { display:block; margin-bottom:10px; font-size:15px;
+                    color:var(--ink); }
 
   @media (prefers-reduced-motion: reduce) { * { animation:none !important; } }
 </style>
@@ -2777,6 +2779,9 @@ const QUESTIONS = [{"code": "2F1", "ref": "2025-Full6015", "q": "To digitize an 
   $('grpTag').textContent = BENCH.group;
   $('grpTitle').textContent = BENCH.title;
   $('colophon').innerHTML =
+    '<span class="home"><a href="../index.html">All the Bench Test pages</a>' +
+    ' &middot; built by Ian Henry, G0LFT, ' +
+    '<a href="https://g0lft.org/">g0lft.org</a></span>' +
     'Every curve is solved by a general complex nodal analysis engine, verified against ' +
     'closed form results. Circuit symbols follow the RSGB specification. ' +
     'Item wording is our own. Questions are held by the RSGB and used under the terms ' +
