@@ -1,0 +1,969 @@
+<title>{{TITLE}}</title>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<!-- Kept out of search while this is a work in progress being reviewed.
+     Delete this line when you want it found. -->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Saira+Semi+Condensed:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+
+<style>
+  :root {
+    --paper:#E4E9EE; --surface:#FBFCFD; --surface-2:#EEF2F6;
+    --ink:#0F1A22; --ink-soft:#4B5C69; --ink-faint:#7E8E9B;
+    --rule:#C3CFD9; --rule-soft:#DCE4EB;
+    --trace:#B26B0C; --trace-fill:rgba(178,107,12,.13);
+    --phase:#16697F; --marker:#A62463; --wire:#54646F;
+    --shadow:0 1px 2px rgba(15,26,34,.06),0 8px 24px rgba(15,26,34,.07);
+    --f-panel:"Saira Semi Condensed","Helvetica Neue",Arial,sans-serif;
+    --f-text:"Source Serif 4",Georgia,"Times New Roman",serif;
+    --f-data:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:#10171D; --surface:#19222B; --surface-2:#212C36;
+      --ink:#DEE7EE; --ink-soft:#9BABB8; --ink-faint:#6B7C89;
+      --rule:#33424E; --rule-soft:#26333D;
+      --trace:#F0B450; --trace-fill:rgba(240,180,80,.15);
+      --phase:#4FC4DA; --marker:#EC74AC; --wire:#93A4B1;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.34);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:#10171D; --surface:#19222B; --surface-2:#212C36;
+    --ink:#DEE7EE; --ink-soft:#9BABB8; --ink-faint:#6B7C89;
+    --rule:#33424E; --rule-soft:#26333D;
+    --trace:#F0B450; --trace-fill:rgba(240,180,80,.15);
+    --phase:#4FC4DA; --marker:#EC74AC; --wire:#93A4B1;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.34);
+  }
+
+  * { box-sizing:border-box; }
+  /* an author display rule beats the hidden attribute, so say it again */
+  [hidden] { display:none !important; }
+  body { margin:0; background:var(--paper); color:var(--ink);
+         font-family:var(--f-text); font-size:17px; line-height:1.6;
+         -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:1060px; margin:0 auto; padding:36px 20px 80px;
+          display:flex; flex-direction:column; gap:24px; }
+
+  /* masthead */
+  .masthead { display:grid; grid-template-columns:1fr; gap:10px 30px; align-items:start; }
+  @media (min-width:900px) {
+    .masthead { grid-template-columns:minmax(0,1.6fr) minmax(0,1fr); }
+    .masthead .eyebrow, .masthead h1 { grid-column:1 / -1; }
+    .masthead .levels { justify-self:end; align-self:center; }
+  }
+  .eyebrow { font-family:var(--f-panel); font-size:12px; font-weight:600;
+             letter-spacing:.14em; text-transform:uppercase; color:var(--ink-faint);
+             display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+  .eyebrow .tag { color:var(--marker); border:1px solid currentColor;
+                  border-radius:2px; padding:1px 6px; letter-spacing:.1em; }
+  h1 { font-family:var(--f-panel); font-size:clamp(28px,5vw,42px); font-weight:700;
+       letter-spacing:-.01em; margin:0; text-wrap:balance; }
+  .standfirst { color:var(--ink-soft); font-size:18px; margin:2px 0 0; }
+
+  /* level switch */
+  .levels { display:flex; gap:0; border:1px solid var(--rule); border-radius:3px;
+            overflow:hidden; align-self:flex-start; background:var(--surface); }
+  .levels button { font-family:var(--f-panel); font-size:12.5px; font-weight:600;
+                   letter-spacing:.1em; text-transform:uppercase;
+                   padding:8px 16px; border:0; border-right:1px solid var(--rule);
+                   background:transparent; color:var(--ink-soft); cursor:pointer; }
+  .levels button:last-child { border-right:0; }
+  .levels button[aria-pressed="true"] { background:var(--marker); color:var(--surface); }
+  .levels button:focus-visible { outline:2px solid var(--marker); outline-offset:-2px; }
+
+  /* sticky control rail */
+  .rail-wrap { position:sticky; top:0; z-index:5; padding-top:4px;
+               background:linear-gradient(var(--paper) 72%, transparent); }
+  .rail { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+          background:var(--surface); border:1px solid var(--rule); border-radius:4px;
+          box-shadow:var(--shadow); overflow:hidden; }
+  .ctrl { padding:12px 16px 14px; border-right:1px solid var(--rule-soft);
+          display:flex; flex-direction:column; gap:6px; }
+  .ctrl:last-child { border-right:none; }
+  .ctrl-head { display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+  .ctrl-name { font-family:var(--f-panel); font-size:12px; font-weight:600;
+               letter-spacing:.11em; text-transform:uppercase; color:var(--ink-soft); }
+  .ctrl-val { font-family:var(--f-data); font-size:15px; font-weight:500;
+              font-variant-numeric:tabular-nums; }
+  .ctrl-desc { font-size:13px; line-height:1.4; color:var(--ink-faint);
+               margin:2px 0 0; max-width:34ch; }
+
+  input[type=range] { -webkit-appearance:none; appearance:none; width:100%;
+                      height:20px; background:transparent; margin:0; }
+  input[type=range]::-webkit-slider-runnable-track { height:3px; background:var(--rule); border-radius:2px; }
+  input[type=range]::-moz-range-track { height:3px; background:var(--rule); border-radius:2px; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; appearance:none;
+      width:16px; height:16px; margin-top:-6.5px; border-radius:50%;
+      background:var(--trace); border:2px solid var(--surface); cursor:grab;
+      box-shadow:0 1px 3px rgba(0,0,0,.3); }
+  input[type=range]::-moz-range-thumb { width:16px; height:16px; border-radius:50%;
+      background:var(--trace); border:2px solid var(--surface); cursor:grab;
+      box-shadow:0 1px 3px rgba(0,0,0,.3); }
+  input[type=range]:focus-visible { outline:2px solid var(--marker); outline-offset:3px; border-radius:3px; }
+
+  /* item panels */
+  .item { background:var(--surface); border:1px solid var(--rule); border-radius:4px;
+          box-shadow:var(--shadow); overflow:hidden; scroll-margin-top:118px; }
+  .item[hidden] { display:none; }
+  .item-head { padding:15px 20px; border-bottom:1px solid var(--rule);
+               background:var(--surface-2);
+               display:grid; grid-template-columns:1fr; gap:8px 30px; align-items:start; }
+  @media (min-width:900px) {
+    .item-head { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+    .item-head .item-code { grid-column:1 / -1; }
+    .item-headline { grid-column:2; grid-row:2 / span 2; align-self:start;
+                     border-left:2px solid var(--rule); padding-left:16px; margin:0; }
+  }
+  .item-code { font-family:var(--f-panel); font-size:11px; font-weight:600;
+               letter-spacing:.13em; text-transform:uppercase; color:var(--ink-faint);
+               display:flex; gap:8px; align-items:center; }
+  .item-code b { color:var(--marker); font-weight:700; }
+  .item-heading { font-family:var(--f-panel); font-size:25px; font-weight:700;
+                  letter-spacing:-.01em; margin:0; text-wrap:balance; }
+  .item-lead { margin:0; font-size:17.5px; color:var(--ink); }
+  .presets { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  .preset { font:inherit; font-size:13px; padding:5px 11px; cursor:pointer;
+            border:1px solid var(--rule); border-radius:999px;
+            background:var(--surface); color:var(--ink); }
+  .preset:hover { border-color:var(--marker); color:var(--marker); }
+  .preset-note { font-size:12.5px; color:var(--muted); }
+  .item-headline { font-family:var(--f-text); font-size:15.5px; font-style:italic;
+                   color:var(--ink-soft); margin:0; }
+  /* framed and two column, like everything else on the page, so the measure
+     reads as chosen rather than as text that ran out */
+  .bench-intro, .bench-outro {
+    background:var(--surface); border:1px solid var(--rule); border-radius:4px;
+    box-shadow:var(--shadow); padding:20px 22px;
+    display:grid; grid-template-columns:1fr; gap:12px 30px; align-items:start;
+    font-size:17.5px;
+  }
+  .bench-outro { font-size:17px; }
+  @media (min-width:900px) {
+    .bench-intro, .bench-outro { grid-template-columns:1fr 1fr; }
+  }
+  .bench-intro p, .bench-outro p { margin:0; max-width:60ch; }
+  .bench-intro:empty, .bench-outro:empty { display:none; }
+  .anim { display:flex; align-items:center; gap:9px; padding:12px 16px;
+          border-right:1px solid var(--rule-soft); }
+  .anim button { font-family:var(--f-panel); font-size:12px; font-weight:600;
+                 letter-spacing:.09em; text-transform:uppercase; cursor:pointer;
+                 padding:6px 12px; border:1px solid var(--rule); border-radius:3px;
+                 background:transparent; color:var(--ink-soft); }
+  .anim button[aria-pressed="true"] { background:var(--trace); color:var(--surface);
+                                      border-color:var(--trace); }
+  .anim button:focus-visible { outline:2px solid var(--marker); outline-offset:2px; }
+
+  .stage { display:grid; grid-template-columns:1fr; gap:0; }
+  @media (min-width:820px) { .stage { grid-template-columns:300px 1fr; } }
+  .stage.wide { grid-template-columns:1fr; }
+  .schem { padding:10px; border-bottom:1px solid var(--rule-soft); }
+  @media (min-width:820px) { .schem { border-bottom:0; border-right:1px solid var(--rule-soft); } }
+  .schem canvas { display:block; width:100%; height:230px; }
+  .graph { padding:10px 10px 2px; }
+  .graph canvas { display:block; width:100%; height:230px; touch-action:none; cursor:crosshair; }
+  .legend { display:flex; flex-wrap:wrap; gap:16px; padding:6px 4px 8px;
+            font-family:var(--f-panel); font-size:11.5px; font-weight:600;
+            letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); }
+  .legend span { display:inline-flex; align-items:center; gap:6px; }
+  .legend i { width:15px; height:3px; border-radius:2px; }
+
+  .toggle { display:flex; flex-wrap:wrap; gap:0; border-top:1px solid var(--rule-soft);
+            background:var(--surface-2); }
+  .toggle button { font-family:var(--f-panel); font-size:12px; font-weight:600;
+                   letter-spacing:.09em; text-transform:uppercase;
+                   padding:9px 15px; border:0; border-right:1px solid var(--rule-soft);
+                   background:transparent; color:var(--ink-soft); cursor:pointer; }
+  .toggle button[aria-pressed="true"] { color:var(--trace); box-shadow:inset 0 -2px 0 var(--trace); }
+  .toggle button:focus-visible { outline:2px solid var(--marker); outline-offset:-3px; }
+
+  .readouts { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+              border-top:1px solid var(--rule); }
+  .ro { padding:11px 16px 13px; border-right:1px solid var(--rule-soft);
+        display:flex; flex-direction:column; gap:2px; }
+  .ro:last-child { border-right:none; }
+  .ro-l { font-family:var(--f-panel); font-size:10.5px; font-weight:600;
+          letter-spacing:.12em; text-transform:uppercase; color:var(--ink-faint); }
+  .ro-v { font-family:var(--f-data); font-size:17px; font-weight:500;
+          font-variant-numeric:tabular-nums; }
+  .ro.hot .ro-v { color:var(--marker); }
+  .ro-note { margin:6px 0 0; font-size:12px; color:var(--muted);
+             font-style:italic; }
+  .panel-failed { margin:0 0 10px; padding:8px 10px; font-size:13px;
+                  border:1px solid var(--marker); border-radius:4px;
+                  color:var(--marker); }
+
+  .prose { padding:18px 20px 20px; border-top:1px solid var(--rule);
+           display:grid; grid-template-columns:1fr; gap:14px 30px; align-items:start; }
+  .prose-text { display:flex; flex-direction:column; gap:11px; min-width:0; }
+  .prose-work { display:flex; flex-direction:column; gap:0; min-width:0; }
+  .prose-qs { grid-column:1 / -1; }
+  @media (min-width:900px) {
+    .prose { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+    .prose-text { grid-column:1; grid-row:1; }
+    .prose-work { grid-column:2; grid-row:1; }
+  }
+  .prose p { margin:0; max-width:62ch; }
+  .work { background:var(--surface-2); border:1px solid var(--rule-soft);
+          border-radius:3px; padding:4px 14px 8px; overflow-x:auto; }
+  .work-row { display:grid; grid-template-columns:1fr; gap:2px;
+              padding:11px 0; border-bottom:1px solid var(--rule-soft); }
+  .work-row:last-child { border-bottom:none; }
+  .work-name { font-family:var(--f-panel); font-size:11px; font-weight:600;
+               letter-spacing:.12em; text-transform:uppercase; color:var(--ink-faint);
+               display:flex; gap:9px; align-items:center; flex-wrap:wrap; }
+  .given { border:1px solid currentColor; border-radius:2px; padding:0 5px;
+           font-size:9.5px; letter-spacing:.09em; }
+  .given.yes { color:var(--phase); }
+  .given.no  { color:var(--marker); }
+  .work-eq { font-family:var(--f-data); font-size:14.5px; font-weight:500; }
+  .work-sub { font-family:var(--f-data); font-size:13.5px; color:var(--ink-soft);
+              font-variant-numeric:tabular-nums; }
+  .work-sub b { color:var(--phase); font-weight:500; }
+  .work-out { color:var(--marker); font-weight:600; }
+  .work-note { font-size:14.5px; color:var(--ink-soft); margin:9px 0 0; max-width:62ch; }
+  .work .lhs { color:var(--ink-faint); }
+  .work .sub { color:var(--phase); }
+  .work .out { color:var(--marker); font-weight:600; }
+  .work .rad { font-family:var(--f-text); font-size:1.06em; }
+
+  .qlink { display:flex; flex-wrap:wrap; align-items:baseline; gap:8px;
+           font-size:15px; color:var(--ink-soft);
+           border-top:1px dashed var(--rule); padding-top:12px; margin-top:3px; }
+  .qs { display:flex; flex-direction:column; gap:0; margin-top:4px;
+        border:1px solid var(--rule); border-radius:4px; overflow:hidden; }
+  .qs-head { font-family:var(--f-panel); font-size:11px; font-weight:700;
+             letter-spacing:.13em; text-transform:uppercase; color:var(--ink-faint);
+             padding:10px 15px; background:var(--surface-2);
+             border-bottom:1px solid var(--rule); }
+  .q { padding:15px; border-bottom:1px solid var(--rule-soft);
+       display:flex; flex-direction:column; gap:10px; }
+  .q:last-child { border-bottom:none; }
+  .q-text { margin:0; font-size:16.5px; max-width:68ch; }
+  .q-opts li { max-width:68ch; }
+  .q-img { max-width:100%; align-self:flex-start; background:#fff;
+           border:1px solid var(--rule-soft); border-radius:3px; padding:6px; }
+  .q-opts { list-style:none; margin:0; padding:0; display:flex;
+            flex-direction:column; gap:5px; }
+  .q-opts li { display:grid; grid-template-columns:24px 1fr; gap:8px;
+               font-size:15.5px; align-items:baseline; }
+  .q-opts .k { font-family:var(--f-panel); font-weight:700; font-size:12.5px;
+               letter-spacing:.08em; color:var(--ink-faint); }
+  .q.shown .q-opts li.right .k { color:var(--e-right,var(--phase)); }
+  .q.shown .q-opts li.right { color:var(--ink); font-weight:600; }
+  .q.shown .q-opts li.right .k::after { content:' \2713'; }
+  .q-foot { display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
+  .q-foot button { font-family:var(--f-panel); font-size:11.5px; font-weight:600;
+                   letter-spacing:.09em; text-transform:uppercase; cursor:pointer;
+                   padding:5px 11px; border:1px solid var(--rule); border-radius:3px;
+                   background:transparent; color:var(--ink-soft); }
+  .q-foot button:focus-visible { outline:2px solid var(--marker); outline-offset:2px; }
+  .q-ref { font-family:var(--f-data); font-size:12px; color:var(--ink-faint); }
+  .q-attrib { font-size:13.5px; color:var(--ink-faint); padding:10px 15px;
+              background:var(--surface-2); border-top:1px solid var(--rule); }
+  .q-why { display:none; flex-direction:column; gap:9px;
+           border-left:3px solid var(--phase); padding:2px 0 2px 14px; }
+  .q.shown .q-why { display:flex; }
+  .q-why p { margin:0; font-size:16px; }
+  .q-work { font-family:var(--f-data); font-size:13.5px; line-height:1.75;
+            font-variant-numeric:tabular-nums; color:var(--ink-soft); }
+  .q-work div:last-child { color:var(--marker); font-weight:600; }
+  .q-seed { align-self:flex-start; font-family:var(--f-panel); font-size:11.5px;
+            font-weight:600; letter-spacing:.09em; text-transform:uppercase;
+            cursor:pointer; padding:6px 12px; border-radius:3px;
+            border:1px solid var(--trace); background:transparent; color:var(--trace); }
+  .q-seed:focus-visible { outline:2px solid var(--marker); outline-offset:2px; }
+  .schem-note { font-family:var(--f-panel); font-size:10.5px; font-weight:600;
+                letter-spacing:.09em; text-transform:uppercase; color:var(--ink-faint);
+                text-align:center; padding:0 0 6px; }
+  .work-lead { font-size:15.5px; color:var(--ink-soft); margin:0 0 8px; }
+  .terms { border:1px solid var(--rule-soft); border-radius:3px;
+           background:var(--surface-2); padding:4px 15px 8px; margin:0 0 4px; }
+  .terms-head { font-family:var(--f-panel); font-size:10.5px; font-weight:700;
+                letter-spacing:.13em; text-transform:uppercase; color:var(--ink-faint);
+                padding:9px 0 7px; }
+  .terms dl { margin:0; display:flex; flex-direction:column; gap:9px; }
+  .terms dt { font-family:var(--f-panel); font-size:14px; font-weight:700;
+              letter-spacing:.02em; color:var(--phase); }
+  .terms dd { margin:2px 0 0; font-size:15.5px; color:var(--ink); max-width:60ch; }
+  .term { border-bottom:1px dotted var(--phase); cursor:help; }
+  .q-src { font-size:14.5px; color:var(--ink-soft); border-top:1px dotted var(--rule);
+           padding-top:9px; }
+  .q-src b { font-family:var(--f-panel); font-size:12px; font-weight:700;
+             letter-spacing:.11em; text-transform:uppercase; color:var(--ink-faint);
+             display:block; margin-bottom:4px; }
+  .q-src a { color:var(--phase); }
+  .q-src code { font-family:var(--f-data); font-size:13px; background:var(--surface);
+                padding:1px 5px; border-radius:3px; }
+  .qlink a { color:var(--phase); }
+  .qlink code { font-family:var(--f-data); font-size:13px; background:var(--surface-2);
+                padding:1px 5px; border-radius:3px; }
+
+  .colophon { font-size:14px; color:var(--ink-faint); border-top:1px solid var(--rule);
+              padding-top:16px; max-width:72ch; }
+  .colophon a { color:var(--phase); }
+
+  @media (prefers-reduced-motion: reduce) { * { animation:none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <div class="eyebrow">
+      <span class="tag" id="grpTag"></span>
+      <span id="grpItems"></span>
+    </div>
+    <h1 id="grpTitle"></h1>
+    <p class="standfirst">
+      Move a control and watch what happens. The circuit is solved live at every
+      frequency on the screen, so nothing here is a drawing of an answer.
+    </p>
+    <div class="levels" id="levels" role="group" aria-label="Licence level"></div>
+  </header>
+
+  <div class="rail-wrap"><div class="rail" id="rail"></div></div>
+
+  <div class="bench-intro" id="intro"></div>
+  <div id="items"></div>
+  <div class="bench-outro" id="outro"></div>
+
+  <p class="colophon" id="colophon"></p>
+</div>
+
+<script>
+/* ============ engine ============ */
+{{ENGINE}}
+
+/* ============ bench content ============ */
+{{CONTENT}}
+
+/* ============ questions, verbatim from the published bank ============ */
+{{QUESTIONS}}
+
+/* ============ page ============ */
+(function () {
+  const { eng, sci, trim, round4, logMap, logUnmap } = window.Fmt;
+  const M = window.MNA, Plot = window.Plot, Schematic = window.Schematic;
+  const $ = id => document.getElementById(id);
+
+  const LEVEL_NAME = { foundation: 'Foundation', intermediate: 'Intermediate', full: 'Full' };
+  const values = {};
+  BENCH.controls.forEach(c => { values[c.id] = c.start; });
+
+  const params = new URLSearchParams(location.search);
+  let level = params.get('level');
+  // Anything that goes wrong during the first render happens before there is
+  // any way to watch for it, so keep a record that can be read afterwards.
+  window.__benchErrors = [];
+  window.addEventListener('error', e => {
+    window.__benchErrors.push((e.error && e.error.stack) || e.message);
+  });
+
+  if (!BENCH.levels.includes(level)) level = BENCH.levels[BENCH.levels.length - 1];
+
+  function setLevel(lv) {
+    level = lv;
+    const q = new URLSearchParams(location.search);
+    q.set('level', lv);
+    history.replaceState(null, '', location.pathname + '?' + q + location.hash);
+  }
+
+  function tokens() {
+    const s = getComputedStyle(document.documentElement);
+    const g = n => s.getPropertyValue(n).trim();
+    return {
+      trace: g('--trace'), fill: g('--trace-fill'), phase: g('--phase'),
+      marker: g('--marker'), grid: g('--rule-soft'), wire: g('--wire'),
+      ink: g('--ink'), soft: g('--ink-soft'), faint: g('--ink-faint'),
+      surface: g('--surface'),
+      panelFont: '"Saira Semi Condensed", sans-serif',
+      font: '"Saira Semi Condensed", sans-serif',
+      mono: '"IBM Plex Mono", monospace'
+    };
+  }
+
+
+  /** Quantities derived from the controls. Each bench defines its own. */
+  function derived() {
+    return BENCH.derive ? BENCH.derive(values) : Object.assign({}, values);
+  }
+
+  function build(topology, extra) {
+    const v = Object.assign({}, values, extra || {});
+    const spec = BENCH.circuits[topology](
+      { R: sci(v.R), L: sci(v.L), C: sci(v.C), R2: sci(v.R2 || v.R) });
+    spec.circuit = M.parseNetlist(spec.netlist);
+    return spec;
+  }
+
+  function sweep(spec, fa, fb, n) {
+    const out = [];
+    for (let i = 0; i < n; i++) {
+      const f = fa + (fb - fa) * i / (n - 1);
+      const sol = M.solveAt(spec.circuit, f);
+      let mag, ph;
+      if (spec.probe.kind === 'current') {
+        const I = M.currentThrough(sol, spec.probe.of);
+        mag = M.abs(I); ph = M.arg(I);
+      } else {
+        const V = M.nodeV(sol, spec.probe.of);
+        mag = M.abs(V); ph = M.arg(V);
+      }
+      out.push({ f, mag, ph, sol });
+    }
+    return out;
+  }
+
+  /* ---- controls ---- */
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let animating = !reduceMotion;
+  let phase = 0;
+
+  const rail = $('rail');
+  BENCH.controls.forEach(c => {
+    const d = document.createElement('div');
+    d.className = 'ctrl';
+    d.innerHTML =
+      '<div class="ctrl-head"><label class="ctrl-name" for="s_' + c.id + '">' + c.label +
+      '</label><span class="ctrl-val" id="v_' + c.id + '"></span></div>' +
+      '<input type="range" id="s_' + c.id + '" min="0" max="1000" step="1">' +
+      (c.desc ? '<p class="ctrl-desc">' + c.desc + '</p>' : '');
+    rail.appendChild(d);
+    const input = d.querySelector('input');
+    input.value = Math.round(c.linear
+      ? 1000 * (c.start - c.range[0]) / (c.range[1] - c.range[0])
+      : logUnmap(c.start, c.range));
+    const toValue = t => c.linear
+      ? c.range[0] + (c.range[1] - c.range[0]) * t / 1000
+      : logMap(t, c.range);
+    input.addEventListener('input', () => {
+      values[c.id] = round4(toValue(+input.value));
+      renderAll();
+    });
+  });
+
+  // charge animation control, in the rail beside the component sliders
+  (function () {
+    const d = document.createElement('div');
+    d.className = 'anim';
+    d.innerHTML = '<span class="ctrl-name">Charge</span>' +
+                  '<button id="animBtn" aria-pressed="' + animating + '">' +
+                  (animating ? 'Moving' : 'Still') + '</button>';
+    rail.appendChild(d);
+    d.querySelector('button').addEventListener('click', e => {
+      animating = !animating;
+      e.target.setAttribute('aria-pressed', String(animating));
+      e.target.textContent = animating ? 'Moving' : 'Still';
+      if (animating) { lastTs = 0; requestAnimationFrame(tick); }
+      renderAll();
+    });
+  })();
+
+  /* ---- level switch ---- */
+  BENCH.levels.forEach(lv => {
+    const b = document.createElement('button');
+    b.textContent = LEVEL_NAME[lv];
+    b.addEventListener('click', () => { setLevel(lv); renderAll(); });
+    $('levels').appendChild(b);
+  });
+
+  /* ---- panels ---- */
+  const panels = [];
+  BENCH.items.forEach(item => {
+    const sec = document.createElement('section');
+    sec.className = 'item';
+    sec.id = 'item-' + item.code;
+    const toggleHtml = item.toggle
+      ? '<div class="toggle" role="group" aria-label="' + item.toggle.label + '">' +
+        item.toggle.options.map(([k, t]) =>
+          '<button data-k="' + k + '">' + t + '</button>').join('') + '</div>'
+      : '';
+    sec.innerHTML =
+      '<div class="item-head">' +
+        '<div class="item-code"><b>' + item.code + '</b>' +
+        '<span>' + item.levels.map(l => LEVEL_NAME[l]).join(' and ') + '</span></div>' +
+        '<h2 class="item-heading"></h2>' +
+        '<p class="item-lead"></p>' +
+        '<div class="presets"></div>' +
+        '<p class="item-headline"></p>' +
+      '</div>' +
+      '<div class="stage" data-stage="' + item.code + '">' +
+        (item.noSchematic === true ? '' :
+        '<div class="schem"><canvas></canvas><div class="schem-note"></div></div>') +
+        '<div class="graph"><canvas></canvas><div class="legend"></div></div>' +
+      '</div>' + toggleHtml +
+      '<div class="readouts"></div>' +
+      '<div class="prose"></div>';
+    $('items').appendChild(sec);
+
+    const p = {
+      item, sec,
+      schem: sec.querySelector('.schem canvas'),
+      graphTall: !!item.noSchematic,
+      graph: sec.querySelector('.graph canvas'),
+      readouts: sec.querySelector('.readouts'),
+      prose: sec.querySelector('.prose'),
+      legend: sec.querySelector('.legend'),
+      schemNote: sec.querySelector('.schem-note'),
+      headline: sec.querySelector('.item-headline'),
+      lead: sec.querySelector('.item-lead'),
+      presets: sec.querySelector('.presets'),
+      topology: item.circuit,
+      cursor: null
+    };
+    if (item.toggle) {
+      sec.querySelectorAll('.toggle button').forEach(b => {
+        b.addEventListener('click', () => { p.topology = b.dataset.k; p.cursor = null; render(p); });
+      });
+    }
+    p.graph.addEventListener('pointerdown', e => {
+      p.graph.setPointerCapture(e.pointerId);
+      p.cursor = Plot.cursorFraction(p.graph, e); render(p);
+    });
+    p.graph.addEventListener('pointermove', e => {
+      if (!e.buttons) return;
+      p.cursor = Plot.cursorFraction(p.graph, e); render(p);
+    });
+    p.graph.addEventListener('dblclick', () => { p.cursor = null; render(p); });
+    panels.push(p);
+  });
+
+  function ro(list) {
+    // The highlighted figure is the one the panel is built around. That was
+    // the convention all along, but nothing on the page said so, so the
+    // colour just looked like decoration.
+    const rows = list.map(([l, v, hot]) =>
+      '<div class="ro' + (hot ? ' hot' : '') + '"><span class="ro-l">' + l +
+      '</span><span class="ro-v">' + v + '</span></div>').join('');
+    const marked = list.some(r => r[2]);
+    return rows + (marked
+      ? '<p class="ro-note">The figure in colour is the one this panel is about.</p>'
+      : '');
+  }
+
+
+  const swatch = (c, label) =>
+    '<span><i style="background:' + c + '"></i>' + label + '</span>';
+
+
+
+  function workingBlock(keys, d, note, lead) {
+    // An item with no formula still has something to say about why it has
+    // none, so the note is shown whether or not there are equations above it.
+    if (!keys || !keys.length) {
+      return note ? '<p class="work-note">' + note + '</p>' : '';
+    }
+    const leadHtml = lead ? '<p class="work-lead">' + lead + '</p>' : '';
+    const rows = keys.map(k => {
+      const f = (BENCH.equations || {})[k];
+      if (!f) return '';
+      const [sub, out] = f.work(d);
+      return '<div class="work-row">' +
+        '<div class="work-name">' + f.name +
+          '<span class="given ' + (f.given ? 'yes' : 'no') + '">' +
+          (f.given ? 'given in the exam' : 'learn this one') + '</span></div>' +
+        '<div class="work-eq">' + f.eq + '</div>' +
+        '<div class="work-sub">= ' + sub + ' = <span class="work-out">' + out + '</span></div>' +
+        '</div>';
+    }).join('');
+    return leadHtml + '<div class="work">' + rows + '</div>' +
+           (note ? '<p class="work-note">' + note + '</p>' : '');
+  }
+
+
+  function render(p) {
+    const d = derived(), t = tokens();
+    const item = p.item;
+    const show = item.levels.includes(level);
+    p.sec.hidden = !show;
+    if (!show) return;
+
+    const pick = f => typeof f === 'string' ? f : (f && (f[level] || f[item.levels[0]])) || '';
+    p.sec.querySelector('.item-heading').textContent = pick(item.heading);
+    p.headline.textContent = item.headline[level] || item.headline[item.levels[0]];
+    p.lead.textContent = pick(item.lead);
+    /*
+     * Named settings, so a worked example out of a book can be followed on
+     * the bench instead of only described. Each one says where it came from.
+     */
+    if (p.presets) {
+      const list = (item.presets || []).filter(
+        ps => !ps.levels || ps.levels.includes(level));
+      p.presets.innerHTML = list.map((ps, i) =>
+        '<button type="button" class="preset" data-i="' + i + '">' +
+        esc(ps.label) + '</button>').join('') +
+        (list.length && list[0].note ? '<span class="preset-note">' +
+          esc(list[0].note) + '</span>' : '');
+      p.presets.hidden = !list.length;
+      p.presets.querySelectorAll('button').forEach(b => {
+        b.addEventListener('click', () => applySeed(list[+b.dataset.i].values));
+      });
+    }
+    // the left slot holds a circuit, or a second display, or nothing
+    const hideSchem = item.noSchematic === true ||
+      (item.noSchematic && typeof item.noSchematic === 'object' && item.noSchematic[level]);
+    const stage = p.sec.querySelector('.stage');
+    if (stage) stage.classList.toggle('wide', !!hideSchem);
+    if (p.schem && p.schem.parentElement) p.schem.parentElement.hidden = !!hideSchem;
+
+    const panelName = typeof item.panel === 'string' ? item.panel : pick(item.panel);
+    const stageBox = p.sec.querySelector('.stage');
+    if (!panelName) {
+      // a prose only item: no instrument, so do not leave an empty frame
+      if (stageBox) stageBox.hidden = true;
+      p.readouts.innerHTML = '';
+      p.flow = null; p.layout = null;
+      return finishItem(p, item, d);
+    }
+    if (stageBox) stageBox.hidden = false;
+    const panel = BENCH.panels[panelName];
+    if (!panel) throw new Error('no panel named ' + panelName);
+    const spec = panel({
+      p: p, d: d, t: t, level: level, values: values, item: item,
+      M: M, Plot: Plot, Fmt: window.Fmt,
+      build: build, sweep: sweep, swatch: swatch, ro: ro
+    });
+
+    // currents for the charge animation, taken at whichever frequency this
+    // panel is drawing attention to, so the cursor changes what you see
+    if (spec.circuit) {
+      const sol = M.solveAt(spec.circuit, p.fAnim || d.f0);
+      const currents = {};
+      for (const el of spec.circuit.elements) {
+        if (el.type === 'V') continue;
+        currents[el.name] = M.currentThrough(sol, el.name);
+      }
+      /*
+       * Scale the animation to the largest current that is actually drawn.
+       * Some of the biggest currents in the circuit are inside the device and
+       * never appear on the page: the transistor's controlled source and its
+       * own output resistance. Normalising to those left the largest visible
+       * branch at a fraction of full swing and made every setting where they
+       * dominate look sluggish for no reason the reader could see.
+       */
+      const shown = new Set();
+      const lay = spec.layout;
+      if (lay) {
+        for (const el of (lay.elements || [])) {
+          const nm = el.flow === undefined ? el.name : el.flow;
+          if (nm && nm !== '-') shown.add(nm);
+        }
+        for (const w of (lay.wires || [])) if (w[4] && w[4] !== '-') shown.add(w[4]);
+      }
+      let iMax = 0;
+      for (const nm of Object.keys(currents)) {
+        if (shown.size && !shown.has(nm)) continue;
+        iMax = Math.max(iMax, M.abs(currents[nm]));
+      }
+      p.flow = { currents, iMax, colour: t.trace };
+    } else {
+      p.flow = null;
+    }
+    p.layout = spec.layout || null;
+    if (p.schemNote && p.flow) {
+      const f = p.fAnim || d.f0;
+      p.schemNote.textContent = animating
+        ? 'charge at ' + eng(f, 'Hz', 4) + ', slowed ' +
+          Math.round(f / animRate()).toLocaleString('en-GB') + ' times'
+        : 'charge held still';
+    }
+    p.labels = BENCH.labels ? BENCH.labels(p, d, values) : {};
+    p.highlight = new Set(Array.isArray(item.highlight)
+      ? item.highlight
+      : (item.highlight && item.highlight[level]) || []);
+
+    drawSchematic(p);
+
+    finishItem(p, item, d);
+  }
+
+  /*
+   * Words, working and questions. Split out because a prose only item needs
+   * all of this and none of the instrument above it.
+   */
+  function finishItem(p, item, d) {
+    const paras = (item.explain[level] || []).map(x => '<p>' + x + '</p>').join('');
+    const keys = (item.formulas && (item.formulas[level] || item.formulas.all)) || [];
+    const wk = workingBlock(keys, Object.assign({ Rf: values.R * 100 }, d),
+                            item.workNote && item.workNote[level],
+                            item.workLead && item.workLead[level]);
+    // The working goes above the prose. Watching which term in the equation
+    // moves is the lesson; the paragraphs are commentary on it.
+    p.prose.innerHTML =
+      '<div class="prose-work">' + wk + '</div>' +
+      '<div class="prose-text">' + termsBlock(item) + paras + '</div>' +
+      '<div class="prose-qs">' + questionsFor(item.code) + '</div>';
+    wireQuestions(p.prose);
+
+    if (item.toggle) {
+      const box = p.sec.querySelector('.toggle');
+      const wanted = item.toggle.levels;
+      if (box) box.hidden = !!(wanted && wanted.indexOf(level) < 0);
+      p.sec.querySelectorAll('.toggle button').forEach(b =>
+        b.setAttribute('aria-pressed', String(b.dataset.k === p.topology)));
+    }
+  }
+
+  /*
+   * Questions are published for Full level only. At Intermediate there is
+   * nothing to show, so say so rather than sending the reader to look for a
+   * bank that does not exist yet.
+   */
+  const esc = s => String(s).replace(/[&<>"]/g,
+    c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  function questionsFor(code) {
+    if (level !== 'full') {
+      return '<div class="qlink"><span>The RSGB has published its question bank for ' +
+        'Full level only. Foundation and Intermediate are listed as still to come, so ' +
+        'there are no questions to show here yet.</span></div>';
+    }
+    const qs = QUESTIONS.filter(q => q.code === code);
+    if (!qs.length) {
+      return '<div class="qlink"><span>No questions in the bank are tagged to this item.</span>' +
+        '<a href="' + BENCH.bank.url + '" target="_blank" rel="noopener">Browse the bank</a></div>';
+    }
+    const body = qs.map((q, i) =>
+      '<div class="q" data-answer="' + q.answer + '">' +
+        '<p class="q-text">' + esc(q.q) + '</p>' +
+        (q.image ? '<img class="q-img" alt="Diagram for question ' + esc(q.ref) +
+                   '" src="' + q.image + '">' : '') +
+        '<ul class="q-opts">' +
+          q.options.map((o, k) =>
+            '<li data-k="' + 'ABCD'[k] + '"><span class="k">' + 'ABCD'[k] + '</span>' +
+            '<span>' + esc(o) + '</span></li>').join('') +
+        '</ul>' +
+        '<div class="q-foot"><button type="button">Show answer</button>' +
+        '<span class="q-ref">' + esc(q.ref) + '</span></div>' +
+        answerBlock(q) +
+      '</div>').join('');
+    return '<div class="qs"><div class="qs-head">' + qs.length +
+      ' question' + (qs.length > 1 ? 's' : '') + ' from the bank for ' + code + '</div>' +
+      body +
+      '<div class="q-attrib">Questions and diagrams &copy; Radio Society of Great Britain, ' +
+      'reproduced unadapted from the published Full level question bank. ' +
+      '<a href="' + BENCH.bank.url + '" target="_blank" rel="noopener">Source</a></div></div>';
+  }
+
+  /*
+   * Showing which option is right teaches very little on its own. What the
+   * reader needs is why, and the arithmetic where there is any. This is our
+   * own writing: the question and its options are the RSGB's, the reasoning
+   * is not.
+   */
+  function answerBlock(q) {
+    const a = (BENCH.answers || {})[q.ref];
+    if (!a) return '';
+    const work = a.working
+      ? '<div class="q-work">' + a.working.map(l => '<div>' + l + '</div>').join('') + '</div>'
+      : '';
+    const seed = a.seed
+      ? '<button type="button" class="q-seed" data-seed="' +
+        esc(JSON.stringify(a.seed)) + '">Set the bench to this question</button>'
+      : '';
+    const note = a.seedNote ? '<p class="work-note">' + a.seedNote + '</p>' : '';
+    return '<div class="q-why">' + (a.why ? '<p>' + a.why + '</p>' : '') +
+           work + sourceLine(a) + note + seed + '</div>';
+  }
+
+  /*
+   * Say where the reasoning came from. An answer that appears from nowhere
+   * teaches nothing, so each one names the equation it used and links to the
+   * section that explains it. Those sections are the ones above on this page.
+   */
+  function sourceLine(a) {
+    if (!a.source) return '';
+    const eqs = (a.source.eq || []).map(k => {
+      const f = (BENCH.equations || {})[k];
+      return f ? '<code>' + f.eq + '</code>' : '';
+    }).filter(Boolean);
+    const froms = (a.source.from || []).map(code => {
+      const it = BENCH.items.find(i => i.code === code);
+      if (!it) return '';
+      const h = typeof it.heading === 'string' ? it.heading
+              : (it.heading && (it.heading[level] || it.heading[it.levels[0]])) || code;
+      return '<a href="#item-' + code + '">' + esc(h) + '</a>';
+    }).filter(Boolean);
+    let body = '';
+    if (eqs.length) body += 'Uses ' + eqs.join(' and ');
+    if (froms.length) body += (body ? ', explained in ' : 'Explained in ') + froms.join(' and ');
+    if (a.source.note) body += '. ' + a.source.note;
+    return body ? '<div class="q-src"><b>Where this comes from</b>' + body + '</div>' : '';
+  }
+
+  /** Put the sliders where a question's values say, then redraw everything. */
+  function applySeed(seed) {
+    BENCH.controls.forEach(c => {
+      if (!(c.id in seed)) return;
+      const v = Math.min(c.range[1], Math.max(c.range[0], seed[c.id]));
+      values[c.id] = round4(v);
+      const input = $('s_' + c.id);
+      if (input) {
+        input.value = Math.round(c.linear
+          ? 1000 * (v - c.range[0]) / (c.range[1] - c.range[0])
+          : logUnmap(v, c.range));
+      }
+    });
+    renderAll();
+  }
+
+  function wireQuestions(root) {
+    root.querySelectorAll('.q').forEach(q => {
+      const btn = q.querySelector('.q-foot button');
+      if (!btn) return;
+      btn.addEventListener('click', () => {
+        const on = q.classList.toggle('shown');
+        btn.textContent = on ? 'Hide answer' : 'Show answer';
+        q.querySelectorAll('.q-opts li').forEach(li =>
+          li.classList.toggle('right', on && li.dataset.k === q.dataset.answer));
+      });
+      const seedBtn = q.querySelector('.q-seed');
+      if (seedBtn) {
+        seedBtn.addEventListener('click', () => {
+          const seed = JSON.parse(seedBtn.dataset.seed);
+          applySeed(seed);
+          q.scrollIntoView({ block: 'nearest' });
+        });
+      }
+    });
+  }
+
+  /*
+   * A word gets defined in the section that first uses it, above the prose
+   * rather than in a glossary somewhere else, so nobody has to go looking.
+   * The build refuses to ship a bench that uses a term before defining it.
+   */
+  function termsBlock(item) {
+    const list = item.introduces && (item.introduces[level] || []);
+    if (!list || !list.length || !BENCH.terms) return '';
+    const rows = list.map(k => BENCH.terms[k]
+      ? '<div><dt>' + esc(k) + '</dt><dd>' + BENCH.terms[k] + '</dd></div>' : '').join('');
+    if (!rows) return '';
+    return '<div class="terms"><div class="terms-head">' +
+      (list.length > 1 ? 'Words used here' : 'Word used here') +
+      '</div><dl>' + rows + '</dl></div>';
+  }
+
+  function drawSchematic(p) {
+    if (!p.layout || !p.schem) return;
+    Schematic.draw(p.schem, p.layout, {
+      tokens: tokens(),
+      highlight: p.highlight,
+      labels: p.labels,
+      flow: p.flow ? Object.assign({ phase: phase }, p.flow) : null
+    });
+  }
+
+  // Only animate what is on screen. Five panels redrawing at 60 frames a
+  // second for the sake of one the reader cannot see is wasted battery.
+  const onScreen = new Set();
+  if (window.IntersectionObserver) {
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => e.isIntersecting ? onScreen.add(e.target) : onScreen.delete(e.target));
+    }, { rootMargin: '100px' });
+    panels.forEach(p => io.observe(p.sec));
+  } else {
+    panels.forEach(p => onScreen.add(p.sec));
+  }
+
+  /*
+   * Real speed is out of the question: at a few megahertz every dot would be
+   * a blur. But holding the rate fixed hides the fact that frequency changed
+   * at all, so it follows f gently and is clamped so it stays watchable. The
+   * slowdown factor is printed under each circuit, which makes the point that
+   * absolute speed here is arbitrary while the relative timing is not.
+   */
+  const ANIM_BASE = 0.55;                // cycles per second on screen
+  function animRate() {
+    const d = derived();
+    const ref = BENCH.animRef;
+    if (!ref || !d.f0) return ANIM_BASE;
+    const scale = Math.pow(d.f0 / ref, 0.35);
+    return ANIM_BASE * Math.min(2.2, Math.max(0.45, scale));
+  }
+
+  let lastTs = 0;
+  function tick(ts) {
+    if (!animating) return;
+    const dt = lastTs ? Math.min(0.05, (ts - lastTs) / 1000) : 0;
+    lastTs = ts || 0;
+    phase += dt * 2 * Math.PI * animRate();
+    panels.forEach(p => { if (!p.sec.hidden && onScreen.has(p.sec)) drawSchematic(p); });
+    requestAnimationFrame(tick);
+  }
+
+  function renderAll() {
+    const para = xs => (xs || []).map(x => '<p>' + x + '</p>').join('');
+    $('intro').innerHTML = para(BENCH.intro && (BENCH.intro[level] || BENCH.intro.all));
+    $('outro').innerHTML = para(BENCH.outro && (BENCH.outro[level] || BENCH.outro.all));
+    // a dimensionless quantity gets no SI prefix: a bias of -0.25 is not -250 m
+    BENCH.controls.forEach(c => {
+      $('v_' + c.id).textContent = c.unit ? eng(values[c.id], c.unit, 3) : trim(values[c.id], 3);
+    });
+    $('levels').querySelectorAll('button').forEach((b, i) =>
+      b.setAttribute('aria-pressed', String(BENCH.levels[i] === level)));
+    const shown = BENCH.items.filter(i => i.levels.includes(level));
+    $('grpItems').textContent = 'RSGB ' + LEVEL_NAME[level] + ', ' +
+      shown.length + ' of ' + BENCH.items.length + ' items in this thread';
+    // One panel throwing used to take out every item after it, leaving a page
+    // of blank frames with nothing to say what had happened. Contain it, and
+    // make the failure visible where it happened.
+    panels.forEach(p => {
+      try {
+        render(p);
+        if (p.failed) { p.failed.remove(); p.failed = null; }
+      } catch (err) {
+        console.error('panel for ' + p.item.code + ' failed', err);
+        if (!p.failed) {
+          p.failed = document.createElement('p');
+          p.failed.className = 'panel-failed';
+          p.sec.prepend(p.failed);
+        }
+        p.failed.textContent = 'This panel could not be drawn: ' + err.message;
+      }
+    });
+  }
+
+  $('grpTag').textContent = BENCH.group;
+  $('grpTitle').textContent = BENCH.title;
+  $('colophon').innerHTML =
+    'Every curve is solved by a general complex nodal analysis engine, verified against ' +
+    'closed form results. Circuit symbols follow the RSGB specification. ' +
+    'Item wording is our own. Questions are held by the RSGB and used under the terms ' +
+    'published with the bank. ' + BENCH.bank.note;
+
+  // Panels are built here, so at load time the browser cannot resolve a
+  // #item-... fragment and any jump lands under the sticky rail. Do it once
+  // the panels exist. This is the link a question uses to open its own bench.
+  function jumpToFragment() {
+    const id = (location.hash || '').slice(1);
+    if (!id) return;
+    const el = document.getElementById(id);
+    if (!el || el.hidden) return;
+    const rail = document.querySelector('.rail-wrap');
+    const clear = (rail ? rail.offsetHeight : 0) + 14;
+    window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - clear });
+  }
+
+  window.addEventListener('resize', renderAll);
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', renderAll);
+  renderAll();
+  if (animating) requestAnimationFrame(tick);
+
+  // Jump exactly once, and only after layout has settled. Web fonts land after
+  // the first paint and reflow every panel, and measuring mid-layout sends the
+  // scroll hundreds of pixels wide of the target.
+  let jumped = false;
+  function jumpOnce() {
+    if (jumped) return;
+    jumped = true;
+    requestAnimationFrame(() => requestAnimationFrame(jumpToFragment));
+  }
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() => { renderAll(); jumpOnce(); });
+  }
+  setTimeout(jumpOnce, 800);
+})();
+</script>

@@ -1,0 +1,291 @@
+<title>Bench Test</title>
+<meta name="robots" content="noindex, nofollow">
+<!-- Kept out of search while this is a work in progress being reviewed.
+     Delete this line when you want it found. -->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,600;1,400&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  :root {
+    --paper:     #fbfaf8;
+    --surface:   #ffffff;
+    --ink:       #1b1f23;
+    --muted:     #5b6570;
+    --rule:      #ddd8d1;
+    --rule-soft: #ece8e2;
+    --accent:    #0b6a70;
+    --live:      #2f6b3f;
+    --todo:      #99590f;
+    --shadow:    0 1px 2px rgba(20,25,30,.06), 0 6px 18px rgba(20,25,30,.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:     #14171a;
+      --surface:   #1c2024;
+      --ink:       #e8e6e2;
+      --muted:     #9aa4ae;
+      --rule:      #333a41;
+      --rule-soft: #262b31;
+      --accent:    #57c2c8;
+      --live:      #74c58a;
+      --todo:      #d9a45c;
+      --shadow:    0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:     #14171a;
+    --surface:   #1c2024;
+    --ink:       #e8e6e2;
+    --muted:     #9aa4ae;
+    --rule:      #333a41;
+    --rule-soft: #262b31;
+    --accent:    #57c2c8;
+    --live:      #74c58a;
+    --todo:      #d9a45c;
+    --shadow:    0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.3);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font-family: "Source Sans 3", system-ui, -apple-system, sans-serif;
+    font-size: 17.5px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 24px 90px; }
+  .col  { max-width: 66ch; }
+
+  header {
+    border-bottom: 2px solid var(--ink);
+    padding: 60px 0 24px; margin-bottom: 44px;
+  }
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 14px;
+  }
+  h1 {
+    font-family: Spectral, Georgia, serif; font-weight: 600;
+    font-size: clamp(38px, 6vw, 60px); line-height: 1.04;
+    letter-spacing: -.02em; margin: 0 0 18px; text-wrap: balance;
+  }
+  .standfirst {
+    font-family: Spectral, Georgia, serif;
+    font-size: clamp(19px, 2.3vw, 22px); line-height: 1.48;
+    color: var(--muted); margin: 0; max-width: 56ch;
+  }
+
+  section { margin: 0 0 52px; }
+  h2 {
+    font-family: Spectral, Georgia, serif; font-weight: 600;
+    font-size: clamp(23px, 3vw, 30px); line-height: 1.2;
+    margin: 0 0 16px; text-wrap: balance;
+  }
+  h3 {
+    font-family: "Source Sans 3", sans-serif; font-weight: 600;
+    font-size: 14.5px; letter-spacing: .05em; text-transform: uppercase;
+    color: var(--muted); margin: 32px 0 12px;
+    padding-bottom: 6px; border-bottom: 1px solid var(--rule-soft);
+  }
+  p { margin: 0 0 16px; max-width: 66ch; }
+  a { color: var(--accent); text-underline-offset: 2px; }
+  strong { font-weight: 600; }
+
+  .lead-in {
+    font-family: Spectral, Georgia, serif; font-size: 19.5px;
+    line-height: 1.55;
+  }
+
+  .cards { display: grid; gap: 14px; grid-template-columns: 1fr; margin: 0 0 8px; }
+  @media (min-width: 720px) { .cards { grid-template-columns: repeat(3, 1fr); } }
+  .card {
+    background: var(--surface); border: 1px solid var(--rule);
+    border-radius: 6px; padding: 18px 20px; box-shadow: var(--shadow);
+  }
+  .card h4 {
+    margin: 0 0 4px; font-size: 17px; font-weight: 600;
+    font-family: "Source Sans 3", sans-serif;
+  }
+  .card .code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px; color: var(--accent); letter-spacing: .08em;
+    display: block; margin-bottom: 8px;
+  }
+  .card p { margin: 0; font-size: 15.5px; color: var(--muted); max-width: none; }
+  .card h4 a { text-decoration: none; }
+  .card h4 a:hover { text-decoration: underline; }
+  .card .levels {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11.5px; margin-top: 10px; letter-spacing: .03em;
+  }
+
+  .scroll { overflow-x: auto; margin: 0 0 18px; }
+  table { border-collapse: collapse; width: 100%; min-width: 480px; font-size: 16px; }
+  th, td {
+    text-align: left; padding: 10px 16px 10px 0;
+    border-bottom: 1px solid var(--rule-soft); vertical-align: top;
+  }
+  th {
+    font-size: 12.5px; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--rule);
+  }
+  td.num {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-variant-numeric: tabular-nums; font-size: 15px; white-space: nowrap;
+  }
+  .yes { color: var(--live); font-weight: 600; }
+
+  ul { margin: 0 0 16px; padding-left: 22px; max-width: 66ch; }
+  li { margin-bottom: 8px; }
+
+  .pull {
+    border-left: 3px solid var(--accent); padding: 4px 0 4px 20px;
+    margin: 0 0 20px; font-family: Spectral, Georgia, serif;
+    font-size: 19px; line-height: 1.5; max-width: 60ch;
+  }
+  .note {
+    background: var(--surface); border: 1px solid var(--rule);
+    border-radius: 6px; padding: 18px 22px; box-shadow: var(--shadow);
+    margin: 0 0 18px;
+  }
+  .note p:last-child { margin-bottom: 0; }
+
+  footer {
+    border-top: 1px solid var(--rule); padding-top: 22px; margin-top: 56px;
+    font-size: 15px; color: var(--muted);
+  }
+  footer p { max-width: 72ch; }
+  @media (max-width: 640px) { body { font-size: 16.5px; } header { padding-top: 38px; } }
+</style>
+
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">Amateur radio training &middot; work in progress</p>
+  <h1>Bench Test</h1>
+  <p class="standfirst">Interactive pages for the technical part of the amateur
+    radio syllabus. The circuits are solved in the browser as you change
+    them.</p>
+</header>
+
+<section class="col">
+  <p class="lead-in">Each page turns the circuits from a syllabus group into
+    working instruments. There are controls for the component values. Move one
+    and the page solves the circuit again: the readings update, the waveforms
+    redraw, the working underneath substitutes the new values, and the charge
+    moving round the schematic changes speed to match the current in each
+    branch.</p>
+
+  <p>Everything on the page is calculated as you move the control, from a nodal
+    analysis of the circuit. The pages are free, run entirely in the browser,
+    and work offline once loaded.</p>
+
+  <p>They are meant to sit alongside a course and the books, for the reader who
+    wants to see a circuit respond before the idea settles.</p>
+</section>
+
+<section>
+  <h2>The pages</h2>
+  <div class="cards">
+    <div class="card">
+      <span class="code">Group 2H</span>
+      <h4><a href="benches/2H.html">Tuned circuits</a></h4>
+      <p>Resonance, Q, bandwidth, dynamic resistance and the four filter
+        shapes, with the circulating current visible in the tank.</p>
+      <p class="levels">Foundation, Intermediate, Full</p>
+    </div>
+    <div class="card">
+      <span class="code">Group 2I</span>
+      <h4><a href="benches/2I.html">Semiconductors</a></h4>
+      <p>Diodes, Zeners, varicaps, transistor characteristics and biasing, the
+        three configurations, amplifier classes and oscillators.</p>
+      <p class="levels">Intermediate, Full</p>
+    </div>
+    <div class="card">
+      <span class="code">Group 2F</span>
+      <h4><a href="benches/2F.html">Sampling</a></h4>
+      <p>Converters, quantisation, sample rate and aliasing, from what a
+        converter does at Foundation to Nyquist and noise at Full.</p>
+      <p class="levels">Foundation, Intermediate, Full</p>
+    </div>
+  </div>
+  <p class="col" style="margin-top:20px">Each page covers every level that
+    teaches the group. The level buttons at the top switch the whole page, so
+    the same instruments appear with the depth, the equations and the worked
+    answers set for that level.</p>
+</section>
+
+<section>
+  <h2>Checks</h2>
+  <div class="col">
+    <p>These run every time the pages are built, and a page that fails one is
+      not written out.</p>
+  </div>
+
+  <div class="scroll">
+    <table>
+      <thead><tr><th>What is checked</th><th>Result</th></tr></thead>
+      <tbody>
+        <tr><td>Assertions on the nodal analysis, signal processing and DC maths</td><td class="num yes">73 pass</td></tr>
+        <tr><td>Every circuit joined up, with every lead landing on something</td><td class="num yes">12 layouts</td></tr>
+        <tr><td>Every wire and component carrying a current the circuit solves for</td><td class="num yes">12 layouts</td></tr>
+        <tr><td>Kirchhoff at every node, swept across the control range</td><td class="num yes">0.000000%</td></tr>
+        <tr><td>Content: level coverage, working shown with numbers, terms defined before use, answers sourced</td><td class="num yes">14 checks</td></tr>
+        <tr><td>Every page at every level, loaded and read back</td><td class="num yes">9 of 9</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note col">
+    <p><strong>Reading the finished picture.</strong> The displays are checked
+      from the rendered image as well as from the maths. Each trace is located
+      by its colour and the two are compared down the page, so the check proves
+      that a phase inversion is visible on screen and that both traces are drawn
+      at a size you can see.</p>
+    <p>That check was added after the common emitter amplifier calculated its
+      phase inversion correctly, drew it correctly, and showed both traces on
+      one vertical scale, which put a ten millivolt input and a two volt output
+      on the same axis.</p>
+  </div>
+</section>
+
+<section class="col">
+  <h2>Still to come</h2>
+  <ul>
+    <li>The remaining syllabus groups. Three of the technical groups are built,
+      and the per&nbsp;level item lists for the rest are ready.</li>
+    <li>One schematic on the oscillator page. The panel works and the figures
+      are right; the tuned circuit and its feedback tap are described in the
+      text and will be drawn.</li>
+    <li>Questions at Foundation and Intermediate, once the RSGB publishes those
+      banks. Full level questions are in place with worked answers.</li>
+    <li>Audio, once the visual side is settled.</li>
+  </ul>
+</section>
+
+<section class="col">
+  <h2>Feedback</h2>
+  <p>Any reaction is welcome, and these in particular:</p>
+  <ul>
+    <li>Is the pitch right at each level, and does switching level change enough
+      to be worth having?</li>
+    <li>Does showing the working with the numbers substituted help, or is the
+      formula on its own enough?</li>
+    <li>Does the moving charge in the schematic teach anything?</li>
+    <li>Anything technically wrong, which is the most useful of all.</li>
+  </ul>
+  <p>It is free, it will stay free, and it is not commercial in any form.</p>
+</section>
+
+<footer>
+  <p>Written independently. Reference books consulted while planning are
+    copyright to their publishers, and none of their wording or artwork appears
+    here. Questions are reproduced unadapted and with attribution under the
+    terms the RSGB publishes with its question bank, with the option order left
+    as supplied. Syllabus item codes are used as factual references.</p>
+</footer>
+
+</div>

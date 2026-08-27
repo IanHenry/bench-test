@@ -1,0 +1,2092 @@
+[
+ {
+  "code": "1A1",
+  "group": "1A",
+  "section": "1",
+  "technical": false,
+  "levels": [
+   "foundation"
+  ]
+ },
+ {
+  "code": "1A2",
+  "group": "1A",
+  "section": "1",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "full"
+  ]
+ },
+ {
+  "code": "1A3",
+  "group": "1A",
+  "section": "1",
+  "technical": false,
+  "levels": [
+   "foundation"
+  ]
+ },
+ {
+  "code": "1A4",
+  "group": "1A",
+  "section": "1",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "intermediate"
+  ]
+ },
+ {
+  "code": "1A5",
+  "group": "1A",
+  "section": "1",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "full"
+  ]
+ },
+ {
+  "code": "1B1",
+  "group": "1B",
+  "section": "1",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "1B2",
+  "group": "1B",
+  "section": "1",
+  "technical": false,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "1C1",
+  "group": "1C",
+  "section": "1",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "1C2",
+  "group": "1C",
+  "section": "1",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "1D1",
+  "group": "1D",
+  "section": "1",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "1D2",
+  "group": "1D",
+  "section": "1",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "intermediate"
+  ]
+ },
+ {
+  "code": "1E1",
+  "group": "1E",
+  "section": "1",
+  "technical": false,
+  "levels": [
+   "intermediate"
+  ]
+ },
+ {
+  "code": "1E2",
+  "group": "1E",
+  "section": "1",
+  "technical": false,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "1F1",
+  "group": "1F",
+  "section": "1",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "1F2",
+  "group": "1F",
+  "section": "1",
+  "technical": false,
+  "levels": [
+   "full"
+  ]
+ },
+ {
+  "code": "1G1",
+  "group": "1G",
+  "section": "1",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "1G2",
+  "group": "1G",
+  "section": "1",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "2A1",
+  "group": "2A",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "2A2",
+  "group": "2A",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "foundation"
+  ]
+ },
+ {
+  "code": "2B1",
+  "group": "2B",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "full"
+  ]
+ },
+ {
+  "code": "2C1",
+  "group": "2C",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "intermediate"
+  ]
+ },
+ {
+  "code": "2C2",
+  "group": "2C",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "intermediate"
+  ]
+ },
+ {
+  "code": "2C3",
+  "group": "2C",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "intermediate"
+  ]
+ },
+ {
+  "code": "2C4",
+  "group": "2C",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "foundation"
+  ]
+ },
+ {
+  "code": "2D1",
+  "group": "2D",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "2D2",
+  "group": "2D",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "2D3",
+  "group": "2D",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "2D4",
+  "group": "2D",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "2D5",
+  "group": "2D",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "intermediate"
+  ]
+ },
+ {
+  "code": "2D6",
+  "group": "2D",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "intermediate"
+  ]
+ },
+ {
+  "code": "2D7",
+  "group": "2D",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "full"
+  ]
+ },
+ {
+  "code": "2E1",
+  "group": "2E",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "intermediate"
+  ]
+ },
+ {
+  "code": "2E2",
+  "group": "2E",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "intermediate"
+  ]
+ },
+ {
+  "code": "2E3",
+  "group": "2E",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "2E4",
+  "group": "2E",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "2E5",
+  "group": "2E",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "2E6",
+  "group": "2E",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "2E7",
+  "group": "2E",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "intermediate"
+  ]
+ },
+ {
+  "code": "2E8",
+  "group": "2E",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "intermediate"
+  ]
+ },
+ {
+  "code": "2F1",
+  "group": "2F",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "2F2",
+  "group": "2F",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "full"
+  ]
+ },
+ {
+  "code": "2G1",
+  "group": "2G",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "2H1",
+  "group": "2H",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "2H2",
+  "group": "2H",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "2H3",
+  "group": "2H",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "intermediate"
+  ]
+ },
+ {
+  "code": "2H4",
+  "group": "2H",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "2H5",
+  "group": "2H",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "2I1",
+  "group": "2I",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "2I2",
+  "group": "2I",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "intermediate"
+  ]
+ },
+ {
+  "code": "2I3",
+  "group": "2I",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "2I4",
+  "group": "2I",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "2I5",
+  "group": "2I",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "2I6",
+  "group": "2I",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "intermediate"
+  ]
+ },
+ {
+  "code": "2J1",
+  "group": "2J",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "intermediate"
+  ]
+ },
+ {
+  "code": "2J2",
+  "group": "2J",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "2J3",
+  "group": "2J",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "2J4",
+  "group": "2J",
+  "section": "2",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "3A1",
+  "group": "3A",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "foundation"
+  ]
+ },
+ {
+  "code": "3A2",
+  "group": "3A",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "3A3",
+  "group": "3A",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "intermediate"
+  ]
+ },
+ {
+  "code": "3A4",
+  "group": "3A",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "foundation"
+  ]
+ },
+ {
+  "code": "3B1",
+  "group": "3B",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "3C1",
+  "group": "3C",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "3C2",
+  "group": "3C",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "intermediate"
+  ]
+ },
+ {
+  "code": "3C3",
+  "group": "3C",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "3D1",
+  "group": "3D",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "full"
+  ]
+ },
+ {
+  "code": "3E1",
+  "group": "3E",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "3E2",
+  "group": "3E",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "3E3",
+  "group": "3E",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "intermediate"
+  ]
+ },
+ {
+  "code": "3F1",
+  "group": "3F",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "intermediate"
+  ]
+ },
+ {
+  "code": "3F2",
+  "group": "3F",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "full"
+  ]
+ },
+ {
+  "code": "3F3",
+  "group": "3F",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "full"
+  ]
+ },
+ {
+  "code": "3F4",
+  "group": "3F",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "full"
+  ]
+ },
+ {
+  "code": "3F5",
+  "group": "3F",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "full"
+  ]
+ },
+ {
+  "code": "3G1",
+  "group": "3G",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "full"
+  ]
+ },
+ {
+  "code": "3G2",
+  "group": "3G",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "3G3",
+  "group": "3G",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "3G4",
+  "group": "3G",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "3G5",
+  "group": "3G",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "3H1",
+  "group": "3H",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "foundation"
+  ]
+ },
+ {
+  "code": "3H2",
+  "group": "3H",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "intermediate"
+  ]
+ },
+ {
+  "code": "3H3",
+  "group": "3H",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "3H4",
+  "group": "3H",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "intermediate"
+  ]
+ },
+ {
+  "code": "3I1",
+  "group": "3I",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "3I2",
+  "group": "3I",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "3I3",
+  "group": "3I",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "3I4",
+  "group": "3I",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "full"
+  ]
+ },
+ {
+  "code": "3I5",
+  "group": "3I",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "full"
+  ]
+ },
+ {
+  "code": "3J1",
+  "group": "3J",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "full"
+  ]
+ },
+ {
+  "code": "3K1",
+  "group": "3K",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "3L1",
+  "group": "3L",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "3M1",
+  "group": "3M",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "3M2",
+  "group": "3M",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "3M3",
+  "group": "3M",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "intermediate"
+  ]
+ },
+ {
+  "code": "3N1",
+  "group": "3N",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "full"
+  ]
+ },
+ {
+  "code": "3N2",
+  "group": "3N",
+  "section": "3",
+  "technical": true,
+  "levels": [
+   "full"
+  ]
+ },
+ {
+  "code": "4A1",
+  "group": "4A",
+  "section": "4",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "intermediate"
+  ]
+ },
+ {
+  "code": "4A2",
+  "group": "4A",
+  "section": "4",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "intermediate"
+  ]
+ },
+ {
+  "code": "4A3",
+  "group": "4A",
+  "section": "4",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "4B1",
+  "group": "4B",
+  "section": "4",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "4C1",
+  "group": "4C",
+  "section": "4",
+  "technical": true,
+  "levels": [
+   "foundation"
+  ]
+ },
+ {
+  "code": "4C2",
+  "group": "4C",
+  "section": "4",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "intermediate"
+  ]
+ },
+ {
+  "code": "4C3",
+  "group": "4C",
+  "section": "4",
+  "technical": true,
+  "levels": [
+   "foundation"
+  ]
+ },
+ {
+  "code": "4C4",
+  "group": "4C",
+  "section": "4",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "intermediate"
+  ]
+ },
+ {
+  "code": "4C5",
+  "group": "4C",
+  "section": "4",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "intermediate"
+  ]
+ },
+ {
+  "code": "4C6",
+  "group": "4C",
+  "section": "4",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "intermediate"
+  ]
+ },
+ {
+  "code": "4D1",
+  "group": "4D",
+  "section": "4",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "4D2",
+  "group": "4D",
+  "section": "4",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "4E1",
+  "group": "4E",
+  "section": "4",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "4E2",
+  "group": "4E",
+  "section": "4",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "full"
+  ]
+ },
+ {
+  "code": "4E3",
+  "group": "4E",
+  "section": "4",
+  "technical": true,
+  "levels": [
+   "full"
+  ]
+ },
+ {
+  "code": "4F1",
+  "group": "4F",
+  "section": "4",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "4F2",
+  "group": "4F",
+  "section": "4",
+  "technical": true,
+  "levels": [
+   "full"
+  ]
+ },
+ {
+  "code": "4G1",
+  "group": "4G",
+  "section": "4",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "intermediate"
+  ]
+ },
+ {
+  "code": "5A1",
+  "group": "5A",
+  "section": "5",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "full"
+  ]
+ },
+ {
+  "code": "5A2",
+  "group": "5A",
+  "section": "5",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "intermediate"
+  ]
+ },
+ {
+  "code": "5A3",
+  "group": "5A",
+  "section": "5",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "5B1",
+  "group": "5B",
+  "section": "5",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "5B2",
+  "group": "5B",
+  "section": "5",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "5B3",
+  "group": "5B",
+  "section": "5",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "5B4",
+  "group": "5B",
+  "section": "5",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "5B5",
+  "group": "5B",
+  "section": "5",
+  "technical": true,
+  "levels": [
+   "intermediate"
+  ]
+ },
+ {
+  "code": "5C1",
+  "group": "5C",
+  "section": "5",
+  "technical": true,
+  "levels": [
+   "foundation"
+  ]
+ },
+ {
+  "code": "5C2",
+  "group": "5C",
+  "section": "5",
+  "technical": true,
+  "levels": [
+   "foundation"
+  ]
+ },
+ {
+  "code": "5C3",
+  "group": "5C",
+  "section": "5",
+  "technical": true,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "5D1",
+  "group": "5D",
+  "section": "5",
+  "technical": true,
+  "levels": [
+   "full"
+  ]
+ },
+ {
+  "code": "5D2",
+  "group": "5D",
+  "section": "5",
+  "technical": true,
+  "levels": [
+   "full"
+  ]
+ },
+ {
+  "code": "6A1",
+  "group": "6A",
+  "section": "6",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "intermediate"
+  ]
+ },
+ {
+  "code": "6A2",
+  "group": "6A",
+  "section": "6",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "6A3",
+  "group": "6A",
+  "section": "6",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "intermediate"
+  ]
+ },
+ {
+  "code": "6A4",
+  "group": "6A",
+  "section": "6",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "6B1",
+  "group": "6B",
+  "section": "6",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "6B2",
+  "group": "6B",
+  "section": "6",
+  "technical": false,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "6B3",
+  "group": "6B",
+  "section": "6",
+  "technical": false,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "6C1",
+  "group": "6C",
+  "section": "6",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "6C2",
+  "group": "6C",
+  "section": "6",
+  "technical": false,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "6C3",
+  "group": "6C",
+  "section": "6",
+  "technical": false,
+  "levels": [
+   "full"
+  ]
+ },
+ {
+  "code": "6D1",
+  "group": "6D",
+  "section": "6",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "6D2",
+  "group": "6D",
+  "section": "6",
+  "technical": false,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "6D3",
+  "group": "6D",
+  "section": "6",
+  "technical": false,
+  "levels": [
+   "intermediate"
+  ]
+ },
+ {
+  "code": "6D4",
+  "group": "6D",
+  "section": "6",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "intermediate"
+  ]
+ },
+ {
+  "code": "6E1",
+  "group": "6E",
+  "section": "6",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "6E2",
+  "group": "6E",
+  "section": "6",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "6E3",
+  "group": "6E",
+  "section": "6",
+  "technical": false,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "6F1",
+  "group": "6F",
+  "section": "6",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "full"
+  ]
+ },
+ {
+  "code": "6F2",
+  "group": "6F",
+  "section": "6",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "6F3",
+  "group": "6F",
+  "section": "6",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "intermediate"
+  ]
+ },
+ {
+  "code": "6G1",
+  "group": "6G",
+  "section": "6",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "full"
+  ]
+ },
+ {
+  "code": "6G2",
+  "group": "6G",
+  "section": "6",
+  "technical": false,
+  "levels": [
+   "foundation"
+  ]
+ },
+ {
+  "code": "7A1",
+  "group": "7A",
+  "section": "7",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "full"
+  ]
+ },
+ {
+  "code": "7A2",
+  "group": "7A",
+  "section": "7",
+  "technical": false,
+  "levels": [
+   "foundation"
+  ]
+ },
+ {
+  "code": "7A3",
+  "group": "7A",
+  "section": "7",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "intermediate"
+  ]
+ },
+ {
+  "code": "7A4",
+  "group": "7A",
+  "section": "7",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "intermediate"
+  ]
+ },
+ {
+  "code": "7A5",
+  "group": "7A",
+  "section": "7",
+  "technical": false,
+  "levels": [
+   "foundation"
+  ]
+ },
+ {
+  "code": "7A6",
+  "group": "7A",
+  "section": "7",
+  "technical": false,
+  "levels": [
+   "foundation"
+  ]
+ },
+ {
+  "code": "7B1",
+  "group": "7B",
+  "section": "7",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "7B2",
+  "group": "7B",
+  "section": "7",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "full"
+  ]
+ },
+ {
+  "code": "7C1",
+  "group": "7C",
+  "section": "7",
+  "technical": false,
+  "levels": [
+   "foundation"
+  ]
+ },
+ {
+  "code": "7D1",
+  "group": "7D",
+  "section": "7",
+  "technical": false,
+  "levels": [
+   "foundation"
+  ]
+ },
+ {
+  "code": "7E1",
+  "group": "7E",
+  "section": "7",
+  "technical": false,
+  "levels": [
+   "intermediate"
+  ]
+ },
+ {
+  "code": "7E2",
+  "group": "7E",
+  "section": "7",
+  "technical": false,
+  "levels": [
+   "foundation"
+  ]
+ },
+ {
+  "code": "7F1",
+  "group": "7F",
+  "section": "7",
+  "technical": false,
+  "levels": [
+   "foundation"
+  ]
+ },
+ {
+  "code": "7F2",
+  "group": "7F",
+  "section": "7",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "intermediate"
+  ]
+ },
+ {
+  "code": "7G1",
+  "group": "7G",
+  "section": "7",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "intermediate"
+  ]
+ },
+ {
+  "code": "7G2",
+  "group": "7G",
+  "section": "7",
+  "technical": false,
+  "levels": [
+   "intermediate"
+  ]
+ },
+ {
+  "code": "7G3",
+  "group": "7G",
+  "section": "7",
+  "technical": false,
+  "levels": [
+   "intermediate"
+  ]
+ },
+ {
+  "code": "7G4",
+  "group": "7G",
+  "section": "7",
+  "technical": false,
+  "levels": [
+   "intermediate"
+  ]
+ },
+ {
+  "code": "7H1",
+  "group": "7H",
+  "section": "7",
+  "technical": false,
+  "levels": [
+   "full"
+  ]
+ },
+ {
+  "code": "8A1",
+  "group": "8A",
+  "section": "8",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "8A2",
+  "group": "8A",
+  "section": "8",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "full"
+  ]
+ },
+ {
+  "code": "8A3",
+  "group": "8A",
+  "section": "8",
+  "technical": false,
+  "levels": [
+   "foundation"
+  ]
+ },
+ {
+  "code": "8A4",
+  "group": "8A",
+  "section": "8",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "intermediate"
+  ]
+ },
+ {
+  "code": "8A5",
+  "group": "8A",
+  "section": "8",
+  "technical": false,
+  "levels": [
+   "foundation"
+  ]
+ },
+ {
+  "code": "8A6",
+  "group": "8A",
+  "section": "8",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "8A7",
+  "group": "8A",
+  "section": "8",
+  "technical": false,
+  "levels": [
+   "foundation"
+  ]
+ },
+ {
+  "code": "8A8",
+  "group": "8A",
+  "section": "8",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "intermediate"
+  ]
+ },
+ {
+  "code": "8B1",
+  "group": "8B",
+  "section": "8",
+  "technical": false,
+  "levels": [
+   "foundation"
+  ]
+ },
+ {
+  "code": "8B2",
+  "group": "8B",
+  "section": "8",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "intermediate"
+  ]
+ },
+ {
+  "code": "8B3",
+  "group": "8B",
+  "section": "8",
+  "technical": false,
+  "levels": [
+   "intermediate"
+  ]
+ },
+ {
+  "code": "8B4",
+  "group": "8B",
+  "section": "8",
+  "technical": false,
+  "levels": [
+   "intermediate"
+  ]
+ },
+ {
+  "code": "8B5",
+  "group": "8B",
+  "section": "8",
+  "technical": false,
+  "levels": [
+   "intermediate"
+  ]
+ },
+ {
+  "code": "8B6",
+  "group": "8B",
+  "section": "8",
+  "technical": false,
+  "levels": [
+   "intermediate"
+  ]
+ },
+ {
+  "code": "8B7",
+  "group": "8B",
+  "section": "8",
+  "technical": false,
+  "levels": [
+   "foundation"
+  ]
+ },
+ {
+  "code": "8C1",
+  "group": "8C",
+  "section": "8",
+  "technical": false,
+  "levels": [
+   "foundation"
+  ]
+ },
+ {
+  "code": "8C2",
+  "group": "8C",
+  "section": "8",
+  "technical": false,
+  "levels": [
+   "foundation"
+  ]
+ },
+ {
+  "code": "8C3",
+  "group": "8C",
+  "section": "8",
+  "technical": false,
+  "levels": [
+   "foundation"
+  ]
+ },
+ {
+  "code": "8D1",
+  "group": "8D",
+  "section": "8",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "8D2",
+  "group": "8D",
+  "section": "8",
+  "technical": false,
+  "levels": [
+   "foundation"
+  ]
+ },
+ {
+  "code": "8D3",
+  "group": "8D",
+  "section": "8",
+  "technical": false,
+  "levels": [
+   "foundation"
+  ]
+ },
+ {
+  "code": "8D4",
+  "group": "8D",
+  "section": "8",
+  "technical": false,
+  "levels": [
+   "foundation"
+  ]
+ },
+ {
+  "code": "8E1",
+  "group": "8E",
+  "section": "8",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "8F1",
+  "group": "8F",
+  "section": "8",
+  "technical": false,
+  "levels": [
+   "foundation"
+  ]
+ },
+ {
+  "code": "8F2",
+  "group": "8F",
+  "section": "8",
+  "technical": false,
+  "levels": [
+   "foundation"
+  ]
+ },
+ {
+  "code": "8F3",
+  "group": "8F",
+  "section": "8",
+  "technical": false,
+  "levels": [
+   "foundation"
+  ]
+ },
+ {
+  "code": "8F4",
+  "group": "8F",
+  "section": "8",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "full"
+  ]
+ },
+ {
+  "code": "8F5",
+  "group": "8F",
+  "section": "8",
+  "technical": false,
+  "levels": [
+   "foundation",
+   "full"
+  ]
+ },
+ {
+  "code": "8F6",
+  "group": "8F",
+  "section": "8",
+  "technical": false,
+  "levels": [
+   "full"
+  ]
+ },
+ {
+  "code": "8F7",
+  "group": "8F",
+  "section": "8",
+  "technical": false,
+  "levels": [
+   "full"
+  ]
+ },
+ {
+  "code": "9A1",
+  "group": "9A",
+  "section": "9",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "9A2",
+  "group": "9A",
+  "section": "9",
+  "technical": true,
+  "levels": [
+   "intermediate"
+  ]
+ },
+ {
+  "code": "9A3",
+  "group": "9A",
+  "section": "9",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "9A4",
+  "group": "9A",
+  "section": "9",
+  "technical": true,
+  "levels": [
+   "full"
+  ]
+ },
+ {
+  "code": "9A5",
+  "group": "9A",
+  "section": "9",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "9A6",
+  "group": "9A",
+  "section": "9",
+  "technical": true,
+  "levels": [
+   "full"
+  ]
+ },
+ {
+  "code": "9A7",
+  "group": "9A",
+  "section": "9",
+  "technical": true,
+  "levels": [
+   "full"
+  ]
+ },
+ {
+  "code": "9A8",
+  "group": "9A",
+  "section": "9",
+  "technical": true,
+  "levels": [
+   "full"
+  ]
+ },
+ {
+  "code": "9A9",
+  "group": "9A",
+  "section": "9",
+  "technical": true,
+  "levels": [
+   "full"
+  ]
+ },
+ {
+  "code": "9B1",
+  "group": "9B",
+  "section": "9",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "9C1",
+  "group": "9C",
+  "section": "9",
+  "technical": true,
+  "levels": [
+   "intermediate",
+   "full"
+  ]
+ },
+ {
+  "code": "9D1",
+  "group": "9D",
+  "section": "9",
+  "technical": true,
+  "levels": [
+   "intermediate"
+  ]
+ },
+ {
+  "code": "9E1",
+  "group": "9E",
+  "section": "9",
+  "technical": true,
+  "levels": [
+   "intermediate"
+  ]
+ },
+ {
+  "code": "9E2",
+  "group": "9E",
+  "section": "9",
+  "technical": true,
+  "levels": [
+   "intermediate"
+  ]
+ },
+ {
+  "code": "9E3",
+  "group": "9E",
+  "section": "9",
+  "technical": true,
+  "levels": [
+   "intermediate"
+  ]
+ },
+ {
+  "code": "9E4",
+  "group": "9E",
+  "section": "9",
+  "technical": true,
+  "levels": [
+   "intermediate"
+  ]
+ }
+]

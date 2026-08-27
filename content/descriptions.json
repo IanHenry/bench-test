@@ -1,0 +1,490 @@
+{
+  "_meta": {
+    "purpose": "Our own one-line description of every technical syllabus item, per level. The RSGB owns the wording of the learning objectives, so nothing here is copied from them. These are what a bench displays as its subject line.",
+    "voice": "Measured from G0LFT's published RadCom articles: median 14-15 words, roughly a third under 12, second person, colons not semicolons, no em dashes.",
+    "syllabus": "Syllabus 2019 per-level specifications v1.5, cross-checked against combined v1.6b",
+    "coverage": "126 technical items, 221 item-level pairs",
+    "levels": ["foundation", "intermediate", "full"]
+  },
+
+  "items": {
+
+    "2A1": {
+      "foundation": "Current is electrons on the move. Which everyday materials let them through, and which do not.",
+      "intermediate": "Components are never exactly their marked value. Every one carries a tolerance.",
+      "full": "How tolerances add up across a circuit, and what that does to the result you get."
+    },
+    "2A2": {
+      "foundation": "Current needs a complete loop and something to push it. How it splits, and how it does not."
+    },
+    "2B1": {
+      "foundation": "Power in watts, and why a resistor carrying current warms up.",
+      "full": "Finding current, voltage, resistance and power anywhere in a series or parallel network."
+    },
+    "2C1": {
+      "foundation": "Resistance opposes current. How voltage, current and resistance tie together.",
+      "intermediate": "Resistors and cells in series and parallel, and solving for whichever quantity you are missing."
+    },
+    "2C2": {
+      "foundation": "The voltages across resistors in series add up to the supply voltage.",
+      "intermediate": "Two or three resistors as a potential divider, and how to work out the output."
+    },
+    "2C3": {
+      "intermediate": "EMF and potential difference are not the same thing. Draw current, and the source sags."
+    },
+    "2C4": {
+      "foundation": "Getting the polarity right, and what happens when you get it wrong."
+    },
+    "2D1": {
+      "intermediate": "What a capacitor is made of, and how it holds a charge.",
+      "full": "What sets the value: plate area, plate spacing, and the dielectric between them."
+    },
+    "2D2": {
+      "intermediate": "Combining capacitors in series and in parallel.",
+      "full": "Why different dielectrics suit different jobs, and how their losses grow with frequency."
+    },
+    "2D3": {
+      "intermediate": "Some capacitors are polarised. Connect one backwards and it can hurt you.",
+      "full": "Every capacitor has a voltage it will not survive."
+    },
+    "2D4": {
+      "intermediate": "Move a conductor through a magnetic field and you induce a voltage across it.",
+      "full": "Self-inductance, and the back EMF a coil throws out when its current changes."
+    },
+    "2D5": {
+      "intermediate": "Combining inductors in series and in parallel."
+    },
+    "2D6": {
+      "intermediate": "What makes a coil's inductance larger: more turns, wider diameter, closer spacing, and the core."
+    },
+    "2D7": {
+      "full": "How current and voltage rise and fall in LR and CR circuits, and what the time constant tells you."
+    },
+    "2E1": {
+      "foundation": "Direct current flows one way. Alternating current keeps changing direction.",
+      "intermediate": "A capacitor charges and discharges each way, so it passes AC but blocks DC."
+    },
+    "2E2": {
+      "foundation": "The sine wave as a picture of AC, and the frequencies radio works at.",
+      "intermediate": "Reading amplitude and frequency off a sine wave, and how period and frequency relate."
+    },
+    "2E3": {
+      "intermediate": "In a resistor, voltage and current stay in step. What RMS means and why it is used.",
+      "full": "Current lags voltage in an inductor and leads it in a capacitor. Working out reactance."
+    },
+    "2E4": {
+      "intermediate": "Capacitive reactance, and why it falls as the frequency climbs.",
+      "full": "Using a capacitor to couple a signal through, or to send it to ground."
+    },
+    "2E5": {
+      "intermediate": "Inductive reactance, and why it rises as the frequency climbs.",
+      "full": "Using an inductor to block AC while letting DC pass."
+    },
+    "2E6": {
+      "intermediate": "Put resistance and reactance together and the circuit both stores energy and loses it as heat.",
+      "full": "Impedance as resistance and reactance combined, and working it out for a series CR or LR circuit."
+    },
+    "2E7": {
+      "foundation": "How frequency and wavelength relate, and the units each one uses.",
+      "intermediate": "Using v = f x wavelength to get from one to the other."
+    },
+    "2E8": {
+      "intermediate": "On a wire as long as the wave it carries, current and voltage differ from one end to the other."
+    },
+    "2F1": {
+      "foundation": "An analogue signal changes smoothly. A digital one is a stream of samples.",
+      "intermediate": "More bits and faster sampling give you a closer copy of the original.",
+      "full": "Sample too slowly and a signal turns up at the wrong frequency entirely."
+    },
+    "2F2": {
+      "foundation": "What an analogue to digital converter does, and why you need something to process the result.",
+      "full": "The Fourier transform, which turns a signal in time into a picture of its frequencies."
+    },
+    "2G1": {
+      "intermediate": "Two coils sharing one magnetic field, and what the core is there for.",
+      "full": "Turns ratio sets voltage and current. Square it and you have the impedance ratio."
+    },
+    "2H1": {
+      "intermediate": "An inductor and capacitor together make a tuned circuit. At one frequency their reactances match.",
+      "full": "Finding the resonant frequency, or the L or C you need to land on one."
+    },
+    "2H2": {
+      "intermediate": "At resonance a series circuit shows low impedance and a parallel one shows high impedance.",
+      "full": "A crystal behaves like a tuned circuit, with a series and a parallel resonance close together."
+    },
+    "2H3": {
+      "intermediate": "Energy swaps back and forth between capacitor and coil. Larger values give a lower frequency."
+    },
+    "2H4": {
+      "intermediate": "Selectivity, and how the bandwidth compares with the frequency at the centre of it.",
+      "full": "Q as magnification. The voltages inside a tuned circuit can dwarf the one you put in."
+    },
+    "2H5": {
+      "intermediate": "Low pass, high pass, band pass and notch filters, and the shape each response takes.",
+      "full": "Dynamic resistance, and what it means at resonance."
+    },
+    "2I1": {
+      "intermediate": "A diode conducts one way only, once you give it enough forward voltage to start.",
+      "full": "A Zener diode conducts backwards once you pass its rated voltage, and holds there."
+    },
+    "2I2": {
+      "intermediate": "A varicap works as a capacitor whose value you set with the reverse voltage."
+    },
+    "2I3": {
+      "intermediate": "A small base current steers a much larger collector current. That is where the gain comes from.",
+      "full": "Biasing bipolar transistors and FETs so they sit where you want them."
+    },
+    "2I4": {
+      "intermediate": "The common emitter amplifier, and picking the collector resistor to set the operating point.",
+      "full": "Comparing amplifier configurations, and the characteristics of classes A, AB, B and C."
+    },
+    "2I5": {
+      "intermediate": "How a transistor keeps a tuned circuit ringing, and where crystals beat variable oscillators.",
+      "full": "The feedback an oscillator needs to keep itself going."
+    },
+    "2I6": {
+      "intermediate": "An integrated circuit packs many devices onto one chip and gives you a whole function."
+    },
+    "2J1": {
+      "foundation": "Cells and batteries, and where the energy in them comes from.",
+      "intermediate": "Different chemistries give different voltages. Capacity is measured in ampere-hours."
+    },
+    "2J2": {
+      "intermediate": "Half wave, full wave and bridge rectifiers, and how each one turns AC into DC.",
+      "full": "Stabilising circuits, and how they hold the output steady when the load changes."
+    },
+    "2J3": {
+      "intermediate": "A reservoir capacitor fills the gaps between rectifier pulses and smooths what comes out.",
+      "full": "Peak inverse voltage, and choosing a diode that will survive it."
+    },
+    "2J4": {
+      "intermediate": "Linear power supplies, and how they stack up against switch mode ones.",
+      "full": "How a switch mode supply works, at block diagram level."
+    },
+
+    "3A1": {
+      "foundation": "What a transmitter is for, and what modulation means."
+    },
+    "3A2": {
+      "foundation": "Modulation is how the audio gets onto the radio carrier.",
+      "intermediate": "Depth of modulation on AM, and the difference between wide and narrow band FM.",
+      "full": "Modulation index, and how it decides the number of FM sidebands."
+    },
+    "3A3": {
+      "foundation": "Modulate a carrier and you create sidebands either side of it.",
+      "intermediate": "SSB throws away the carrier and one sideband, and why that is worth doing."
+    },
+    "3A4": {
+      "foundation": "Recognising audio, a carrier, AM, FM and CW from the shapes they make."
+    },
+    "3B1": {
+      "foundation": "The stages of a simple transmitter, and the order the signal passes through them.",
+      "intermediate": "Block diagrams for CW, AM, SSB and FM transmitters.",
+      "full": "Transmitters that mix their way up to the final frequency."
+    },
+    "3C1": {
+      "foundation": "The oscillator decides your transmit frequency, so setting it wrong puts you off band.",
+      "intermediate": "Crystal oscillators and VFOs, and what each one is good at.",
+      "full": "Why drift matters, and what you can do to keep it small."
+    },
+    "3C2": {
+      "intermediate": "What keeps an oscillator steady: solid construction, screening, and a clean supply."
+    },
+    "3C3": {
+      "intermediate": "Direct digital synthesis, and generating a signal from numbers.",
+      "full": "The phase locked loop synthesiser, and the job each stage does in the loop."
+    },
+    "3D1": {
+      "full": "Frequency multipliers use harmonics to reach frequencies above the oscillator itself."
+    },
+    "3E1": {
+      "foundation": "The microphone amplifier lifts your voice to the level the modulator needs.",
+      "intermediate": "A balanced modulator gives you both sidebands and kills the carrier.",
+      "full": "How AM, SSB and FM modulators work, and calculating the bandwidth each one takes."
+    },
+    "3E2": {
+      "intermediate": "A sideband filter lets just one sideband through to the power amplifier.",
+      "full": "Sideband filter circuits, and working out the frequencies involved."
+    },
+    "3E3": {
+      "intermediate": "Put a varicap in an oscillator and you have frequency modulation."
+    },
+    "3F1": {
+      "foundation": "The power amplifier lifts the signal to the level you actually transmit.",
+      "intermediate": "Efficiency, and working out the RF you get out from the DC you put in."
+    },
+    "3F2": {
+      "full": "Which modes need a linear amplifier, and how distortion makes harmonics and intermodulation."
+    },
+    "3F3": {
+      "foundation": "The power amplifier needs a matched load. The wrong antenna can damage it.",
+      "full": "The parts of a PA stage, and what each one contributes."
+    },
+    "3F4": {
+      "full": "How mode and speech processing change the rating your PA needs, through peak to average power."
+    },
+    "3F5": {
+      "full": "Automatic level control and the manual power knob, and what each is protecting."
+    },
+    "3G1": {
+      "foundation": "Too much modulation distorts your signal and splashes into the channels next door.",
+      "full": "Over-modulation makes audio harmonics, and those widen what you transmit."
+    },
+    "3G2": {
+      "intermediate": "Oscillators, mixers and amplifiers all throw off harmonics of the frequency they work at.",
+      "full": "Over-driving the PA widens your signal too, including when you drive an external amplifier."
+    },
+    "3G3": {
+      "intermediate": "A filter passes some frequencies and blocks others. Where each type earns its place.",
+      "full": "Avoiding harmonics in the first place, and what else a transmitter can radiate."
+    },
+    "3G4": {
+      "intermediate": "Key a CW transmitter too sharply and the clicks spread either side of you.",
+      "full": "Parasitic and self-oscillation, and how to cure them."
+    },
+    "3G5": {
+      "intermediate": "What causes chirp, and how to get rid of it.",
+      "full": "How a synthesiser can end up somewhere you did not intend, and how to stop it transmitting there."
+    },
+    "3H1": {
+      "foundation": "What a receiver is for, and what demodulation means."
+    },
+    "3H2": {
+      "foundation": "The stages of a simple receiver, and the order the signal passes through them.",
+      "intermediate": "The crystal set and the direct conversion receiver, and what each stage does."
+    },
+    "3H3": {
+      "intermediate": "Sensitivity, and what a very strong signal does to a receiver that cannot cope.",
+      "full": "Intermodulation from overload, and how it buries the signal you were listening to."
+    },
+    "3H4": {
+      "intermediate": "Selectivity, and the limits on rejecting what sits just outside your bandwidth."
+    },
+    "3I1": {
+      "intermediate": "Why almost every receiver uses the superhet arrangement.",
+      "full": "Single and double superhet block diagrams, and the job of each block."
+    },
+    "3I2": {
+      "intermediate": "Mixing two frequencies gives you their sum and difference. One of those becomes the IF.",
+      "full": "What a mixer does, and the other products it makes alongside the one you wanted."
+    },
+    "3I3": {
+      "intermediate": "A fixed IF gives good selectivity, and mixing ahead of it lets you cover several bands.",
+      "full": "Choosing a high or low IF, and why some receivers convert more than once."
+    },
+    "3I4": {
+      "full": "The IF amplifier and IF transformer, and what happens when you couple two tuned circuits."
+    },
+    "3I5": {
+      "full": "Phase noise, where it comes from, and why it is quoted in dBc/Hz."
+    },
+    "3J1": {
+      "full": "The RF amplifier, and why bolting a preamp on the front does not always help."
+    },
+    "3K1": {
+      "foundation": "The detector recovers your information and the audio stage makes it loud enough to hear.",
+      "intermediate": "How a diode detector pulls audio off an AM signal, and why CW needs a beat oscillator.",
+      "full": "AM, CW, SSB and FM demodulator circuits, and what the FM limiter is doing."
+    },
+    "3L1": {
+      "intermediate": "Automatic gain control keeps the volume steady as signals rise and fall.",
+      "full": "Where the AGC voltage comes from, and setting attack and decay to suit the signal."
+    },
+    "3M1": {
+      "foundation": "An SDR digitises everything the antenna hears and does the rest in software.",
+      "intermediate": "The Fourier transform sorts a jumbled signal into the separate parts that make it up.",
+      "full": "Amplitude, frequency and phase modulation seen from the software side."
+    },
+    "3M2": {
+      "intermediate": "The time domain and the frequency domain are two views of the same signal.",
+      "full": "Two local oscillators 90 degrees apart give you I and Q."
+    },
+    "3M3": {
+      "intermediate": "The blocks that make up an SDR, and how the signal moves between them."
+    },
+    "3N1": {
+      "full": "A transceiver shares oscillators and filters between transmit and receive."
+    },
+    "3N2": {
+      "full": "A transverter takes you to bands your radio does not cover. Working out the frequencies."
+    },
+
+    "4A1": {
+      "foundation": "Which cables suit RF, and why coax is the usual choice.",
+      "intermediate": "A balanced feeder carries equal and opposite currents, so the fields around it cancel."
+    },
+    "4A2": {
+      "foundation": "Feeders lose signal, and they lose it on receive as well as transmit.",
+      "intermediate": "Twin feeder against coax, and what a loss in dB means for the power that arrives."
+    },
+    "4A3": {
+      "intermediate": "Characteristic impedance, and how the conductor size and spacing decide it.",
+      "full": "Velocity factor, and why a cut length of cable is shorter than free space suggests."
+    },
+    "4B1": {
+      "foundation": "Why you need a balun between coax and a dipole.",
+      "intermediate": "Choke baluns, and how they are put together.",
+      "full": "Transformer, sleeve and choke baluns, and the 1:1 and 4:1 circuits."
+    },
+    "4C1": {
+      "foundation": "An antenna turns electrical signals into radio waves, and sets their polarisation."
+    },
+    "4C2": {
+      "foundation": "Radiation patterns, and the polar diagrams of a dipole and a Yagi.",
+      "intermediate": "Front to back ratio, beamwidth, and the fact that patterns are three dimensional."
+    },
+    "4C3": {
+      "foundation": "Antenna gain comes from pointing the radiation somewhere rather than everywhere."
+    },
+    "4C4": {
+      "foundation": "Gain quoted against an antenna that radiates equally in all directions, and what EIRP means.",
+      "intermediate": "The isotropic radiator as a reference, and calculating EIRP from it."
+    },
+    "4C5": {
+      "foundation": "At VHF and UHF, both ends want the same polarisation.",
+      "intermediate": "Angle of radiation, and why a long path wants a low one."
+    },
+    "4C6": {
+      "foundation": "The feed point, and the impedance it shows at the frequency the antenna was cut for.",
+      "intermediate": "How feed point impedance ties together the current and the voltage at the antenna."
+    },
+    "4D1": {
+      "foundation": "Recognising the dipole, ground plane, Yagi, end fed wire and 5/8 wave antennas.",
+      "intermediate": "The three elements of a Yagi, and what the reflector and director each do.",
+      "full": "Working out antenna lengths, including the end correction that makes them shorter."
+    },
+    "4D2": {
+      "intermediate": "A trap is a parallel tuned circuit that lets one antenna work on more than one band.",
+      "full": "Current and voltage along a dipole and a ground plane, and the impedance you feed them at."
+    },
+    "4E1": {
+      "foundation": "The antenna has to suit the frequency you are using.",
+      "intermediate": "The reflected wave meets the forward wave, and together they make a standing wave.",
+      "full": "What SWR measures, and how it is worked out."
+    },
+    "4E2": {
+      "foundation": "What an SWR meter is telling you.",
+      "full": "Return loss, and why a low SWR on its own does not prove the antenna is any good."
+    },
+    "4E3": {
+      "full": "Feeder loss flatters the SWR you read at the shack. At the antenna it is worse."
+    },
+    "4F1": {
+      "foundation": "Use an antenna off frequency and the match changes. What that does to the transmitter.",
+      "intermediate": "A matching unit gives the transmitter the impedance it was designed to see.",
+      "full": "How a matching unit cancels reactance, and what it does and does not fix."
+    },
+    "4F2": {
+      "full": "A quarter wave of feeder used as an impedance transformer."
+    },
+    "4G1": {
+      "foundation": "Choosing the right RF connectors, and getting the braid connected properly.",
+      "intermediate": "In a properly terminated coax the RF field stays inside the cable."
+    },
+
+    "5A1": {
+      "foundation": "Radio waves travel in straight lines, and they refract, diffract and reflect.",
+      "full": "In free space the power spreads out by an inverse square law."
+    },
+    "5A2": {
+      "foundation": "VHF and UHF usually pass straight through the ionosphere and stay in the troposphere.",
+      "intermediate": "Ground wave, space wave and sky wave, and what skip distance and the dead zone mean."
+    },
+    "5A3": {
+      "intermediate": "A radio wave carries an electric field and a magnetic field at right angles to each other.",
+      "full": "The E and H fields in phase and square to the direction of travel, and power flux density."
+    },
+    "5B1": {
+      "foundation": "The ionosphere is layers of ionised gas, 70 to 400km up, made by the sun.",
+      "intermediate": "What ionises those layers, and how they sit above one another.",
+      "full": "What solar flares and sunspots do to propagation."
+    },
+    "5B2": {
+      "foundation": "HF signals bend back in the ionosphere, and that is what lets you work the world.",
+      "intermediate": "Ionisation changes with the hour, the season, and the eleven year sunspot cycle.",
+      "full": "Critical frequency, and the highest frequency that will still come back to you."
+    },
+    "5B3": {
+      "intermediate": "The F2 layer gives the longest hops, and several hops take you further still.",
+      "full": "Near vertical incidence sky wave, and when you would want it."
+    },
+    "5B4": {
+      "intermediate": "The D layer soaks up the lower frequencies by day and fades away at night.",
+      "full": "The ionosphere can twist the polarisation of a wave on its way through."
+    },
+    "5B5": {
+      "intermediate": "The 24 and 28MHz bands sometimes get the same lift that VHF does."
+    },
+    "5C1": {
+      "foundation": "Hills cast radio shadows, buildings weaken signals, and range shrinks as frequency rises."
+    },
+    "5C2": {
+      "foundation": "Heavy rain, hail and snow all eat into signals at UHF and above."
+    },
+    "5C3": {
+      "foundation": "Height, gain, a clear path and power all set your VHF range. Height beats power.",
+      "intermediate": "Multipath, where a signal reflected off a building or aircraft arrives alongside the direct one.",
+      "full": "Bouncing signals off the moon, and why that needs everything working in your favour."
+    },
+    "5D1": {
+      "full": "Galactic noise, which is random noise arriving from outside the atmosphere."
+    },
+    "5D2": {
+      "full": "The link budget: power, feeder loss, antenna gain and path loss, added up end to end."
+    },
+
+    "9A1": {
+      "intermediate": "Setting a multimeter to the right range and polarity before you connect it to anything.",
+      "full": "Multiplier resistors and shunts, and how the meter itself disturbs the circuit you are measuring."
+    },
+    "9A2": {
+      "intermediate": "A voltmeter goes across the circuit and an ammeter goes in line with it. Why that is."
+    },
+    "9A3": {
+      "intermediate": "Analogue and digital displays, what each is better at, and reading both.",
+      "full": "Tolerance, calibration and drift in frequency measurement, and the margin to allow."
+    },
+    "9A4": {
+      "full": "Test gear has its own source and input impedance, and that changes the reading you get."
+    },
+    "9A5": {
+      "intermediate": "Using a voltmeter and an ammeter together to find the power going into a circuit.",
+      "full": "Measuring RF power into a dummy load, and what peak envelope power means for SSB."
+    },
+    "9A6": {
+      "full": "Crystal calibrators, frequency counters and standard frequency transmissions, and their limits."
+    },
+    "9A7": {
+      "full": "What is inside an SWR meter, and how to read one with single, twin or crossed needles."
+    },
+    "9A8": {
+      "full": "The oscilloscope, and reading frequency and voltage straight off the trace."
+    },
+    "9A9": {
+      "full": "The spectrum analyser, and picking out the fundamental and its harmonics on screen."
+    },
+    "9B1": {
+      "intermediate": "Decibels are a power ratio. Build any of them from 3dB and 10dB steps.",
+      "full": "The decibel equations, including dBW, dBm, and voltage ratios in dBV."
+    },
+    "9C1": {
+      "intermediate": "Reading the resistor colour code, the tolerance bands, and the E12 series.",
+      "full": "Temperature shifts component values, and what that does to a tuned circuit."
+    },
+    "9D1": {
+      "intermediate": "Thin metal screening cuts unwanted radiation, both out of a box and between stages inside it."
+    },
+    "9E1": {
+      "intermediate": "What soldering actually is, and what it does to the joint."
+    },
+    "9E2": {
+      "intermediate": "Solder melts at low temperature, and the flux in it stops oxide forming."
+    },
+    "9E3": {
+      "intermediate": "Some metals take solder easily and others fight you."
+    },
+    "9E4": {
+      "intermediate": "Cleaning and tinning the iron, and why you tin the wires before you join them."
+    }
+  }
+}

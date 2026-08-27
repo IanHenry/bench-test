@@ -1,0 +1,19 @@
+# Working notes. These name copyright reference works and quote figures from
+# them, which is fine as a private record and is not something to publish.
+notes/
+
+__pycache__/
+*.pyc
+_*.py
+
+# RSGB syllabus documents and anything carrying their learning objective
+# wording. The codes and the level mapping are facts and are kept in
+# levels.json; the wording itself is theirs.
+syllabus/*.pdf
+syllabus/*.txt
+syllabus/items.json
+syllabus/items_by_level.json
+
+# Extracted text of copyright books, kept locally to measure writing pitch
+# against. Never published, never quoted in output.
+pitch/
