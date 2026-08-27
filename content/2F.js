@@ -578,7 +578,8 @@ const BENCH = {
       why: 'Aliasing is caused by frequencies arriving that are higher than half the sample rate. Option B has it backwards, and option D describes oversampling, which is the safe direction.',
       working: ['a tone folds when f &gt; sample rate / 2',
                 '12 kHz is above the 8 kHz limit of a 16k rate',
-                'so it returns at 16 kHz &minus; 12 kHz = 4 kHz'],
+                'so it returns at 16 kHz &minus; 12 kHz = 4 kHz',
+                'that is higher analogue frequencies arriving than the converter can accept'],
       source: { eq: ['nyq', 'alias'], from: ['2F1'] },
       seed: { fsig: 12000, fs: 16000 },
       seedNote: 'A 12 kHz tone sampled at 16k folds back to 4 kHz. Set the bench to it and read the spectrum.'
@@ -586,7 +587,9 @@ const BENCH = {
     '2025-Full7645': {
       why: 'Sampling at 80M samples a second puts the limit at 40 MHz, so the filter has to have stopped passing anything by the time it reaches that. The correct response is the one that has rolled off before 40 MHz rather than one still passing signal beyond it.',
       source: { eq: ['nyq'], from: ['2F1'] },
-      working: ['limit = 80M / 2', '= 40 MHz', 'so the filter must stop below 40 MHz']
+      working: ['limit = 80M samples/s / 2',
+                '= 40 MHz',
+                'so the filter has to have stopped by 40 MHz, which is Response 2']
     },
     '2025-Full7401': {
       why: 'The transform takes a block of samples and reports how much of each frequency was in them, which is what puts the signals in frequency order. Option A describes a transformer, option C a data demodulator and option D the quadrature mixing that produces I and Q.',

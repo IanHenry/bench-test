@@ -131,10 +131,51 @@ def questions_for(group):
                 'q': row['Stimulus'].strip(),
                 'options': [row['Option %d' % i].strip() for i in (1, 2, 3, 4)],
                 'answer': row['Correct Answer'].strip(),
+                # the text of the right option, so the working can be
+                # checked for arriving at it
+                'correct': row.get('Option %d' % (
+                    'ABCD'.index(row['Correct Answer'].strip()) + 1), '').strip(),
                 'image': image,
             })
     note = ('images not downloaded: %s' % ', '.join(missing)) if missing else None
     return out, note
+
+
+SI = {'p': 1e-12, 'n': 1e-9, 'u': 1e-6, 'm': 1e-3, '': 1.0,
+      'k': 1e3, 'K': 1e3, 'M': 1e6, 'G': 1e9}
+
+
+def quantities(text):
+    """Every number in a string, scaled by any SI prefix attached to it."""
+    text = (text.replace('&minus;', '-').replace('&times;', ' ')
+                .replace('&Omega;', ' ').replace('\u2212', '-'))
+    out = set()
+    for m in re.finditer(r'(\d+(?:\.\d+)?)\s*([pnumkKMG])?', text):
+        v = float(m.group(1))
+        out.add(v)
+        out.add(v * SI.get(m.group(2) or '', 1.0))
+    return out
+
+
+def lands_on(last_line, correct):
+    """
+    Does the final line of the working arrive at the correct option? A
+    numeric option has to be matched by a number; an option named in words,
+    such as a graph or a response, has to be named.
+    """
+    if not correct:
+        return True
+    nums = {v for v in quantities(correct) if v > 0}
+    if nums:
+        got = quantities(last_line)
+        return any(a and b and abs(a - b) / max(a, b) <= 0.06
+                   for a in got for b in nums)
+    # a worded option: expect the distinguishing word to be repeated
+    words = [w for w in re.findall(r'[A-Za-z]+', correct) if len(w) > 3]
+    if not words:
+        return True
+    low = last_line.lower()
+    return any(w.lower() in low for w in words)
 
 
 def check_answers(content, questions):
@@ -170,6 +211,18 @@ def check_answers(content, questions):
                                 % q['ref'])
             elif not any(re.search(r"\d", l) for l in lines[1:]):
                 warnings.append('%s shows working with no numbers in it' % q['ref'])
+
+        # and the working has to arrive at the answer. Working that ends on a
+        # different figure from the correct option is answering a different
+        # question, which is how a diode question came to be worked for a
+        # circuit that was not the one in its diagram.
+        if wk:
+            lines = re.findall(r"'([^']*)'", wk.group(1))
+            if lines:
+                if not lands_on(lines[-1], q.get('correct', '')):
+                    warnings.append(
+                        '%s: the working ends "%s" but the correct answer is "%s"'
+                        % (q['ref'], lines[-1][:60], q.get('correct', '')[:40]))
 
         for eq in re.findall(r"eq: \[([^\]]*)\]", seg):
             for k in re.findall(r"'(\w+)'", eq):

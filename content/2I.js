@@ -1249,10 +1249,11 @@ const BENCH = {
       source: { from: ['2I1'] }
     },
     '2025-Full3983': {
-      why: 'A conducting silicon diode drops about 0.6 to 0.7 V, so subtract that from the supply before applying Ohm\u2019s law to the resistor. Using the full supply voltage gives one of the wrong answers, and ignoring the diode entirely gives another.',
-      working: ['current = (supply &minus; diode drop) / R',
-                '= (12 V &minus; 0.7 V) / 1.2 k&Omega;',
-                '= 9.4 mA, and not the 10 mA the full supply would give'],
+      why: 'This is a zener holding a supply steady, with a load across it. The zener fixes the voltage, so work out what the series resistor delivers and what the load takes, and the diode carries whatever is left. Forgetting the load gives the current in the series resistor instead, which is one of the wrong answers.',
+      working: ['the zener holds the output at 3.6 V',
+                'through the series 1 k&Omega;: (12 V &minus; 3.6 V) / 1 k&Omega; = 8.4 mA',
+                'through the 1 k&Omega; load: 3.6 V / 1 k&Omega; = 3.6 mA',
+                'the diode takes the difference: 8.4 mA &minus; 3.6 mA = 4.8 mA'],
       source: { from: ['2I1'] }
     },
     '2025-Full319': {
@@ -1264,17 +1265,19 @@ const BENCH = {
       source: { from: ['2I3'] }
     },
     '2025-Full3585': {
-      why: 'Work out what the potential divider on the gate produces from the supply. The gate draws no current, so the divider is unloaded and the arithmetic is the plain ratio of the two resistors.',
-      working: ['gate voltage = supply &times; lower R / (upper R + lower R)',
-                'the gate draws no current, so the divider is unloaded',
-                'with the values shown that works out at 3.2 V'],
+      why: 'A depletion mode n channel FET conducts with no bias at all, and is turned down by taking the gate below the source. Biasing one as an amplifier therefore puts the gate below the source, and the diagram marks the source voltage. No resistor values are given, so the answer is settled by which option sits below it.',
+      working: ['the diagram marks the source at 4.5 V',
+                'an n channel depletion FET is biased with the gate below its source',
+                'of the options only 3.2 V is below 4.5 V',
+                'which puts V<sub>GS</sub> at 3.2 V &minus; 4.5 V = &minus;1.3 V'],
       source: { from: ['2I3'] }
     },
     '2025-Full679': {
-      why: 'The two base resistors form a divider that sets the base voltage. Work back from the emitter voltage the circuit needs, add the base to emitter drop of about 0.6 V, and choose the upper resistor that gives that from the supply.',
-      working: ['base voltage = emitter voltage + about 0.6 V',
-                'R1 = R2 &times; (supply / base voltage &minus; 1)',
-                '= 22 k&Omega; &times; (12 V / 2.64 V &minus; 1) = 78 k&Omega;'],
+      why: 'The diagram gives the emitter voltage, and the base has to sit about 0.6 V above it. R1 and R2 divide the supply down to that, so what the answer really turns on is the ratio of the two resistors rather than any one value.',
+      working: ['base = emitter + 0.6 V = 1.5 V + 0.6 V = 2.1 V',
+                'the divider gives base = supply &times; R2 / (R1 + R2)',
+                'on a rail of about 9.5 V that needs R2 / (R1 + R2) = 2.1 / 9.5 = 0.22',
+                'with R2 = 22 k&Omega; that puts R1 at 78 k&Omega;'],
       source: { eq: ['divider', 'beta'], from: ['2I3'] },
       seed: { r1: 78e3, r2: 22e3, rc: 910, re: 470 },
       seedNote: 'The bench is set to this divider. Read the base voltage it produces, then check where the collector ends up.'
@@ -1296,7 +1299,8 @@ const BENCH = {
       why: 'Class A conducts for the whole cycle, so the device never switches off and never has to be pieced back together. That is what makes it the most faithful, and it is also why it is the least efficient.',
       working: ['conduction angle = 360&deg;, the whole cycle',
                 'efficiency at best = 50%',
-                'so nothing of the waveform is missing, and half the supply is heat'],
+                'nothing of the waveform is missing, and half the supply is heat',
+                'lowest distortion of the four, which is Class A'],
       source: { eq: ['theta', 'eff'], from: ['2I4'] },
       seed: { r1: 78e3, r2: 22e3, re: 220, drive: 0.05 },
       seedNote: 'Set the bench to class A and look at the spectrum: almost nothing but the fundamental.'

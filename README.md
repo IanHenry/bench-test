@@ -98,6 +98,7 @@ of this project and should not be weakened to make a build pass.
 | Intro, outro and a lead at every level | Items opening cold with no way in |
 | A question seeds the bench | Nothing connected the questions to the instrument |
 | Working shows numbers, not just symbols | Answers that stated relationships without substituting |
+| Working arrives at the correct option | A diode question worked for a circuit that was not the one in its diagram, ending on a figure that was not among the four answers |
 | Circuits drawn on circuit benches | A bench silently lost its schematics |
 | `check-layouts.js`: every circuit joined up | Dangling leads, which look almost right |
 | `check-flow.js`: every conductor carries a named current | Legs drawn with nothing moving in them, which read as broken circuits |
