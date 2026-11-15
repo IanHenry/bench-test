@@ -219,6 +219,7 @@
            font-size:9.5px; letter-spacing:.09em; }
   .given.yes { color:var(--phase); }
   .given.no  { color:var(--marker); }
+  .given.int { color:var(--ink-faint); }
   .work-eq { font-family:var(--f-data); font-size:14.5px; font-weight:500; }
   .work-sub { font-family:var(--f-data); font-size:13.5px; color:var(--ink-soft);
               font-variant-numeric:tabular-nums; }
@@ -562,10 +563,14 @@
       const f = (BENCH.equations || {})[k];
       if (!f) return '';
       const [sub, out] = f.work(d);
+      // The given/learn marks follow the Full reference booklet, so they are
+      // only shown at Full. Below Full the syllabus rarely asks for the sum at
+      // all: a formula is for interest unless the equation says otherwise.
+      const tag = (f.tag && f.tag[level]) || (level === 'full' ? (f.given ? 'given' : 'learn') : 'interest');
+      const TAG = { given: ['yes', 'given in the exam'], learn: ['no', 'learn this one'], interest: ['int', 'for interest'] }[tag];
       return '<div class="work-row">' +
         '<div class="work-name">' + f.name +
-          '<span class="given ' + (f.given ? 'yes' : 'no') + '">' +
-          (f.given ? 'given in the exam' : 'learn this one') + '</span></div>' +
+          (TAG ? '<span class="given ' + TAG[0] + '">' + TAG[1] + '</span>' : '') + '</div>' +
         '<div class="work-eq">' + f.eq + '</div>' +
         '<div class="work-sub">= ' + sub + ' = <span class="work-out">' + out + '</span></div>' +
         '</div>';

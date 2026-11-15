@@ -457,7 +457,7 @@ const BENCH = {
         ['Bandwidth', eng(d.BW, 'Hz', 4)]
       ];
       if (level === 'full') rows.push(['V across L at f₀', eng(at0.vl, 'V', 4), true]);
-      else rows.push(['Selectivity', 'f₀ / BW = ' + trim(d.Q, 3)]);
+      else rows.push(['Selectivity', 'BW / f₀ = ' + trim(1 / d.Q, 3)]);
       p.readouts.innerHTML = ro(rows);
       return spec;
     },
@@ -531,7 +531,7 @@ const BENCH = {
         full: 'Each line follows from the one above it: the two reactances, the frequency where they are equal, then that same result rearranged for whichever value the question leaves out.'
       },
       workNote: {
-        intermediate: 'Both of these are printed in the booklet you get in the exam. Set them equal to one another and you have found resonance, which is what this level asks for.',
+        intermediate: 'These give the numbers behind the graph. What this level asks for is the graph itself: resonance is where the two lines cross, where the reactances are equal.',
         full: 'The booklet gives you the two reactance formulas. It does not give you the resonant frequency, so that one has to be committed to memory, along with both of its rearrangements.'
       },
       explain: {
@@ -570,11 +570,11 @@ const BENCH = {
         full: 'A crystal behaves like a tuned circuit, with a series and a parallel resonance close together.'
       },
       formulas: {
-        intermediate: ['XL', 'XC', 'Zs'],
+        intermediate: ['XL', 'XC'],
         full: ['Zs']
       },
       workLead: {
-        intermediate: 'The two reactances first, then what is left once they cancel.',
+        intermediate: 'The two reactances: at resonance they are equal, and they cancel.',
         full: 'Whichever way it is wired, the cancellation is the same. What differs is what remains.'
       },
       workNote: {
@@ -651,7 +651,7 @@ const BENCH = {
         full: 'Q first, then the same Q from the components, then what that magnification does to the voltage inside the circuit.'
       },
       workNote: {
-        intermediate: 'Q is given to you in the exam in exactly this form: the centre frequency divided by the bandwidth. Drag R and watch the two half power frequencies move apart while the centre stays exactly where it was.',
+        intermediate: 'At this level Q only needs to indicate selectivity: higher Q, a narrower band for its frequency. Drag R and watch the two half power frequencies move apart while the centre stays exactly where it was.',
         full: 'The two forms of Q agree, which is a useful check. The first is the one printed in the booklet. The second shows why R alone controls the sharpness, because it is the only term that plays no part in the resonant frequency.'
       },
       explain: {

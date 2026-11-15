@@ -135,7 +135,7 @@
       "full": "Biasing bipolar transistors and FETs so they sit where you want them."
     },
     "2I4": {
-      "intermediate": "The common emitter amplifier, and picking the collector resistor to set the operating point.",
+      "intermediate": "Recognising the common emitter amplifier, and why it has to be biased.",
       "full": "Comparing amplifier configurations, and the characteristics of classes A, AB, B and C."
     },
     "2I5": {

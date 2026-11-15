@@ -84,6 +84,8 @@ const BENCH = {
         point: 'the rounding is a form of distortion and shows as a noise floor' },
       { at: '2F1', level: 'intermediate',
         point: 'rate and depth are the two figures of merit, and both cost money and processing' },
+      { at: '2F1', level: 'intermediate',
+        point: 'sample faster than twice the highest frequency: twice it is the Nyquist rate, the minimum' },
       { at: '2F1', level: 'full',
         point: 'sample at a little over twice the highest frequency present, not twice the bandwidth' },
       { at: '2F1', level: 'full',
@@ -399,6 +401,10 @@ const BENCH = {
                    per < 2.05]);
       } else {
         rows.push(['Levels available', d.levels.toLocaleString('en-GB')]);
+        if (level === 'intermediate') {
+          rows.push(['Nyquist rate, twice the signal', eng(2 * d.fsig, 'Hz', 4)]);
+          rows.push(['Sampling above it?', d.fs > 2 * d.fsig ? 'yes' : 'no: too slow', d.fs <= 2 * d.fsig]);
+        }
       }
       p.readouts.innerHTML = ro(rows);
       return {};
@@ -445,7 +451,7 @@ const BENCH = {
       levels: ['foundation', 'intermediate', 'full'],
       introduces: {
         foundation: ['analogue', 'digital', 'sample', 'sample rate'],
-        intermediate: ['quantisation', 'bit depth'],
+        intermediate: ['quantisation', 'bit depth', 'Nyquist rate'],
         full: ['Nyquist', 'Nyquist rate', 'aliasing', 'anti-alias filter', 'spectrum']
       },
       panel: { foundation: 'sampling', intermediate: 'sampling', full: 'spectrum' },
@@ -488,7 +494,8 @@ const BENCH = {
           'The orange staircase is what the converter actually holds. It can only store one of a fixed set of levels, so each measurement is rounded to the nearest one and the difference is thrown away.',
           'Drag the bit depth down and the steps get coarse. That rounding error is quantisation error, and it is a form of distortion: what comes out is not quite the shape that went in. On a spectrum it shows as an added noise floor, and you will meet both words for it.',
           'Now drag the sample rate. More samples a second follows the shape more closely. The two controls improve different things, which is why a converter is specified by both. Pushing either one up costs money, and it costs processing as well: more samples a second, with more digits in each, is more arithmetic for whatever has to handle the result. A real design settles on enough of each rather than the most of either.',
-          'Bit depth also goes by the name resolution, and you will meet both words. They mean the same thing: how finely each measurement can be recorded.'
+          'Bit depth also goes by the name resolution, and you will meet both words. They mean the same thing: how finely each measurement can be recorded.',
+          'There is a floor under the sample rate. It has to be more than twice the highest frequency in the signal, and twice that frequency is called the Nyquist rate: the minimum. Drag the sample rate down until it is less than twice the signal and the measurements stop describing it at all. They describe a slower wave that was never there.'
         ],
         full: [
           'Turn the limit round and it becomes a design rule: sample at a little over twice the highest frequency you intend to capture. Note highest, not bandwidth. A signal running from 20 Hz to 14 kHz needs more than 28k samples a second, because what matters is the 14 kHz, not the roughly 14 kHz of width between the two.',

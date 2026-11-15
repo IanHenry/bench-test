@@ -219,6 +219,7 @@
            font-size:9.5px; letter-spacing:.09em; }
   .given.yes { color:var(--phase); }
   .given.no  { color:var(--marker); }
+  .given.int { color:var(--ink-faint); }
   .work-eq { font-family:var(--f-data); font-size:14.5px; font-weight:500; }
   .work-sub { font-family:var(--f-data); font-size:13.5px; color:var(--ink-soft);
               font-variant-numeric:tabular-nums; }
@@ -1559,18 +1560,22 @@ const VCC = 12;
 const VBE = 0.6;              // the base to emitter drop of a conducting silicon junction
 
 /*
- * The operating point, worked out the way the exam works it out: the divider
- * sets the base voltage, subtract the junction drop to get the emitter
- * voltage, and the emitter resistor turns that into the current.
+ * The operating point. The exam's quick method takes the base voltage from
+ * the divider as if nothing drew on it (vth below); that is only true when
+ * the divider carries ten or more times the base current. The point itself
+ * is worked properly: the divider seen from the base is vth behind R1 and R2
+ * in parallel, and the base current flows through that as well as through
+ * the emitter resistor, scaled up by beta + 1.
  */
 function bias(v) {
-  const vb = (v.vcc || VCC) * v.r2 / (v.r1 + v.r2);
-  const ve = Math.max(0, vb - VBE);
-  const ie = ve / v.re;
-  const ic = ie * v.beta / (v.beta + 1);
-  const vce = (v.vcc || VCC) - ic * (v.rc + v.re);
-  return { vb: vb, ve: ve, ic: ic, ib: ic / v.beta, vce: vce,
-           conducting: vb > VBE };
+  const vcc = v.vcc || VCC;
+  const vth = vcc * v.r2 / (v.r1 + v.r2), rth = v.r1 * v.r2 / (v.r1 + v.r2);
+  const ib = Math.max(0, (vth - VBE) / (rth + (v.beta + 1) * v.re));
+  const ic = v.beta * ib, ie = ic + ib, ve = ie * v.re;
+  const vb = ib > 0 ? ve + VBE : vth;
+  const vce = vcc - ic * v.rc - ie * v.re;
+  return { vb: vb, vth: vth, ve: ve, ic: ic, ib: ib, vce: vce,
+           conducting: vth > VBE };
 }
 
 /*
@@ -1962,9 +1967,9 @@ const BENCH = {
   controls: [
     { id: 'vcc', label: 'Supply', unit: 'V', range: [5, 24], start: 12, linear: true,
       desc: 'The rail the stage runs from. Worked designs often use 10 V' },
-    { id: 'r1', label: 'R1', unit: 'Ω', range: [10e3, 470e3], start: 200e3,
+    { id: 'r1', label: 'R1', unit: 'Ω', range: [10e3, 470e3], start: 47e3,
       desc: 'Upper bias resistor, from the supply to the base' },
-    { id: 'r2', label: 'R2', unit: 'Ω', range: [1e3, 100e3], start: 33e3,
+    { id: 'r2', label: 'R2', unit: 'Ω', range: [1e3, 100e3], start: 7.5e3,
       desc: 'Lower bias resistor, base to ground. With R1 it sets the base voltage' },
     { id: 'rc', label: 'RC', unit: 'Ω', range: [220, 22000], start: 4700,
       desc: 'Collector load. Turns collector current into output voltage' },
@@ -1988,7 +1993,7 @@ const BENCH = {
     return {
       vcc: v.vcc || VCC, r1: v.r1, r2: v.r2, rc: v.rc, re: v.re,
       beta: v.beta, drive: v.drive,
-      vb: b.vb, ve: b.ve, ic: b.ic, icq: b.ic, ib: b.ib, vce: b.vce, vceq: b.vce,
+      vb: b.vb, vth: b.vth, ve: b.ve, ic: b.ic, icq: b.ic, ib: b.ib, vce: b.vce, vceq: b.vce,
       conducting: b.conducting, headroom: headroom,
       iMax: ll.iMax,
       theta: theta, thetaDeg: theta * 180 / Math.PI,
@@ -2012,12 +2017,13 @@ const BENCH = {
                work: d => ['<b>' + d.vcc + ' V</b> &times; <b>' + FI.eng(d.r2, 'Ω', 3) +
                            '</b> / (<b>' + FI.eng(d.r1, 'Ω', 3) + '</b> + <b>' +
                            FI.eng(d.r2, 'Ω', 3) + '</b>)',
-                           FI.trim(d.vb, 3) + ' V at the base'] },
+                           FI.trim(d.vth, 3) + ' V at the base, if the divider is stiff'] },
     emitter: { given: false, name: 'What the emitter resistor sets',
                eq: 'I<sub>E</sub> = (V<sub>B</sub> &minus; 0.6) / R<sub>E</sub>',
-               work: d => ['(<b>' + FI.trim(d.vb, 3) + ' V</b> &minus; 0.6 V) / <b>' +
+               work: d => ['(<b>' + FI.trim(d.vth, 3) + ' V</b> &minus; 0.6 V) / <b>' +
                            FI.eng(d.re, 'Ω', 3) + '</b>',
-                           FI.eng(d.ic, 'A', 3)] },
+                           'about ' + FI.eng(Math.max(0, d.vth - 0.6) / d.re, 'A', 3) +
+                           ' (the base current pulls it to ' + FI.eng(d.ic + d.ib, 'A', 3) + ')'] },
     zpower: { given: true, name: 'Power the Zener has to get rid of',
               eq: 'P = V<sub>Z</sub> &times; I',
               work: d => {
@@ -2033,7 +2039,7 @@ const BENCH = {
                          FI.eng(i, 'A', 3) + '</b>',
                          FI.eng((d.vcc - vz) / i, 'Ω', 3)];
                } },
-    beta: { given: true, name: 'Current gain', eq: 'I<sub>C</sub> = &beta; &times; I<sub>B</sub>',
+    beta: { given: true, tag: { intermediate: 'learn' }, name: 'Current gain', eq: 'I<sub>C</sub> = &beta; &times; I<sub>B</sub>',
             work: d => ['<b>' + FI.trim(d.beta, 3) + '</b> &times; <b>' + FI.eng(d.ib, 'A', 3) + '</b>',
                         FI.eng(d.icq, 'A', 3)] },
     theta: { given: false, name: 'How much of the cycle it conducts for',
@@ -2417,8 +2423,8 @@ const BENCH = {
         ['Base current needed', eng(d.ib, 'A', 3)],
         ['Current down the divider', eng(dividerI, 'A', 3)],
         ['Divider against base current', trim(ratio, 2) + ' times' +
-          (ratio < 5 ? ', too close to hold the bias steady' : ', enough to hold the bias'),
-         ratio < 5],
+          (ratio < 10 ? ', under ten times: the base current pulls the bias down' : ', enough to hold the bias'),
+         ratio < 10],
         ['Headroom', clipping ? 'will clip' : 'room both ways', clipping],
         ['Power in the transistor', (() => {
           const pw = Math.max(0.2, d.vceq) * d.icq;
@@ -2604,14 +2610,14 @@ const BENCH = {
         intermediate: 'A small base current steers a much larger collector current. That is where the gain comes from.',
         full: 'Biasing bipolar transistors and FETs so they sit where you want them.'
       },
-      formulas: { intermediate: ['divider', 'emitter', 'beta'],
+      formulas: { intermediate: ['beta'],
                   full: ['divider', 'emitter', 'beta', 'diss'] },
       workLead: {
-        intermediate: 'Gain first, then the line the load resistor draws across every possibility.',
+        intermediate: 'One relationship: the current gain.',
         full: 'Gain, the load line, and what the device has to dissipate while it sits there.'
       },
       workNote: {
-        intermediate: 'Beta is the one relationship in this section the exam hands you in the booklet. Everything else about the stage follows from it and from Ohm\\u2019s law across the collector resistor.',
+        intermediate: 'Beta is simply the collector current divided by the base current. How R1 and R2 set the operating point is shown on the curve; working it out is not needed at this level.',
         full: 'Note the dissipation figure. It is largest when the collector sits near the middle of the line, which is where a stage has to sit if it is to reproduce a signal faithfully. That is the reason such a stage runs hot even with no signal going through it.'
       },
       explain: {
@@ -2632,17 +2638,18 @@ const BENCH = {
 
     {
       code: '2I4',
+      levels: ['intermediate', 'full'],
       // A conventional divider bias design, worked the way any textbook
       // works it: choose the collector current, drop about half the rail
       // across the load, put a volt or so on the emitter, and run the divider
       // at ten times the base current so that variation in gain between
       // devices does not move the bias.
       presets: [{
+        levels: ['full'],
         label: 'A worked design: 10 V, 1 mA',
         note: 'half the rail across the load, and the divider at ten times the base current',
         values: { vcc: 10, r1: 79e3, r2: 21e3, rc: 4000, re: 1500, beta: 100 }
       }],
-      levels: ['intermediate', 'full'],
       panel: { intermediate: 'loadline', full: 'amp' },
       toggle: {
         label: 'View',
@@ -2660,23 +2667,23 @@ const BENCH = {
       lead: { intermediate: 'Now put a signal into the stage you have just biased.',
               full: 'Two separate questions about one transistor: which way round it is wired, and where it is biased.' },
       headline: {
-        intermediate: 'The common emitter amplifier, and picking the collector resistor to set the operating point.',
+        intermediate: 'Recognising the common emitter amplifier, and why it has to be biased.',
         full: 'Comparing amplifier configurations, and the characteristics of classes A, AB, B and C.'
       },
-      formulas: { intermediate: ['beta', 'mid'], full: ['theta', 'eff'] },
+      formulas: { intermediate: [], full: ['theta', 'eff'] },
       workLead: {
         intermediate: 'Work out the current you want, then the resistor that puts the collector halfway.',
         full: 'The conduction angle first, because the class and the efficiency both follow from it.'
       },
       workNote: {
-        intermediate: 'This is the standard exam calculation. Choose the collector current, then pick the resistor that drops half the supply across itself at that current.',
+        intermediate: 'No calculation at this level: recognise the circuit, and know that a transistor has to be biased, given the right steady voltages and currents, before it will amplify. Choosing the resistors is Full level.',
         full: 'Neither figure is quoted from a table. The efficiency is worked out from the shape of the current pulse the device actually passes, which is why it lands on 50% for class A and 78.5% for class B without either being written down.'
       },
       explain: {
         intermediate: [
           'With the stage biased, a small change at the base produces a large change in collector current, and the collector resistor turns that into a large change in voltage. That is voltage gain.',
           'The collector voltage moves the opposite way to the base voltage, because more collector current means more drop across the resistor. A common emitter stage inverts.',
-          'Different arrangements trade differently. An emitter follower gives no voltage gain but a high input and low output impedance, which is what you want for driving a load. A common base stage gives voltage gain with low input impedance.'
+          'The bias is what makes this work. R1 and R2 give the base its steady voltage, so the transistor sits part way up its curve with room to swing both ways. Without it, half of every waveform would be cut off.'
         ],
         full: [
           'There are three ways to wire one transistor as an amplifier, and the difference is simply which terminal the signal goes in at and which it comes out of. Switch between the first three views and watch all five figures move.',
@@ -3122,10 +3129,14 @@ const QUESTIONS = [{"code": "2I1", "ref": "2025-Full300", "q": "A zener diode is
       const f = (BENCH.equations || {})[k];
       if (!f) return '';
       const [sub, out] = f.work(d);
+      // The given/learn marks follow the Full reference booklet, so they are
+      // only shown at Full. Below Full the syllabus rarely asks for the sum at
+      // all: a formula is for interest unless the equation says otherwise.
+      const tag = (f.tag && f.tag[level]) || (level === 'full' ? (f.given ? 'given' : 'learn') : 'interest');
+      const TAG = { given: ['yes', 'given in the exam'], learn: ['no', 'learn this one'], interest: ['int', 'for interest'] }[tag];
       return '<div class="work-row">' +
         '<div class="work-name">' + f.name +
-          '<span class="given ' + (f.given ? 'yes' : 'no') + '">' +
-          (f.given ? 'given in the exam' : 'learn this one') + '</span></div>' +
+          (TAG ? '<span class="given ' + TAG[0] + '">' + TAG[1] + '</span>' : '') + '</div>' +
         '<div class="work-eq">' + f.eq + '</div>' +
         '<div class="work-sub">= ' + sub + ' = <span class="work-out">' + out + '</span></div>' +
         '</div>';
