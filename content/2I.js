@@ -1068,25 +1068,21 @@ const BENCH = {
     // The booklet prints P = IV and V = IR. The Zener sums are those two
     // applied, so they are marked given, and they use the voltage the
     // readouts show: the rated 5.1 V plus what the slope resistance adds.
+    // Neither applies until the Zener conducts, so until then the rows are
+    // left out and the readouts say why.
     zpower: { given: true, name: 'Power the Zener has to get rid of',
               eq: 'P = IV, with V the voltage across the Zener',
+              applies: d => d.zener.i > 0,
               work: d => {
                 const z = d.zener;
-                if (!(z.i > 0)) {
-                  return ['<b>' + FI.trim(d.vcc, 3) + ' V</b> supply, below the ' + ZENER_V + ' V it needs',
-                          'nothing: the Zener is not conducting'];
-                }
                 return ['<b>' + FI.eng(z.i, 'A', 3) + '</b> &times; <b>' + FI.trim(z.vd, 3) + ' V</b>',
                         FI.eng(z.p, 'W', 3) + ' turned into heat in the diode'];
               } },
     zseries: { given: true, name: 'The resistor that sets the Zener current',
                eq: 'V = IR, so R = (V<sub>supply</sub> &minus; V<sub>Z</sub>) / I',
+               applies: d => d.zener.i > 0,
                work: d => {
                  const z = d.zener;
-                 if (!(z.i > 0)) {
-                   return ['<b>' + FI.trim(d.vcc, 3) + ' V</b> supply, below the ' + ZENER_V + ' V it needs',
-                           'no current flows, so there is nothing for R to set'];
-                 }
                  return ['(<b>' + FI.trim(d.vcc, 3) + ' V</b> &minus; <b>' + FI.trim(z.vd, 3) +
                          ' V</b>) / <b>' + FI.eng(z.i, 'A', 3) + '</b>',
                          FI.eng((d.vcc - z.vd) / z.i, 'Ω', 3)];

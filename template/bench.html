@@ -553,9 +553,15 @@
 
 
   function workingBlock(keys, d, note, lead) {
+    // An equation can say when it applies. Outside that, its row is left out
+    // rather than worked through to say there is nothing to work out.
+    keys = (keys || []).filter(k => {
+      const f = (BENCH.equations || {})[k];
+      return !(f && f.applies) || f.applies(d);
+    });
     // An item with no formula still has something to say about why it has
     // none, so the note is shown whether or not there are equations above it.
-    if (!keys || !keys.length) {
+    if (!keys.length) {
       return note ? '<p class="work-note">' + note + '</p>' : '';
     }
     const leadHtml = lead ? '<p class="work-lead">' + lead + '</p>' : '';
