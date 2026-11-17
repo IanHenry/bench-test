@@ -23,6 +23,19 @@ const M = window.MNA;
 // the equation blocks below format numbers directly, so pull these in here
 const { eng, trim, sci } = window.Fmt;
 
+/*
+ * The crystal's holder capacitance, as a multiple of the motional C. A real
+ * crystal has a motional capacitance of a few femtofarads against picofarads
+ * of holder, so its two resonances sit a few kilohertz apart and need a Q in
+ * the tens of thousands to be told apart. The sliders do not reach that, so
+ * the bench uses a holder ten times C, which puts the parallel resonance about
+ * 5% above the series one where both can be seen. The text says so.
+ */
+const CRYSTAL_HOLDER = 10;
+
+/** Enough significant figures that f_U - f_L survives the subtraction. */
+const sigFor = Q => Math.min(10, Math.max(5, 4 + Math.ceil(Math.log10(Math.max(1, Q)))));
+
 function probeAt(spec, f) {
   const sol = M.solveAt(spec.circuit, f);
   const I = M.currentThrough(sol, 'R1');
@@ -31,8 +44,10 @@ function probeAt(spec, f) {
   return out;
 }
 
-const usesBigR = p =>
-  p.item.panel === 'filter' && (p.topology === 'lowpass' || p.topology === 'highpass');
+// The CR filters need a resistor a hundred times the coil loss to put their
+// cut-off on the same scale. The filter panel sets this flag, and every other
+// panel clears it, because which panel an item shows depends on the level.
+const usesBigR = p => !!p.bigR;
 
 const BENCH = {
   group: '2H',
@@ -76,7 +91,7 @@ const BENCH = {
     const Q = (1 / R) * Math.sqrt(L / C);
     const Z0 = Math.sqrt(L / C);
     const k = Math.sqrt(1 + 1 / (4 * Q * Q));
-    return { R, L, C, f0, Q, Z0, BW: f0 / Q,
+    return { R, L, C, f0, Q, Z0, BW: f0 / Q, sig: sigFor(Q),
              fLo: f0 * (k - 1 / (2 * Q)), fHi: f0 * (k + 1 / (2 * Q)) };
   },
 
@@ -84,7 +99,8 @@ const BENCH = {
     RS: '10 kΩ',
     R1: window.Fmt.eng(usesBigR(p) ? v.R * 100 : d.R, 'Ω', 3),
     L1: window.Fmt.eng(d.L, 'H', 3),
-    C1: window.Fmt.eng(d.C, 'F', 3)
+    C1: window.Fmt.eng(d.C, 'F', 3),
+    C0: window.Fmt.eng(d.C * CRYSTAL_HOLDER, 'F', 3)
   }),
 
   animRef: 3.5594e6,
@@ -114,13 +130,13 @@ const BENCH = {
       { at: '2H2', level: 'full',
         point: 'a crystal has both a series and a parallel resonance, from its holder capacitance' },
       { at: '2H3', level: 'intermediate',
-        point: 'energy changes hands between the two stores, and the rate is the frequency' },
+        point: 'energy passes from one store to the other and back again in every cycle at the resonant frequency' },
       { at: '2H3', level: 'intermediate',
         point: 'the formula is deliberately not required at this level' },
       { at: '2H4', level: 'intermediate',
         point: 'bandwidth is measured between the half power points, at 0.707 of the peak' },
       { at: '2H4', level: 'intermediate',
-        point: 'R alone sets the sharpness, and at RF it is worse than DC because of skin effect' },
+        point: 'R sets the sharpness without moving the centre, and at RF it is worse than DC because of skin effect' },
       { at: '2H4', level: 'full',
         point: 'Q magnifies voltage in a series circuit and current in a parallel one' },
       { at: '2H5', level: 'intermediate',
@@ -180,6 +196,38 @@ const BENCH = {
                 [215, 190, 160, 190, 'C1'], [160, 190, 30, 190, 'RS'],
                 [30, 190, 30, 130, 'RS']],
         grounds: [[95, 190]]
+      }
+    }),
+
+    // A crystal's equivalent circuit: the motional R, L and C in series, with
+    // the holder capacitance C0 across the whole thing. Fed through a source
+    // resistance so the current into the crystal has a name of its own.
+    crystal: (v) => ({
+      netlist: `V1 in 0 1
+RS in t 10k
+R1 t a ${v.R}
+L1 a b ${v.L}
+C1 b 0 ${v.C}
+` +
+               `C0 t 0 ${sci(CRYSTAL_HOLDER * M.parseValue(v.C))}`,
+      probe: { kind: 'node', of: 't' },
+      z: { mode: 'tank', v: 't', i: 'RS' },
+      layout: {
+        w: 275, h: 200,
+        elements: [
+          { name: 'V1', type: 'V', at: [20, 120], rot: 90, label: '1 V' },
+          { name: 'RS', type: 'R', at: [60, 60], label: 'source' },
+          { name: 'R1', type: 'R', at: [140, 60], label: 'R' },
+          { name: 'L1', type: 'L', at: [200, 60], label: 'L' },
+          { name: 'C1', type: 'C', at: [260, 90], rot: 90, label: 'C', labelAt: 'left' },
+          { name: 'C0', type: 'C', at: [110, 105], rot: 90, label: 'holder C₀' }
+        ],
+        wires: [[20, 90, 20, 60, 'RS'], [20, 60, 30, 60, 'RS'], [90, 60, 110, 60, 'RS'],
+                [230, 60, 260, 60, 'L1'], [260, 120, 260, 150, 'C1'],
+                [260, 150, 110, 150, 'C1'],
+                [110, 60, 110, 75, 'C0'], [110, 135, 110, 150, 'C0'],
+                [110, 150, 20, 150, 'RS']],
+        grounds: [[65, 150]]
       }
     }),
 
@@ -259,47 +307,60 @@ const BENCH = {
 
   /*
    * The equations this bench uses. `given` records whether the Full
-   * reference booklet hands the candidate the formula in the exam.
+   * reference booklet (EX309, Feb 2026, formula sheet) prints the formula, so
+   * that at Full it is marked "given in the exam" or "learn this one". Below
+   * Full the default is "for interest"; `tag` overrides that where the
+   * Intermediate booklet (EX308) prints the formula as well.
    */
   equations: {
-    XL: { given: true, name: 'Reactance of the inductor', eq: 'X<sub>L</sub> = 2&pi;fL',
+    XL: { given: true, tag: { intermediate: 'given' },
+          name: 'Reactance of the inductor', eq: 'X<sub>L</sub> = 2&pi;fL',
           work: d => ['2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b> &times; <b>' + eng(d.L, 'H', 3) + '</b>',
                       eng(2 * Math.PI * d.f0 * d.L, 'Ω', 4)] },
-    XC: { given: true, name: 'Reactance of the capacitor', eq: 'X<sub>C</sub> = 1 / 2&pi;fC',
+    XC: { given: true, tag: { intermediate: 'given' },
+          name: 'Reactance of the capacitor', eq: 'X<sub>C</sub> = 1 / 2&pi;fC',
           work: d => ['1 / (2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b> &times; <b>' + eng(d.C, 'F', 3) + '</b>)',
                       eng(1 / (2 * Math.PI * d.f0 * d.C), 'Ω', 4)] },
-    f0: { given: false, name: 'Resonant frequency', eq: 'f<sub>0</sub> = 1 / 2&pi;<span class="rad">&radic;</span>(LC)',
+    f0: { given: true, name: 'Resonant frequency', eq: 'f<sub>0</sub> = 1 / 2&pi;<span class="rad">&radic;</span>(LC)',
           work: d => ['1 / 2&pi;<span class="rad">&radic;</span>(<b>' + eng(d.L, 'H', 3) + '</b> &times; <b>' + eng(d.C, 'F', 3) + '</b>)',
                       eng(d.f0, 'Hz', 5)] },
-    Lfor: { given: false, name: 'Rearranged for L', eq: 'L = 1 / (2&pi;f<sub>0</sub>)&sup2;C',
-          work: d => ['1 / (2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b>)&sup2; &times; <b>' + eng(d.C, 'F', 3) + '</b>',
+    Lfor: { given: false, name: 'Rearranged for L', eq: 'L = 1 / ((2&pi;f<sub>0</sub>)&sup2; &times; C)',
+          work: d => ['1 / ((2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b>)&sup2; &times; <b>' + eng(d.C, 'F', 3) + '</b>)',
                       eng(1 / (Math.pow(2 * Math.PI * d.f0, 2) * d.C), 'H', 4)] },
-    Cfor: { given: false, name: 'Rearranged for C', eq: 'C = 1 / (2&pi;f<sub>0</sub>)&sup2;L',
-          work: d => ['1 / (2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b>)&sup2; &times; <b>' + eng(d.L, 'H', 3) + '</b>',
+    Cfor: { given: false, name: 'Rearranged for C', eq: 'C = 1 / ((2&pi;f<sub>0</sub>)&sup2; &times; L)',
+          work: d => ['1 / ((2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b>)&sup2; &times; <b>' + eng(d.L, 'H', 3) + '</b>)',
                       eng(1 / (Math.pow(2 * Math.PI * d.f0, 2) * d.L), 'F', 4)] },
-    Q: { given: true, name: 'Q factor', eq: 'Q = f<sub>C</sub> / (f<sub>U</sub> &minus; f<sub>L</sub>)',
-          work: d => ['<b>' + eng(d.f0, 'Hz', 5) + '</b> / (<b>' + eng(d.fHi, 'Hz', 5) + '</b> &minus; <b>' + eng(d.fLo, 'Hz', 5) + '</b>)',
+    Q: { given: true, tag: { intermediate: 'given' },
+          name: 'Q factor', eq: 'Q = f<sub>C</sub> / (f<sub>U</sub> &minus; f<sub>L</sub>)',
+          work: d => ['<b>' + eng(d.f0, 'Hz', d.sig) + '</b> / (<b>' + eng(d.fHi, 'Hz', d.sig) + '</b> &minus; <b>' + eng(d.fLo, 'Hz', d.sig) + '</b>)',
                       trim(d.Q, 4)] },
-    Qlc: { given: false, name: 'Q from the components', eq: 'Q = (1/R)<span class="rad">&radic;</span>(L/C)',
-          work: d => ['(1 / <b>' + eng(d.R, 'Ω', 3) + '</b>)<span class="rad">&radic;</span>(<b>' + eng(d.L, 'H', 3) + '</b> / <b>' + eng(d.C, 'F', 3) + '</b>)',
-                      trim(d.Q, 4)] },
-    Il: { given: false, name: 'Circulating current in a parallel circuit',
-          eq: 'I<sub>circ</sub> = Q &times; I<sub>supply</sub>',
+    QL: { given: true, name: 'Q from the coil', eq: 'Q = 2&pi;fL / R',
+          work: d => ['2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b> &times; <b>' + eng(d.L, 'H', 3) + '</b> / <b>' + eng(d.R, 'Ω', 4) + '</b>',
+                      trim(2 * Math.PI * d.f0 * d.L / d.R, 4)] },
+    QC: { given: true, name: 'Q from the capacitor', eq: 'Q = 1 / 2&pi;fCR',
+          work: d => ['1 / (2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b> &times; <b>' + eng(d.C, 'F', 3) + '</b> &times; <b>' + eng(d.R, 'Ω', 4) + '</b>)',
+                      trim(1 / (2 * Math.PI * d.f0 * d.C * d.R), 4)] },
+    Il: { given: false, name: 'Circulating current in a parallel circuit, when Q is high',
+          eq: 'I<sub>circ</sub> &asymp; Q &times; I<sub>supply</sub>',
           work: d => ['<b>' + trim(d.Q, 4) + '</b> &times; the current fed in',
-                      trim(d.Q, 4) + ' times whatever you supply'] },
-    Vl: { given: false, name: 'Voltage across the inductor', eq: 'V<sub>L</sub> = Q &times; V<sub>s</sub>',
+                      'about ' + trim(d.Q, 4) + ' times whatever you supply'] },
+    Vl: { given: false, name: 'Voltage across the inductor in a series circuit', eq: 'V<sub>L</sub> = Q &times; V<sub>s</sub>',
           work: d => ['<b>' + trim(d.Q, 4) + '</b> &times; <b>1 V</b>', eng(d.Q, 'V', 4)] },
-    Zs: { given: false, name: 'Impedance of the series circuit', eq: 'Z = <span class="rad">&radic;</span>(R&sup2; + (X<sub>L</sub> &minus; X<sub>C</sub>)&sup2;)',
-          work: d => ['at f<sub>0</sub> the reactances cancel, leaving <b>' + eng(d.R, 'Ω', 3) + '</b>',
+    Zs: { given: true, name: 'Impedance of the series circuit',
+          eq: 'Z = <span class="rad">&radic;</span>(R&sup2; + X&sup2;), with X = X<sub>L</sub> &minus; X<sub>C</sub>',
+          work: d => ['in the series arm at f<sub>0</sub>, X<sub>L</sub> &minus; X<sub>C</sub> = 0, so <span class="rad">&radic;</span>((<b>' + eng(d.R, 'Ω', 4) + '</b>)&sup2; + 0)',
                       eng(d.R, 'Ω', 4)] },
-    Rd: { given: false, name: 'Dynamic resistance', eq: 'R<sub>D</sub> = L / CR',
-          work: d => ['<b>' + eng(d.L, 'H', 3) + '</b> / (<b>' + eng(d.C, 'F', 3) + '</b> &times; <b>' + eng(d.R, 'Ω', 3) + '</b>)',
+    Rd: { given: true, name: 'Dynamic resistance, when Q is high', eq: 'R<sub>D</sub> = L / CR',
+          work: d => ['<b>' + eng(d.L, 'H', 3) + '</b> / (<b>' + eng(d.C, 'F', 3) + '</b> &times; <b>' + eng(d.R, 'Ω', 4) + '</b>)',
                       eng(d.L / (d.C * d.R), 'Ω', 4)] },
+    QRd: { given: true, name: 'Q from the dynamic resistance', eq: 'Q = 2&pi;fCR<sub>D</sub>',
+          work: d => ['2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b> &times; <b>' + eng(d.C, 'F', 3) + '</b> &times; <b>' + eng(d.L / (d.C * d.R), 'Ω', 4) + '</b>',
+                      trim(2 * Math.PI * d.f0 * d.L / d.R, 4)] },
     fcr: { given: false, name: 'Cut-off of a CR filter', eq: 'f = 1 / 2&pi;RC',
           work: d => ['1 / (2&pi; &times; <b>' + eng(d.Rf, 'Ω', 3) + '</b> &times; <b>' + eng(d.C, 'F', 3) + '</b>)',
                       eng(1 / (2 * Math.PI * d.Rf * d.C), 'Hz', 5)] },
     fL: { given: false, name: 'Half power points', eq: 'f<sub>L</sub>, f<sub>U</sub> where the current is 0.707 of its peak',
-          work: d => ['bandwidth = <b>' + eng(d.fHi, 'Hz', 5) + '</b> &minus; <b>' + eng(d.fLo, 'Hz', 5) + '</b>',
+          work: d => ['bandwidth = <b>' + eng(d.fHi, 'Hz', d.sig) + '</b> &minus; <b>' + eng(d.fLo, 'Hz', d.sig) + '</b>',
                       eng(d.BW, 'Hz', 4)] }
   },
 
@@ -374,10 +435,13 @@ const BENCH = {
         marks: [{ x: d.f0, colour: t.marker }],
         cursor: { x: d.f0, colour: t.marker, label: 'f₀' }
       });
-      const at0 = pts.reduce((m, q) => Math.abs(q.x - d.f0) < Math.abs(m.x - d.f0) ? q : m, pts[0]);
+      // solved at f0 itself, not read off the nearest point of the sweep
+      const sol0 = M.solveAt(spec.circuit, d.f0);
+      const i0 = M.abs(M.currentThrough(sol0, spec.z.i));
+      const z0 = spec.z.mode === 'tank' ? M.abs(M.nodeV(sol0, spec.z.v)) / i0 : 1 / i0;
       p.readouts.innerHTML = ro([
         ['Connection', wide ? 'Parallel' : 'Series'],
-        ['Z at resonance', eng(at0.y, 'Ω', 4), true],
+        ['Z at resonance', eng(z0, 'Ω', 4), true],
         ['Behaviour', wide ? 'maximum' : 'minimum'],
         ['Resonance', eng(d.f0, 'Hz', 5)]
       ]);
@@ -417,7 +481,8 @@ const BENCH = {
       p.legend.innerHTML = swatch(t.trace, 'Energy in C') + swatch(t.phase, 'Energy in L') +
                            swatch(t.faint, 'Total');
       p.readouts.innerHTML = ro([
-        ['Swaps per second', eng(d.f0, 'Hz', 5), true],
+        ['Resonant frequency', eng(d.f0, 'Hz', 5), true],
+        ['Hand-overs each cycle', 'two: C to L, then L to C'],
         ['Peak energy', eng(peak, 'J', 3)],
         ['Lost through', eng(d.R, 'Ω', 3)],
         ['Cycles shown', '6']
@@ -466,8 +531,8 @@ const BENCH = {
       const { p, d, t, level, values, M, Plot, build, sweep, swatch, ro, Fmt } = ctx;
       const { eng, trim, sci } = Fmt;
       const spec = build(p.topology, { R2: values.R * 100 });
-      // declared after isCR below
       const isCR = p.topology === 'lowpass' || p.topology === 'highpass';
+      p.bigR = isCR;
       const Rf = values.R * 100;
       const fRef = isCR ? 1 / (2 * Math.PI * Rf * d.C) : d.f0;
       const fa = fRef / 12, fb = fRef * 12;
@@ -494,8 +559,116 @@ const BENCH = {
       p.readouts.innerHTML = ro([
         ['Filter', name],
         [isCR ? 'Cut-off' : 'Centre', eng(fRef, 'Hz', 5), true],
-        ['Resistor', eng(isCR ? Rf : values.R, 'Ω', 3)],
+        isCR ? ['Resistor, 100 × the R control', eng(Rf, 'Ω', 3)]
+             : ['Resistor, the R control', eng(values.R, 'Ω', 3)],
         ['Shape set by', isCR ? 'R and C' : 'Q = ' + trim(d.Q, 3)]
+      ]);
+      return spec;
+    },
+
+    /*
+     * The crystal's equivalent circuit, solved. Impedance on a log scale,
+     * because the dip and the peak are orders of magnitude apart.
+     */
+    crystal(ctx) {
+      const { p, d, t, M, Plot, build, swatch, ro, Fmt } = ctx;
+      const { eng } = Fmt;
+      p.bigR = false;
+      const spec = build('crystal');
+      const C0 = d.C * CRYSTAL_HOLDER;
+      const fpIdeal = 1 / (2 * Math.PI * Math.sqrt(d.L * d.C * C0 / (d.C + C0)));
+      const gap = fpIdeal - d.f0;
+      const a = d.f0 - 1.5 * gap, b = fpIdeal + 1.5 * gap;
+      const Z = f => {
+        const sol = M.solveAt(spec.circuit, f);
+        return M.abs(M.nodeV(sol, 't')) / Math.max(1e-30, M.abs(M.currentThrough(sol, 'RS')));
+      };
+      // the dip and the peak are found on the solved curve, by golden section,
+      // so the readouts are what the circuit does rather than a formula
+      const golden = (lo, hi, better) => {
+        const g = (Math.sqrt(5) - 1) / 2;
+        let x1 = hi - g * (hi - lo), x2 = lo + g * (hi - lo);
+        for (let i = 0; i < 90; i++) {
+          if (better(Z(x1), Z(x2))) { hi = x2; x2 = x1; x1 = hi - g * (hi - lo); }
+          else { lo = x1; x1 = x2; x2 = lo + g * (hi - lo); }
+        }
+        return (lo + hi) / 2;
+      };
+      const fPk = golden(d.f0, b, (u, w) => u > w);
+      const fDip = golden(a, fPk, (u, w) => u < w);
+      // a turning point that lands on the edge of its window is not one
+      const edge = (f, lo, hi) => Math.min(f - lo, hi - f) < (hi - lo) * 1e-3;
+      const separate = !edge(fPk, d.f0, b) && !edge(fDip, a, fPk);
+
+      const xs = [];
+      for (let i = 0; i < 500; i++) xs.push(a + (b - a) * i / 499);
+      xs.push(fDip, fPk);
+      xs.sort((u, w) => u - w);
+      const pts = xs.map(f => ({ x: f, y: Math.log10(Math.max(1e-6, Z(f))) }));
+      const ys = pts.map(q => q.y);
+      const lo = Math.floor(Math.min(...ys));
+      const hi = lo + 4 * Math.max(1, Math.ceil((Math.ceil(Math.max(...ys)) - lo) / 4));
+      Plot.draw(p.graph, {
+        xRange: [a, b], xFmt: v => eng(v, 'Hz', 4), tokens: t,
+        left: { min: lo, max: hi, fmt: v => eng(Math.pow(10, v), 'Ω', 2) },
+        traces: [{ pts, colour: t.trace, axis: 'left' }],
+        marks: separate ? [{ x: fDip, colour: t.marker }, { x: fPk, colour: t.marker }] : [],
+        cursor: null
+      });
+      p.legend.innerHTML = swatch(t.trace, 'Impedance of the crystal, log scale') +
+                           swatch(t.marker, 'Series and parallel resonance');
+      const none = 'not separate at this Q';
+      p.readouts.innerHTML = ro([
+        ['Series resonance', separate ? eng(fDip, 'Hz', 5) : none, separate],
+        ['Z there, a dip', separate ? eng(Z(fDip), 'Ω', 4) : '—'],
+        ['Parallel resonance', separate ? eng(fPk, 'Hz', 5) : none, separate],
+        ['Z there, a peak', separate ? eng(Z(fPk), 'Ω', 4) : '—'],
+        ['Holder C₀ = 10 × C', eng(C0, 'F', 3)]
+      ]);
+      return spec;
+    },
+
+    /*
+     * Dynamic resistance, on the circuit it belongs to: a parallel tuned
+     * circuit with the coil's loss drawn as R in series with L, which is the
+     * model R_D = L/CR comes from. The impedance and its phase are solved, so
+     * the readouts show where the formula holds and where it does not.
+     */
+    dynamic(ctx) {
+      const { p, d, t, M, Plot, build, swatch, ro, Fmt } = ctx;
+      const { eng, trim } = Fmt;
+      p.bigR = false;
+      const spec = build('parallel');
+      const a = Math.max(d.f0 - d.BW * 6, d.f0 * 0.05), b = d.f0 + d.BW * 6;
+      const Zc = f => {
+        const sol = M.solveAt(spec.circuit, f);
+        return M.div(M.nodeV(sol, 't'), M.currentThrough(sol, 'RS'));
+      };
+      const mag = [], ph = [];
+      for (let i = 0; i < 320; i++) {
+        const f = a + (b - a) * i / 319, z = Zc(f);
+        mag.push({ x: f, y: M.abs(z) });
+        ph.push({ x: f, y: M.arg(z) * 180 / Math.PI });
+      }
+      const peak = Math.max(...mag.map(q => q.y));
+      Plot.draw(p.graph, {
+        xRange: [a, b], xFmt: v => eng(v, 'Hz', 4), tokens: t,
+        left: { max: peak * 1.1, fmt: v => eng(v, 'Ω', 2) },
+        right: { min: -90, max: 90, fmt: v => Math.round(v) + '°' },
+        traces: [{ pts: mag, colour: t.trace, fill: t.fill, axis: 'left' },
+                 { pts: ph, colour: t.phase, axis: 'right', width: 1.6 }],
+        marks: [{ x: d.f0, colour: t.marker }],
+        cursor: { x: d.f0, colour: t.marker, label: 'f₀' }
+      });
+      p.legend.innerHTML = swatch(t.trace, 'Impedance of the tank, left scale') +
+                           swatch(t.phase, 'Its phase, right scale') +
+                           swatch(t.marker, 'f₀');
+      const z0 = Zc(d.f0), deg = M.arg(z0) * 180 / Math.PI;
+      p.readouts.innerHTML = ro([
+        ['R<sub>D</sub> = L / CR', eng(d.L / (d.C * d.R), 'Ω', 4), true],
+        ['Tank at f₀, solved', eng(M.abs(z0), 'Ω', 4)],
+        ['Phase there', trim(deg, 2) + '°'],
+        ['Purely resistive?', Math.abs(deg) <= 2 ? 'yes, near enough' : 'no: Q is too low']
       ]);
       return spec;
     }
@@ -531,8 +704,8 @@ const BENCH = {
         full: 'Each line follows from the one above it: the two reactances, the frequency where they are equal, then that same result rearranged for whichever value the question leaves out.'
       },
       workNote: {
-        intermediate: 'These give the numbers behind the graph. What this level asks for is the graph itself: resonance is where the two lines cross, where the reactances are equal.',
-        full: 'The booklet gives you the two reactance formulas. It does not give you the resonant frequency, so that one has to be committed to memory, along with both of its rearrangements.'
+        intermediate: 'These give the numbers behind the graph, and both are printed in the booklet you are given. What this level asks for is the graph itself: resonance is where the two lines cross, where the reactances are equal.',
+        full: 'The booklet prints the two reactance formulas and the resonant frequency formula. It does not print the formula rearranged for L or for C, and the exam asks for both, so practise getting from the first to the other two.'
       },
       explain: {
         intermediate: [
@@ -556,9 +729,12 @@ const BENCH = {
         intermediate: ['impedance', 'circulating current'],
         full: []
       },
-      panel: 'impedance',
+      // At Full the instrument is the crystal itself, which has both
+      // resonances at once, so the series/parallel switch is Intermediate's.
+      panel: { intermediate: 'impedance', full: 'crystal' },
       circuit: 'series',
-      toggle: { label: 'Connection', options: [['series', 'Series'], ['parallel', 'Parallel']] },
+      toggle: { label: 'Connection', levels: ['intermediate'],
+                options: [['series', 'Series'], ['parallel', 'Parallel']] },
       heading: { intermediate: 'Series and parallel resonance compared',
                  full: 'The crystal as a tuned circuit' },
       lead: {
@@ -575,11 +751,11 @@ const BENCH = {
       },
       workLead: {
         intermediate: 'The two reactances: at resonance they are equal, and they cancel.',
-        full: 'Whichever way it is wired, the cancellation is the same. What differs is what remains.'
+        full: 'At the series resonance the motional L and C cancel, and the impedance formula leaves only R. That is the dip on the curve. The holder capacitance across the arm moves the measured dip a little, so the readout is close to R rather than exactly R.'
       },
       workNote: {
         intermediate: 'Switch the circuit to parallel and the same cancellation gives the opposite result. In series the impedance falls to R. In parallel the two branches carry equal and opposite currents that circulate between them rather than being drawn from the source, so little arrives from outside and the impedance looks high.',
-        full: 'A crystal carries a further capacitance across the whole thing, from its holder and its electrodes. That is what gives it a second resonance a few kilohertz above the first.'
+        full: 'Just above the dip, the series arm turns inductive and resonates with the holder capacitance across it. That is the parallel resonance, the peak. In a real crystal the motional capacitance is tiny next to the holder, so the peak sits only a few kilohertz above the dip. The bench uses a holder of ten times C so the two are far enough apart to see.'
       },
       explain: {
         intermediate: [
@@ -589,8 +765,8 @@ const BENCH = {
           'These are the two response curves the syllabus asks you to identify. The shape alone tells you which connection you are looking at.'
         ],
         full: [
-          'A quartz crystal is a tuned circuit that happens to be made of rock. Its equivalent circuit is a series L, C and R, with another capacitance across the lot.',
-          'So it has two resonances a few kilohertz apart. At the series one its impedance dips. At the parallel one just above, it peaks.',
+          'A quartz crystal is a tuned circuit that happens to be made of rock. Its equivalent circuit, drawn here, is a series L, C and R, with another capacitance across the lot from the holder and its electrodes.',
+          'So it has two resonances close together. At the series one its impedance dips to about R. At the parallel one just above, it peaks. Read both off the curve, then drag R up and watch the two merge as the loss rises.',
           'Crystals are ground for one or the other. Put a series crystal in a circuit expecting parallel operation and it will not sit on its marked frequency.'
         ]
       },
@@ -617,7 +793,7 @@ const BENCH = {
         intermediate: [
           'Charge the capacitor and let it go. It pushes current into the coil, which builds a magnetic field around it. When the capacitor is empty the field collapses, drives the current onward, and charges the capacitor the other way round.',
           'The two stores take turns. The total would stay put for ever if the resistance were not quietly turning some of it into heat on every pass, which is the slow decline on the trace.',
-          'The number of times a second it changes hands is the resonant frequency. Increase L or C and each exchange takes longer, so that number comes down.'
+          'In every cycle at the resonant frequency the energy passes from the capacitor to the coil and back again, so it changes hands twice per cycle. Increase L or C and each exchange takes longer, so the cycle is longer and the resonant frequency comes down.'
         ]
       },
       highlight: ['L1', 'C1']
@@ -644,20 +820,20 @@ const BENCH = {
       },
       formulas: {
         intermediate: ['fL', 'Q'],
-        full: ['Q', 'Qlc', 'Vl', 'Il']
+        full: ['Q', 'QL', 'QC', 'Vl', 'Il']
       },
       workLead: {
         intermediate: 'Find the two half power frequencies first. Q falls out of the gap between them.',
-        full: 'Q first, then the same Q from the components, then what that magnification does to the voltage inside the circuit.'
+        full: 'Q from the response curve first, then the same Q from the components, both ways the booklet prints it, then what that magnification does to the voltage inside the circuit.'
       },
       workNote: {
         intermediate: 'At this level Q only needs to indicate selectivity: higher Q, a narrower band for its frequency. Drag R and watch the two half power frequencies move apart while the centre stays exactly where it was.',
-        full: 'The two forms of Q agree, which is a useful check. The first is the one printed in the booklet. The second shows why R alone controls the sharpness, because it is the only term that plays no part in the resonant frequency.'
+        full: 'All three forms of Q are printed in the booklet, and they agree, which is a useful check. R is not the only thing that sets Q. Hold the resonant frequency fixed and make L larger and C smaller in step, and Q rises too, because the bandwidth works out at R / 2&pi;L. What R does alone is change the sharpness without moving the centre. The two magnification rules below are not printed, so learn them.'
       },
       explain: {
         intermediate: [
           'The band is measured between the half power points, where the current has fallen to 0.707 of its peak. Divide the centre frequency by that width and you have Q.',
-          'Drag R and watch the shaded band widen and narrow while the peak stays put. Of the three components, R is the only one that changes the sharpness.',
+          'Drag R and watch the shaded band widen and narrow while the peak stays put. Of the three components, R is the only one that changes the sharpness without moving the centre: L and C change it as well, but they move the resonant frequency while they do it.',
           'It is worth knowing where that R comes from. Mostly it is the resistance of the coil, and at radio frequencies it is higher than a meter would tell you, because the current crowds towards the surface of the wire instead of using the whole thickness. That is the skin effect, and it gets worse as the frequency rises.',
           'A higher Q means a more selective circuit, and that is what lets a receiver separate one station from its neighbour.'
         ],
@@ -665,7 +841,7 @@ const BENCH = {
           'Q is measured between the half power points, the two frequencies either side of resonance where the current has fallen to 0.707 of its peak. The centre frequency divided by the gap between them is Q, and both figures can be read straight off a response curve.',
           'Q is also a magnification factor, and this is where it stops being an abstraction. One volt goes in. Look at the voltage across the inductor.',
           'The same voltage appears across the capacitor, in antiphase. The two cancel exactly, which is precisely why the impedance of the whole circuit collapses to R.',
-          'The same multiplication happens to current, but in a parallel tuned circuit rather than a series one. There the current circulating between the coil and the capacitor is Q times the current drawn from the source. Feed 100 microamps into a circuit with a Q of 80 and about 8 milliamps is going round inside it.',
+          'The same multiplication happens to current, but in a parallel tuned circuit rather than a series one. There the current circulating between the coil and the capacitor is about Q times the current drawn from the source. Feed 100 microamps into a circuit with a Q of 80 and about 8 milliamps is going round inside it. That rule is an approximation that holds when Q is high, as it is in any tuned circuit worth the name; at a Q of a few it is well out.',
           'That is why tuned circuits in a transmitter need components rated far above the supply voltage and the supply current. An antenna matching unit passing high power is the everyday case: the current going round inside it is many times the current arriving from the transmitter, which is why its components are so much larger than the power alone would suggest.'
         ]
       },
@@ -679,10 +855,12 @@ const BENCH = {
         intermediate: [],
         full: ['dynamic resistance']
       },
-      panel: 'filter',
+      // Intermediate recognises the four filters; Full is about the parallel
+      // tuned circuit at resonance, so it gets that circuit, solved.
+      panel: { intermediate: 'filter', full: 'dynamic' },
       circuit: 'lowpass',
       toggle: {
-        label: 'Filter',
+        label: 'Filter', levels: ['intermediate'],
         options: [['lowpass', 'Low pass'], ['highpass', 'High pass'],
                   ['bandpass', 'Band pass'], ['notch', 'Notch']]
       },
@@ -690,7 +868,7 @@ const BENCH = {
                  full: 'Dynamic resistance at resonance' },
       lead: {
         intermediate: 'Everything so far has been one circuit looked at from different angles. Put the same parts to work and you have the four filters the exam asks you to recognise.',
-        full: 'One number decides how deep a notch you can actually cut, and it is not one of the three on the sliders.'
+        full: 'One number sums up a parallel tuned circuit at resonance, and it is not one of the three on the sliders.'
       },
       headline: {
         intermediate: 'Low pass, high pass, band pass and notch filters, and the shape each response takes.',
@@ -698,11 +876,11 @@ const BENCH = {
       },
       formulas: {
         intermediate: ['fcr'],
-        full: ['Rd']
+        full: ['Rd', 'QRd']
       },
       workNote: {
-        intermediate: 'That cut-off formula applies to the two CR filters. The band pass and the notch are tuned circuits, so their centre is the resonant frequency you already have, and R sets how narrow they are.',
-        full: 'A real coil has resistance, so a parallel tuned circuit is never a true open circuit. What is left at resonance is this purely resistive value. A lower loss coil gives a higher dynamic resistance, a deeper notch and a narrower pass band.'
+        intermediate: 'That cut-off formula applies to the two CR filters, which use a resistor a hundred times the R control so that their cut-off lands on the same scale. The band pass and the notch are tuned circuits, so their centre is the resonant frequency you already have, and R sets how narrow they are.',
+        full: 'Both are printed in the booklet. A real coil has resistance, so a parallel tuned circuit is never a true open circuit, and what is left at resonance is this resistive value. A lower loss coil gives a higher dynamic resistance and a sharper peak. L / CR is the high Q result: compare it with the solved figure under the graph, then drag R up until Q is a few and watch the two part company and the phase move away from zero.'
       },
       explain: {
         intermediate: [
@@ -712,11 +890,12 @@ const BENCH = {
         ],
         full: [
           'The dynamic resistance, sometimes called the dynamic impedance, is what a parallel tuned circuit really looks like at resonance once you allow for the resistance in the coil. It is purely resistive, which is the whole point of the name, and it only means anything at that one frequency. Move away from resonance and the impedance turns reactive again, so there is no dynamic resistance to speak of.',
+          'The circuit drawn is the one the formula describes: the coil with its loss as R in series, and the capacitor across them. At resonance the phase trace sits at zero, or very close to it while Q is high, which is what purely resistive means.',
           'It depends on the ratio of L to C as well as on the loss, so two circuits resonating on the same frequency can present very different values.',
-          'This is the number that decides how deep a notch you can cut, and it is why a low loss coil matters as much in a filter as anywhere else.'
+          'It is the figure a stage sees when a tuned circuit is its load, so it decides how much signal voltage that load develops, and it is why a low loss coil matters as much in a filter or a trap as anywhere else.'
         ]
       },
-      highlight: []
+      highlight: { intermediate: [], full: ['R1', 'L1', 'C1'] }
     }
   ],
 
@@ -733,8 +912,8 @@ const BENCH = {
   answers: {
     '2025-Full129': {
       why: 'A trap is a tuned circuit, so it has to resonate on the frequency you want it to reject. You know f and L, so rearrange the resonance formula for C.',
-      working: ['C = 1 / (2&pi;f)&sup2;L',
-                '= 1 / (2&pi; &times; 14 MHz)&sup2; &times; 2 &micro;H',
+      working: ['C = 1 / ((2&pi;f)&sup2; &times; L)',
+                '= 1 / ((2&pi; &times; 14 MHz)&sup2; &times; 2 &micro;H)',
                 '= 64.6 pF, so 64 pF is the nearest offered'],
       source: { eq: ['Cfor'], from: ['2H1'] },
       seed: { L: 2e-6, C: 64e-12 },
@@ -779,13 +958,13 @@ const BENCH = {
       seedNote: 'The bench is set to a Q of about 50 so you can compare the shape with the one in the question.'
     },
     '2025-Full150': {
-      why: 'At resonance the voltage across the coil and across the capacitor is Q times the applied voltage, and in a parallel circuit the current circulating between them is Q times the current drawn from the source. Both can be far larger than anything you put in, so the components have to be rated for it.',
+      why: 'At resonance the voltage across the coil and across the capacitor is Q times the applied voltage, and in a parallel circuit the current circulating between them is about Q times the current drawn from the source. Both can be far larger than anything you put in, so the components have to be rated for it.',
       source: { eq: ['Vl', 'Il'], from: ['2H4'] },
       seedNote: 'Wind R down on the bench and watch the voltage across the inductor climb.'
     },
     '2025-Full691': {
-      why: 'In a parallel tuned circuit the circulating current is Q times the current supplied. Multiply, do not divide.',
-      working: ['circulating current = Q &times; supply current',
+      why: 'In a parallel tuned circuit the circulating current is about Q times the current supplied, which is why the question asks for an approximate value. Multiply, do not divide.',
+      working: ['circulating current &asymp; Q &times; supply current',
                 '= 80 &times; 100 &micro;A',
                 '= 8 mA'],
       source: { eq: ['Il'], from: ['2H4', '2H2'] },
@@ -808,8 +987,8 @@ const BENCH = {
       'It is also why the same handful of parts turn up all over a radio. Once you can see what a tuned circuit does, an oscillator, an IF stage and an antenna trap stop looking like separate topics.'
     ],
     full: [
-      'All five came from one fact: at a single frequency the reactances cancel. What changes between them is what you do with that.',
-      'Two things are worth carrying forward. The resonant frequency formula is not in the reference booklet, so it has to be remembered. And the voltage inside a tuned circuit can be many times the voltage you put in, which is a component rating problem long before it is an exam question.'
+      'All four came from one fact: at a single frequency the reactances cancel. What changes between them is what you do with that.',
+      'Two things are worth carrying forward. The booklet prints the resonant frequency formula but not its rearrangements for L and C, so practise those until they are automatic. And the voltage inside a tuned circuit can be many times the voltage you put in, which is a component rating problem long before it is an exam question.'
     ]
   }
 };

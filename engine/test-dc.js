@@ -114,5 +114,98 @@ console.log('\ncollector waveform');
   console.log(`  ${lessThanHalf ? 'ok  ' : 'FAIL'} ${'class C is on for less than half'.padEnd(50)} got ${(100 * onC / 720).toFixed(1)}%`);
 }
 
+/* ---- 5. a divider biased stage in each of its states ---- */
+console.log('\ndivider bias');
+{
+  // the default stage: active, and the textbook figures
+  const a = D.dividerBias(12, 47e3, 7.5e3, 4700, 1000, 200);
+  is('the default stage is active', a.state, 'active');
+  near('base current through the Thevenin divider', a.ib, 5.0698e-6, 1e-3);
+  near('collector current is beta times it', a.ic, 200 * a.ib, 1e-12);
+  near('collector to emitter voltage', a.vce, 12 - a.ic * 4700 - a.ie * 1000, 1e-12);
+
+  // the setting that once showed 6.65 mA and a collector at -20.7 V
+  const s = D.dividerBias(12, 78e3, 22e3, 4700, 220, 200);
+  is('too much base drive saturates it', s.state, 'saturated');
+  near('the collector sits at saturation above the emitter', s.vce, 0.2, 1e-12);
+  const cap = s.ic <= (12 - 0.2) / (4700 + 220) + 1e-12;
+  cap ? pass++ : fail++;
+  console.log(`  ${cap ? 'ok  ' : 'FAIL'} ${'and never passes more than the resistors allow'.padEnd(50)} got ${(s.ic * 1e3).toFixed(3)} mA`);
+  const forced = s.ic < 200 * s.ib;
+  forced ? pass++ : fail++;
+  console.log(`  ${forced ? 'ok  ' : 'FAIL'} ${'saturated, it passes less than beta times'.padEnd(50)} got ${(s.ic / s.ib).toFixed(1)}`);
+  // Kirchhoff round the collector loop and at the emitter
+  near('supply = drop on RC + VCE + drop on RE', s.ic * 4700 + s.vce + s.ie * 220, 12, 1e-9);
+  near('base current = what the divider delivers',
+       s.ib, (s.vth - 0.6 - s.ve) / s.rth, 1e-9);
+
+  // no stage anywhere on the controls can push the collector negative
+  let worst = Infinity;
+  for (const r1 of [10e3, 47e3, 470e3]) for (const r2 of [1e3, 22e3, 100e3])
+    for (const rc of [220, 4700, 22e3]) for (const re of [10, 1000, 4700])
+      for (const vcc of [5, 12, 24]) {
+        worst = Math.min(worst, D.dividerBias(vcc, r1, r2, rc, re, 400).vce);
+      }
+  near('collector voltage never below saturation', worst, 0.2, 1e-9);
+
+  // the base right at the point of conduction is the class B bias point
+  const b = D.dividerBias(12, 190e3, 10e3, 2200, 1000, 200);
+  is('a base at 0.6 V is just cut off', b.state, 'cut off');
+  near('with no headroom at all', b.vb - 0.6, 0, 1e-12);
+}
+
+/* ---- 6. field effect transistors ---- */
+console.log('\nFETs');
+{
+  near('no current at pinch off', D.jfetCurrent(-3, 10, 8e-3, -3), 0, 1e-12);
+  near('IDSS with the gate at the source', D.jfetCurrent(0, 10, 8e-3, -3), 8e-3, 1e-12);
+  near('square law in between', D.jfetCurrent(-1.5, 10, 8e-3, -3), 2e-3, 1e-12);
+  near('the ohmic and pinched off regions meet at the knee',
+       D.jfetCurrent(-1, 2 - 1e-9, 8e-3, -3), D.jfetCurrent(-1, 2, 8e-3, -3), 1e-6);
+
+  // the exam's circuit, with figures that give its 4.5 V source and 14 V drain
+  const f = D.fetDividerBias(18, 101.75e3, 22e3, 1556, 1751, 8e-3, -3);
+  near('gate from the divider, untouched by any gate current', f.vg, 3.2, 1e-3);
+  near('the source settles at 4.5 V', f.vs, 4.5, 2e-3);
+  near('so the gate is 1.3 V below it', f.vgs, -1.3, 5e-3);
+  near('drain at 14 V', f.vd, 14, 2e-3);
+  is('and the device is amplifying', f.region, 'pinched off');
+  // lower the gate and the drain current falls (question 3582)
+  const lower = D.fetDividerBias(18, 150e3, 22e3, 1556, 1751, 8e-3, -3);
+  const falls = lower.id < f.id;
+  falls ? pass++ : fail++;
+  console.log(`  ${falls ? 'ok  ' : 'FAIL'} ${'a lower gate passes less drain current'.padEnd(50)} got ${(lower.id * 1e3).toFixed(3)} mA`);
+
+  // dual gate: with gate 2 well up, gate 1 alone sets the current, which is
+  // the single device self biased through its source resistor
+  const single = D.fetDividerBias(12, 1e9, 1e-9, 1000, 1000, 10e-3, -2);
+  const high = D.dualGateBias({ vcc: 12, vg1: 0, vg2: 4, rd: 1000, rs: 1000, idss: 10e-3, vp: -2 });
+  near('gate 2 high: the single device current', high.id, single.id, 1e-3);
+  is('and the upper half is out of the way', high.throttled, false);
+  const low = D.dualGateBias({ vcc: 12, vg1: 0, vg2: 0, rd: 1000, rs: 1000, idss: 10e-3, vp: -2 });
+  const throttles = low.id < high.id * 0.9 && low.throttled;
+  throttles ? pass++ : fail++;
+  console.log(`  ${throttles ? 'ok  ' : 'FAIL'} ${'gate 2 low throttles the current'.padEnd(50)} got ${(low.id * 1e3).toFixed(3)} mA`);
+  const off = D.dualGateBias({ vcc: 12, vg1: 0, vg2: -3, rd: 1000, rs: 1000, idss: 10e-3, vp: -2 });
+  near('gate 2 far enough down turns it off', off.id, 0, 1e-6);
+}
+
+/* ---- 7. what survives clipping ---- */
+console.log('\nclipping');
+{
+  near('a small signal is untouched', D.fundamentalGain(0.1, 1, 1), 1, 1e-6);
+  near('clipped at the operating point on one side keeps half',
+       D.fundamentalGain(1, 0, 10), 0.5, 1e-4);
+  // hard clipping both sides tends to a square wave, 4/pi times the limit
+  near('hard symmetrical clipping', D.fundamentalGain(1000, 1, 1), 4 / Math.PI / 1000, 2e-3);
+  let prev = 2, falling = true;
+  for (const d of [0.1, 0.5, 1, 2, 4, 8]) {
+    const g = D.fundamentalGain(d, 1, 3);
+    if (g > prev + 1e-12) falling = false;
+    prev = g;
+  }
+  is('more drive never gives more gain', falling, true);
+}
+
 console.log(`\n${pass} passed, ${fail} failed\n`);
 process.exit(fail ? 1 : 0);

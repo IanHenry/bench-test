@@ -319,7 +319,7 @@
       <span id="grpItems"></span>
     </div>
     <h1 id="grpTitle"></h1>
-    <p class="standfirst">
+    <p class="standfirst" id="standfirst">
       Move a control and watch what happens. The circuit is solved live at every
       frequency on the screen, so nothing here is a drawing of an answer.
     </p>
@@ -935,12 +935,16 @@
 
   $('grpTag').textContent = BENCH.group;
   $('grpTitle').textContent = BENCH.title;
+  // The default words describe a circuit bench. A bench with no circuit on it
+  // says what its displays are computed from instead.
+  if (BENCH.standfirst) $('standfirst').textContent = BENCH.standfirst;
   $('colophon').innerHTML =
     '<span class="home"><a href="../index.html">All the Bench Test pages</a>' +
     ' &middot; built by Ian Henry, G0LFT, ' +
     '<a href="https://g0lft.org/">g0lft.org</a></span>' +
-    'Every curve is solved by a general complex nodal analysis engine, verified against ' +
-    'closed form results. Circuit symbols follow the RSGB specification. ' +
+    (BENCH.colophonNote ||
+     'Every curve is solved by a general complex nodal analysis engine, verified against ' +
+     'closed form results. Circuit symbols follow the RSGB specification.') + ' ' +
     'Item wording is our own. Questions are held by the RSGB and used under the terms ' +
     'published with the bank. ' + BENCH.bank.note;
 

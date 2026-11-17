@@ -39,6 +39,9 @@ const BENCH = {
   title: 'Digital signals',
   pageTitle: 'Sampling Bench',
   levels: ['foundation', 'intermediate', 'full'],
+  // there is no circuit on this page, so the generic words would be untrue
+  standfirst: 'Move a control and watch what happens. Every waveform and spectrum is calculated live from samples of the signal, so nothing here is a drawing of an answer.',
+  colophonNote: 'Every waveform and spectrum is calculated from samples of the signal, and every spectrum by a Fourier transform written for this bench.',
   bank: {
     url: 'https://rsgb.services/public/exams/eqdb/',
     topic: '2F - Digital signals',
@@ -52,7 +55,7 @@ const BENCH = {
     ],
     intermediate: [
       'Sampling turns a smooth signal into a list of numbers. Two things decide how good that list is: how often you measure, and how finely you can write each measurement down.',
-      'Both are on the controls. Watch the error between the original and the reconstruction as you change them, and watch what it does to the noise floor on the spectrum.'
+      'Both are on the controls. Watch the gap between the smooth original and the staircase the converter holds as you change them.'
     ],
     full: [
       'Sampling is straightforward until the signal contains something above half the sample rate. Then the converter reports a frequency that was never there, and nothing downstream can tell the difference.',
@@ -119,6 +122,13 @@ const BENCH = {
       fsig: v.fsig, fs: v.fs, bits: bits, nyquist: nyquist,
       alias: DSP.aliasOf(v.fsig, v.fs),
       aliased: DSP.isAliased(v.fsig, v.fs),
+      // a tone exactly on the line is not moved, but two samples a cycle is
+      // not enough to capture it: the rule is more than twice
+      onLine: Math.abs(v.fsig - nyquist) < 1e-9 * v.fs,
+      // whole sample rates the tone is above zero, and what is left after
+      // taking them away; above the sample rate the simple rule needs this
+      wraps: Math.floor(v.fsig / v.fs),
+      rem: v.fsig - Math.floor(v.fsig / v.fs) * v.fs,
       step: DSP.quantStep(bits),
       levels: Math.pow(2, bits),
       snr: DSP.idealSNR(bits),
@@ -128,8 +138,9 @@ const BENCH = {
   },
 
   /*
-   * None of these appear in the reference booklet, so all four are marked as
-   * something to know rather than something you will be handed.
+   * The Full booklet (EX309) prints none of these, so at Full each is either
+   * one to learn or, where the Full syllabus does not examine it, for
+   * interest. Below Full the template marks every formula for interest.
    */
   equations: {
     step: { given: false, name: 'Size of one step',
@@ -142,28 +153,52 @@ const BENCH = {
            work: d => ['6.02 &times; <b>' + d.bits + '</b> + 1.76',
                        F.trim(d.snr, 4) + ' dB'] },
     rule: { given: false, name: 'Choosing a sample rate',
-            eq: 'rate &ge; 2 &times; highest frequency present',
+            eq: 'rate &gt; 2 &times; highest frequency present',
             work: d => ['for a signal reaching <b>' + F.eng(d.fsig, 'Hz', 4) + '</b>',
-                        'at least ' + F.eng(2 * d.fsig, 'Hz', 4)] },
+                        'more than ' + F.eng(2 * d.fsig, 'Hz', 4)] },
     nyq: { given: false, name: 'The Nyquist limit',
            eq: 'f<sub>N</sub> = sample rate / 2',
            work: d => ['<b>' + F.eng(d.fs, 'Hz', 4) + '</b> / 2', F.eng(d.nyquist, 'Hz', 4)] },
     reflect: { given: false, name: 'The alias as a reflection',
                eq: 'as far below f<sub>N</sub> as the tone is above it',
-               work: d => d.aliased
-                 ? ['<b>' + F.eng(d.fsig, 'Hz', 4) + '</b> is ' +
-                    F.eng(Math.abs(d.fsig - d.nyquist), 'Hz', 3) + ' above the line',
-                    'so it returns the same distance below, at ' + F.eng(d.alias, 'Hz', 4)]
-                 : ['<b>' + F.eng(d.fsig, 'Hz', 4) + '</b> is below the line already',
-                    'nothing to reflect'] },
+               work: d => {
+                 const f = '<b>' + F.eng(d.fsig, 'Hz', 4) + '</b>';
+                 if (d.onLine) return [f + ' sits exactly on the line, so it does not move',
+                   'but two samples a cycle is not enough: the rate must be more than twice'];
+                 if (!d.aliased) return [f + ' is below the line already', 'nothing to reflect'];
+                 if (d.wraps === 0) return [f + ' is ' +
+                   F.eng(d.fsig - d.nyquist, 'Hz', 4) + ' above the line',
+                   'so it returns the same distance below, at ' + F.eng(d.alias, 'Hz', 4)];
+                 // beyond the sample rate it folds more than once; taking off
+                 // whole sample rates leaves the same samples, so do that first
+                 const r = '<b>' + F.eng(d.fs, 'Hz', 4) + '</b>';
+                 const head = f + ' is past the sample rate itself, so take off whole sample rates first: ' +
+                   f + ' &minus; ' + d.wraps + ' &times; ' + r + ' = ' + F.eng(d.rem, 'Hz', 4);
+                 return d.rem > d.nyquist
+                   ? [head + ', which is ' + F.eng(d.rem - d.nyquist, 'Hz', 4) + ' above the line',
+                      'so it returns the same distance below, at ' + F.eng(d.alias, 'Hz', 4)]
+                   : [head + ', which is below the line', 'so that is where it appears: ' + F.eng(d.alias, 'Hz', 4)];
+               } },
     alias: { given: false, name: 'Where a tone above the limit comes back',
-             eq: 'f<sub>alias</sub> = sample rate &minus; f',
-             work: d => d.aliased
-               ? ['<b>' + F.eng(d.fs, 'Hz', 4) + '</b> &minus; <b>' + F.eng(d.fsig, 'Hz', 4) + '</b>',
-                  F.eng(d.alias, 'Hz', 4)]
-               : ['<b>' + F.eng(d.fsig, 'Hz', 4) + '</b> is below the limit, so it stays put',
-                  F.eng(d.alias, 'Hz', 4)] },
-    bins: { given: false, name: 'What the transform gives you',
+             eq: 'f<sub>alias</sub> = sample rate &minus; f, for f between f<sub>N</sub> and the sample rate',
+             work: d => {
+               const f = '<b>' + F.eng(d.fsig, 'Hz', 4) + '</b>', r = '<b>' + F.eng(d.fs, 'Hz', 4) + '</b>';
+               if (d.onLine) return [f + ' is on the limit, not below it, and is not captured properly',
+                                     F.eng(d.alias, 'Hz', 4)];
+               if (!d.aliased) return [f + ' is below the limit, so it stays put', F.eng(d.alias, 'Hz', 4)];
+               if (d.wraps === 0) return [r + ' &minus; ' + f, F.eng(d.alias, 'Hz', 4)];
+               // past the sample rate the rule only applies once whole sample
+               // rates have been taken off
+               const rem = F.eng(d.rem, 'Hz', 4);
+               return d.rem > d.nyquist
+                 ? ['not in range as it stands: ' + f + ' &minus; ' + d.wraps + ' &times; ' + r + ' = ' + rem +
+                    ' first, then ' + r + ' &minus; ' + rem, F.eng(d.alias, 'Hz', 4)]
+                 : ['not in range as it stands: ' + f + ' &minus; ' + d.wraps + ' &times; ' + r + ' = ' + rem +
+                    ', already below the limit', F.eng(d.alias, 'Hz', 4)];
+             } },
+    // FFT resolution is not in the Full syllabus, which asks only what a
+    // Fourier transform does
+    bins: { given: false, tag: { full: 'interest' }, name: 'What the transform gives you',
             eq: 'spacing = sample rate / number of samples',
             work: d => ['<b>' + F.eng(d.fs, 'Hz', 4) + '</b> / <b>4096</b> samples',
                         F.eng(d.fs / 4096, 'Hz', 3) + ' per point'] }
@@ -293,53 +328,77 @@ const BENCH = {
         both:        [1, 0.5, 0.33]
       }[p.topology] || [1, 0, 0];
 
-      const f = 1000, fs = 48000, N = 4096;
-      const sig = new Float64Array(N);
-      for (let i = 0; i < N; i++) {
+      // The converter's own settings: the tone on the Signal control, sampled
+      // at the Sample rate control. The samples are not rounded here, so the
+      // bit depth plays no part and only the harmonics show on the spectrum.
+      const f = d.fsig, fs = d.fs, N = 4096;
+      const total = mix[0] + mix[1] + mix[2];
+      const at = tt => {
         let v = 0;
         for (let h = 0; h < 3; h++) {
-          if (mix[h]) v += mix[h] * Math.sin(2 * Math.PI * f * (h + 1) * i / fs);
+          if (mix[h]) v += mix[h] * Math.sin(2 * Math.PI * f * (h + 1) * tt);
         }
-        sig[i] = v / (mix[0] + mix[1] + mix[2]);
-      }
+        return v / total;
+      };
+      const sig = new Float64Array(N);
+      for (let i = 0; i < N; i++) sig[i] = at(i / fs);
 
-      // time domain, in the left pane
-      const span = 2 / f, pts = [];
-      for (let i = 0; i < Math.floor(span * fs); i++) pts.push({ x: i / fs, y: sig[i] });
+      // time domain, in the left pane: the signal, and the samples taken of it
+      const span = 2 / f, pts = [], dots = [];
+      for (let i = 0; i <= 600; i++) pts.push({ x: span * i / 600, y: at(span * i / 600) });
+      for (let k = 0; k / fs <= span; k++) dots.push({ x: k / fs, y: sig[k] });
       const tspec = {
         xRange: [0, span], xFmt: x => eng(x, 's', 2), tokens: t,
         left: { min: -1.15, max: 1.15, fmt: y => trim(y, 2) },
         traces: [{ pts: pts, colour: t.trace, axis: 'left', width: 2 }],
         cursor: null
       };
-      if (p.schem) Plot.draw(p.schem, tspec);
-      if (p.schemNote) p.schemNote.textContent = 'the same signal, plotted against time';
+      if (p.schem) {
+        Plot.draw(p.schem, tspec);
+        drawDots(p.schem, tspec, dots, t.marker);
+      }
+      if (p.schemNote) p.schemNote.textContent = 'the signal against time, and the samples taken of it';
 
-      // frequency domain, in the right pane
+      // frequency domain, in the right pane, from those samples
       const sp = DSP.spectrum(sig, fs, { floor: -80 });
       const fpts = [];
-      for (let i = 1; i < sp.bins && sp.freq[i] < f * 5; i++) {
-        fpts.push({ x: sp.freq[i], y: sp.db[i] + 80 });
-      }
+      for (let i = 1; i < sp.bins; i++) fpts.push({ x: sp.freq[i], y: sp.db[i] + 80 });
+
+      // where each part of the signal lands once sampled: a harmonic above
+      // half the sample rate folds back exactly as a single tone does
+      const parts = [];
+      ['fundamental', '2nd', '3rd'].forEach((name, h) => {
+        if (mix[h]) parts.push({ name, f: f * (h + 1), at: DSP.aliasOf(f * (h + 1), fs),
+                                 folded: DSP.isAliased(f * (h + 1), fs) });
+      });
       Plot.draw(p.graph, {
-        xRange: [0, f * 5], xFmt: x => eng(x, 'Hz', 3), tokens: t,
+        xRange: [0, fs / 2], xFmt: x => eng(x, 'Hz', 3), tokens: t,
         left: { max: 85, fmt: y => Math.round(y - 80) + ' dB' },
         traces: [{ pts: fpts, colour: t.phase, fill: t.fill, axis: 'left', width: 1.5 }],
-        marks: [{ x: f, colour: t.marker }, { x: 2 * f, colour: t.marker },
-                { x: 3 * f, colour: t.marker }],
+        marks: parts.map(q => ({ x: q.at, colour: t.marker })),
         cursor: null
       });
       p.legend.innerHTML = swatch(t.trace, 'Against time') +
-        swatch(t.phase, 'Against frequency') + swatch(t.marker, 'Fundamental and harmonics');
+        swatch(t.phase, 'Against frequency, up to half the sample rate') +
+        swatch(t.marker, 'Samples, and where each part lands');
 
-      const present = ['fundamental'];
-      if (mix[1]) present.push('2nd');
-      if (mix[2]) present.push('3rd');
+      // lines closer together than the transform can separate count as one
+      const lines = [];
+      parts.forEach(q => { if (!lines.some(x => Math.abs(x - q.at) < 2 * sp.binWidth)) lines.push(q.at); });
+      const atDC = lines.some(x => x < 2 * sp.binWidth);
+      const visible = lines.length - (atDC ? 1 : 0);
+      const lineText = !atDC ? String(visible)
+        : visible ? visible + ', plus one at 0 Hz' : 'none: everything lands at 0 Hz';
+      const folded = parts.filter(q => q.folded);
+      const names = xs => xs.length > 1
+        ? xs.slice(0, -1).join(', ') + ' and ' + xs[xs.length - 1] : xs[0];
       p.readouts.innerHTML = ro([
-        ['Fundamental', eng(f, 'Hz', 3)],
-        ['Present', present.join(' + ')],
-        ['Lines on the spectrum', String(present.length), present.length > 1],
-        ['Repeats at', eng(f, 'Hz', 3)]
+        ['Present', parts.map(q => q.name).join(' + ')],
+        ['They land at', parts.map(q => eng(q.at, 'Hz', 3)).join(', ')],
+        ['Lines on the spectrum', lineText, parts.length > 1],
+        folded.length
+          ? ['Folded back, above ' + eng(fs / 2, 'Hz', 3), names(folded.map(q => q.name)), true]
+          : ['Signal repeats at', eng(f, 'Hz', 4)]
       ]);
       return {};
     },
@@ -433,12 +492,15 @@ const BENCH = {
         swatch(t.phase, d.aliased ? 'Where the tone came back' : 'The tone') +
         swatch(t.marker, 'Nyquist, half the sample rate');
 
+      // the fourth figure is the verdict, or the room left for the filter
+      const last = d.onLine ? ['Verdict', 'on the line: not enough', true]
+        : d.aliased ? ['Verdict', 'wrong frequency', true]
+        : ['Room below the line', eng(d.nyquist - d.fsig, 'Hz', 4)];
       p.readouts.innerHTML = ro([
         ['Tone put in', eng(d.fsig, 'Hz', 4)],
         ['Nyquist limit', eng(d.nyquist, 'Hz', 4)],
         ['Comes back at', eng(d.alias, 'Hz', 4), d.aliased],
-        [d.aliased ? 'Verdict' : 'Noise floor',
-         d.aliased ? 'wrong frequency' : eng(d.snr, 'dB', 3), d.aliased]
+        last
       ]);
       return {};
     }
@@ -502,7 +564,7 @@ const BENCH = {
           'Two similar names are worth keeping apart. The Nyquist frequency is half a given sample rate, and it is the line on the display. The Nyquist rate is the minimum sample rate for a given signal, twice its highest frequency. One is a property of the converter, the other of the signal.',
           'Push the signal past the Nyquist line and watch the spectrum. The tone does not disappear and it does not stay put: it folds back and appears somewhere below the line instead.',
           'A 5 kHz tone sampled at 8 kHz comes back at 3 kHz. Nothing downstream can tell that apart from a real 3 kHz tone, because by then they are the same list of numbers.',
-          'There is a neater way to see where it lands. The tone reflects about the Nyquist line: it comes back as far below the line as it started above it. 5 kHz is 1 kHz above the 4 kHz line, so it returns 1 kHz below, at 3 kHz. Subtracting from the sample rate gives the same answer, but the reflection is the one that stays with you.',
+          'There is a neater way to see where it lands. The tone reflects about the Nyquist line: it comes back as far below the line as it started above it. 5 kHz is 1 kHz above the 4 kHz line, so it returns 1 kHz below, at 3 kHz. Subtracting from the sample rate gives the same answer, but the reflection is the one that stays with you. Both work only while the tone is below the sample rate itself. Push it further and it folds more than once: take off whole sample rates first, which leaves exactly the same samples, then reflect what is left if it is still above the line. The working above does this whenever you go that far.',
           'This is why an anti-alias filter goes in front of the converter. Once the folding has happened it cannot be undone, so the only cure is to stop it arriving.',
           'In practice you sample comfortably faster than twice, not exactly twice. A real filter does not stop dead at its cut-off, it rolls off over a range, so a little of what lies above still gets through. Leaving headroom between the highest wanted frequency and the Nyquist line gives the filter room to do its work.'
         ]
@@ -540,7 +602,7 @@ const BENCH = {
       formulas: { full: ['bins'] },
       workNote: {
         foundation: 'The device that takes the measurements is an analogue to digital converter, an ADC. On its own it only produces numbers, so something with computing power has to follow it to turn those numbers back into sound.',
-        full: 'The display is a real transform of the samples, not a drawing. Every point on it was calculated from the block of numbers the converter produced.'
+        full: 'The display is a real transform, not a drawing. Every point on it was calculated from a block of 4096 samples of the signal, taken at the sample rate set above, with the fundamental at the Signal setting. The samples are not rounded here, so the bit depth plays no part. The spacing between points is for interest only: the exam asks what the transform does, not how finely it does it.'
       },
       explain: {
         foundation: [
@@ -555,7 +617,8 @@ const BENCH = {
           'A pure sine wave is a single line on the frequency display. Anything that is not a pure sine has more lines, and if the extra ones sit at whole multiples of the first they are called harmonics. A sine with a harmonic added still repeats at the lower of the two frequencies, but the shape is no longer a clean sine, which is how you spot it in the time domain.',
           'The Fourier transform is the arithmetic that gets you from one to the other. Give it a block of samples taken over time and it returns how much of each frequency was in them.',
           'The two displays above are one signal. Add a harmonic and watch both change together: a new line appears on the right, and the shape on the left stops being a clean sine while still repeating at the same rate.',
-          'That is how you tell them apart by eye. The repetition rate follows the fundamental, so the wave still repeats at the lower frequency, but the shape is no longer a plain sine. It is also what the waterfall on an SDR is doing, over and over, many times a second.'
+          'That is how you tell them apart by eye. The repetition rate follows the fundamental, so the wave still repeats at the lower frequency, but the shape is no longer a plain sine. It is also what the waterfall on an SDR is doing, over and over, many times a second.',
+          'The transform can only report what is in the samples, so the rule from the section before still applies. Raise the signal or lower the sample rate until a harmonic passes half the sample rate, and its line folds back below the edge of the display and no longer sits at its whole multiple of the fundamental.'
         ]
       }
     }
@@ -569,7 +632,7 @@ const BENCH = {
   answers: {
     '2025-Full6015': {
       why: 'The rule is twice the highest frequency present, not twice the bandwidth and not twice the lowest. The highest here is 14 kHz, so anything from 28k samples a second upwards will do, and 30k is the lowest offered that clears it.',
-      working: ['minimum rate = 2 &times; highest frequency',
+      working: ['the rate must be more than 2 &times; highest frequency',
                 '= 2 &times; 14 kHz',
                 '= 28k samples/s, so 30k is the lowest that works'],
       source: { eq: ['rule'], from: ['2F1'] },
@@ -584,12 +647,12 @@ const BENCH = {
     '2025-Full7395': {
       why: 'Aliasing is caused by frequencies arriving that are higher than half the sample rate. Option B has it backwards, and option D describes oversampling, which is the safe direction.',
       working: ['a tone folds when f &gt; sample rate / 2',
-                '12 kHz is above the 8 kHz limit of a 16k rate',
+                'to illustrate, with figures of our own (the question gives none): 12 kHz is above the 8 kHz limit of a 16k rate',
                 'so it returns at 16 kHz &minus; 12 kHz = 4 kHz',
                 'that is higher analogue frequencies arriving than the converter can accept'],
       source: { eq: ['nyq', 'alias'], from: ['2F1'] },
       seed: { fsig: 12000, fs: 16000 },
-      seedNote: 'A 12 kHz tone sampled at 16k folds back to 4 kHz. Set the bench to it and read the spectrum.'
+      seedNote: 'The question has no figures; this is our own example. A 12 kHz tone sampled at 16k folds back to 4 kHz. Set the bench to it and read the spectrum.'
     },
     '2025-Full7645': {
       why: 'Sampling at 80M samples a second puts the folding point at 40 MHz, so anything still getting through above that comes back inside the wanted range. That rules out two of the four. Of the two left, the better one is whichever keeps the most spectrum while still being well down by 40 MHz, because a filter that closes too early throws away band you could have used.',
@@ -602,7 +665,7 @@ const BENCH = {
     '2025-Full7401': {
       why: 'The transform takes a block of samples and reports how much of each frequency was in them, which is what puts the signals in frequency order. Option A describes a transformer, option C a data demodulator and option D the quadrature mixing that produces I and Q.',
       source: { from: ['2F2'] },
-      seedNote: 'The lower display on this bench is a real transform of the samples above it.'
+      seedNote: 'The right-hand display in the Fourier transform section is a real transform of the samples drawn on the left of it.'
     },
     '2025-Full7686': {
       source: { from: ['2F2'] },

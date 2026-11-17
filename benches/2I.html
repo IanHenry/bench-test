@@ -319,7 +319,7 @@
       <span id="grpItems"></span>
     </div>
     <h1 id="grpTitle"></h1>
-    <p class="standfirst">
+    <p class="standfirst" id="standfirst">
       Move a control and watch what happens. The circuit is solved live at every
       frequency on the screen, so nothing here is a drawing of an answer.
     </p>
@@ -839,6 +839,166 @@ function operatingPoint(vcc, rl, ib, beta, vsat) {
   };
 }
 
+/**
+ * A bipolar stage biased by a divider, with collector and emitter resistors,
+ * solved in whichever of its three states it is actually in.
+ *
+ * The divider is replaced by what the base sees: vth behind R1 and R2 in
+ * parallel. In the active region the base current flows through that and
+ * through the emitter resistor, scaled up by beta + 1. If the collector
+ * current that implies would pull the collector below saturation, the
+ * transistor is not in the active region at all: it is saturated, the
+ * collector sits at vsat above the emitter, and the currents are set by the
+ * resistors instead of by beta. Solving that state properly is what keeps the
+ * collector voltage from going negative and the collector current from
+ * exceeding what the resistors allow, (vcc - vsat) / (rc + re).
+ *
+ * The same sums serve a PNP stage drawn upside down, with every voltage
+ * measured down from the rail instead of up from ground.
+ */
+function dividerBias(vcc, r1, r2, rc, re, beta, opts) {
+  opts = opts || {};
+  const vbe = opts.vbe === undefined ? 0.6 : opts.vbe;
+  const vsat = opts.vsat === undefined ? 0.2 : opts.vsat;
+  const vth = vcc * r2 / (r1 + r2), rth = r1 * r2 / (r1 + r2);
+  const icMax = (vcc - vsat) / (rc + re);
+  const out = { vth: vth, rth: rth, icMax: icMax };
+
+  const ibActive = (vth - vbe) / (rth + (beta + 1) * re);
+  if (!(ibActive > 0)) {
+    return Object.assign(out, { state: 'cut off', ib: 0, ic: 0, ie: 0,
+      vb: vth, ve: 0, vc: vcc, vce: vcc });
+  }
+  let ib = ibActive, ic = beta * ib, ie = ic + ib;
+  let ve = ie * re, vc = vcc - ic * rc;
+  if (vc - ve >= vsat) {
+    return Object.assign(out, { state: 'active', ib: ib, ic: ic, ie: ie,
+      vb: ve + vbe, ve: ve, vc: vc, vce: vc - ve });
+  }
+  // Saturated: three unknowns, ve, ib and ic, from
+  //   ib = (vth - vbe - ve) / rth,  ic = (vcc - vsat - ve) / rc,  ve = (ib + ic) re
+  ve = re * ((vth - vbe) / rth + (vcc - vsat) / rc) / (1 + re / rth + re / rc);
+  ib = Math.max(0, (vth - vbe - ve) / rth);
+  ic = Math.max(0, (vcc - vsat - ve) / rc);
+  ie = ib + ic;
+  return Object.assign(out, { state: 'saturated', ib: ib, ic: ic, ie: ie,
+    vb: ve + vbe, ve: ve, vc: ve + vsat, vce: vsat });
+}
+
+/* ---------- field effect transistors ---------- */
+
+/**
+ * Drain current of an n channel depletion device (a JFET, or one half of a
+ * dual gate MOSFET). vp is the pinch off voltage, negative. Below it nothing
+ * flows. With enough drain voltage the channel is pinched off at the drain end
+ * and the current follows the square law, which is where it amplifies. With
+ * too little it is ohmic, a resistor the gate voltage sets.
+ */
+function jfetCurrent(vgs, vds, idss, vp) {
+  if (vgs <= vp || vds <= 0) return 0;
+  const u = 1 - vgs / vp;                    // 0 at pinch off, 1 at vgs = 0
+  const knee = vgs - vp;                     // drain voltage where it pinches off
+  if (vds >= knee) return idss * u * u;
+  const x = vds / -vp;
+  return idss * (2 * u * x - x * x);
+}
+
+/** The drain to source voltage a device needs to pass id at this gate voltage. */
+function fetVdsFor(id, vgs, idss, vp) {
+  if (id <= 0) return 0;
+  const sat = jfetCurrent(vgs, 1e9, idss, vp);
+  if (id >= sat) return Infinity;
+  let lo = 0, hi = vgs - vp;
+  for (let k = 0; k < 60; k++) {
+    const mid = (lo + hi) / 2;
+    if (jfetCurrent(vgs, mid, idss, vp) < id) lo = mid; else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
+
+/**
+ * A JFET stage biased the way the exam draws it: a divider on the gate, a
+ * resistor in the source, a load in the drain. The gate draws no current, so
+ * the divider gives exactly vcc R2 / (R1 + R2) however large R1 and R2 are.
+ * The current then settles where the device curve and the source resistor
+ * agree: vgs = vg - id rs.
+ */
+function fetDividerBias(vcc, r1, r2, rd, rs, idss, vp) {
+  const vg = vcc * r2 / (r1 + r2);
+  let lo = 0, hi = vcc / (rd + rs);
+  for (let k = 0; k < 80; k++) {
+    const id = (lo + hi) / 2;
+    const vs = id * rs, vd = vcc - id * rd;
+    if (id > jfetCurrent(vg - vs, vd - vs, idss, vp)) hi = id; else lo = id;
+  }
+  const id = (lo + hi) / 2, vs = id * rs, vd = vcc - id * rd;
+  const vgs = vg - vs, vds = vd - vs;
+  const region = vgs <= vp || id < 1e-9 ? 'cut off'
+    : (vds >= vgs - vp ? 'pinched off' : 'ohmic');
+  return { vg: vg, vs: vs, vd: vd, vgs: vgs, vds: vds, id: id, region: region };
+}
+
+/**
+ * A dual gate MOSFET is two depletion devices in series inside one package:
+ * gate 1 controls the lower one, gate 2 the upper, and they share one current.
+ * Gate 2 is held at a steady voltage. While it is high enough, the upper half
+ * stays out of the way and gate 1 alone decides the current. Lower it and the
+ * upper half starts to throttle the lower one, the current and the gain fall,
+ * which is how automatic gain control is applied to such a stage.
+ *
+ * o: { vcc, vg1, vg2, rd, rs, idss, vp, vs } where vs, if given, holds the
+ * source at a fixed voltage, as a bypass capacitor does to a signal.
+ */
+function dualGateBias(o) {
+  const vg1 = o.vg1 || 0;
+  const tooMuch = id => {
+    const vs = o.vs === undefined ? id * o.rs : o.vs;
+    const d1 = fetVdsFor(id, vg1 - vs, o.idss, o.vp);
+    if (!isFinite(d1)) return true;
+    const vx = vs + d1, vd = o.vcc - id * o.rd;
+    if (vd <= vx) return true;
+    return id > jfetCurrent(o.vg2 - vx, vd - vx, o.idss, o.vp);
+  };
+  let lo = 0, hi = o.vcc / (o.rd + (o.vs === undefined ? o.rs : 0));
+  for (let k = 0; k < 80; k++) {
+    const mid = (lo + hi) / 2;
+    if (tooMuch(mid)) hi = mid; else lo = mid;
+  }
+  const id = lo;
+  const vs = o.vs === undefined ? id * o.rs : o.vs;
+  const d1 = fetVdsFor(id, vg1 - vs, o.idss, o.vp);
+  const vx = vs + (isFinite(d1) ? d1 : 0);
+  // the lower half is ohmic when the upper one has left it too little voltage
+  const throttled = id > 1e-9 && (vx - vs) < (vg1 - vs - o.vp) - 1e-6;
+  return { id: id, vs: vs, vx: vx, vd: o.vcc - id * o.rd,
+           vg1s: vg1 - vs, vg2s: o.vg2 - vs, throttled: throttled };
+}
+
+/* ---------- large signals ---------- */
+
+/**
+ * How much of a sine survives at its own frequency once it is clipped.
+ *
+ * A device swinging about its operating point runs out of room at some point
+ * below (it cuts off) and some point above (it saturates). lo and hi are those
+ * distances from the operating point. Clip a sine of peak `drive` there and
+ * take the fundamental of what is left: this returns that fundamental as a
+ * fraction of the drive. It is 1 while nothing is clipped, it falls as the
+ * drive grows, and it is what stops an oscillator's amplitude growing for ever.
+ */
+function fundamentalGain(drive, lo, hi, n) {
+  if (!(drive > 0)) return 1;
+  if (lo <= 0 && hi <= 0) return 0;
+  n = n || 720;
+  let s = 0;
+  for (let i = 0; i < n; i++) {
+    const ph = 2 * Math.PI * (i + 0.5) / n;
+    const v = Math.max(-Math.max(0, lo), Math.min(Math.max(0, hi), drive * Math.sin(ph)));
+    s += v * Math.sin(ph);
+  }
+  return (2 * s / n) / drive;
+}
+
 /* ---------- conduction angle and amplifier class ---------- */
 
 /**
@@ -896,6 +1056,8 @@ function collectorWave(bias, drive, n) {
 }
 
 const API = { diodeCurrent, diodeVoltage, loadLine, operatingPoint,
+              dividerBias, jfetCurrent, fetVdsFor, fetDividerBias, dualGateBias,
+              fundamentalGain,
               conductionAngle, classOf, classPerformance, collectorWave };
 if (typeof window !== 'undefined') window.DC = API;
 })();
@@ -1565,17 +1727,126 @@ const VBE = 0.6;              // the base to emitter drop of a conducting silico
  * the divider carries ten or more times the base current. The point itself
  * is worked properly: the divider seen from the base is vth behind R1 and R2
  * in parallel, and the base current flows through that as well as through
- * the emitter resistor, scaled up by beta + 1.
+ * the emitter resistor, scaled up by beta + 1. Push the base hard enough and
+ * the stage saturates; dc.js solves that state rather than letting beta carry
+ * the collector current past what the resistors can pass.
  */
+const VSAT = 0.2;             // collector to emitter of a saturated transistor
 function bias(v) {
+  const b = DC.dividerBias(v.vcc || VCC, v.r1, v.r2, v.rc, v.re, v.beta,
+                           { vbe: VBE, vsat: VSAT });
+  b.conducting = b.state !== 'cut off';
+  return b;
+}
+
+/*
+ * The field effect devices on the 2I3 panel. Typical small signal figures,
+ * held fixed so that the controls only move the circuit around them. The
+ * dual gate MOSFET is modelled as what it is inside, two depletion devices in
+ * series sharing one channel current.
+ */
+const FET_IDSS = 8e-3, FET_VP = -3;
+const DG_IDSS = 10e-3, DG_VP = -2;
+const DG_RG = 1e6;            // gate 1 returned to ground through this
+
+function fetPoint(v) {
+  return DC.fetDividerBias(v.vcc || VCC, v.r1, v.r2, v.rc, v.re, FET_IDSS, FET_VP);
+}
+function dualGatePoint(v, vg1, vsFixed) {
   const vcc = v.vcc || VCC;
-  const vth = vcc * v.r2 / (v.r1 + v.r2), rth = v.r1 * v.r2 / (v.r1 + v.r2);
-  const ib = Math.max(0, (vth - VBE) / (rth + (v.beta + 1) * v.re));
-  const ic = v.beta * ib, ie = ic + ib, ve = ie * v.re;
-  const vb = ib > 0 ? ve + VBE : vth;
-  const vce = vcc - ic * v.rc - ie * v.re;
-  return { vb: vb, vth: vth, ve: ve, ic: ic, ib: ib, vce: vce,
-           conducting: vth > VBE };
+  return DC.dualGateBias({ vcc: vcc, vg1: vg1 || 0, vg2: vcc * v.r2 / (v.r1 + v.r2),
+                           rd: v.rc, rs: v.re, idss: DG_IDSS, vp: DG_VP, vs: vsFixed });
+}
+
+/*
+ * Symbols the shared schematic engine does not draw: a PNP transistor, an n
+ * channel JFET and a dual gate MOSFET. Each is laid out as a three terminal
+ * device (type 'Q', so both circuit checkers treat its pins exactly as they
+ * treat the NPN's) with a `kind` that says what to draw. The gate, the upper
+ * lead and the lower lead sit where the NPN's base, collector and emitter do.
+ * Gate 2 of the dual gate device leaves from the top left and lands on a
+ * junction the layout makes with two wires, so the checker still proves it is
+ * joined.
+ */
+const DEVICE = {
+  pnp(ctx) {
+    ctx.beginPath(); ctx.arc(0, 0, 22, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-4, -13); ctx.lineTo(-4, 13); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-4, 0); ctx.stroke();
+    // emitter on top, its arrow pointing in towards the base: that is PNP
+    ctx.beginPath(); ctx.moveTo(-4, -8); ctx.lineTo(12, -20); ctx.lineTo(12, -32); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-4, 8); ctx.lineTo(12, 20); ctx.lineTo(12, 32); ctx.stroke();
+    const dx = 16, dy = -12, len = Math.hypot(dx, dy), ux = dx / len, uy = dy / len;
+    const ax = 0.5, ay = -11;        // tip near the bar, pointing back along the lead
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(ax + ux * 7 - uy * 3.4, ay + uy * 7 + ux * 3.4);
+    ctx.lineTo(ax + ux * 7 + uy * 3.4, ay + uy * 7 - ux * 3.4);
+    ctx.closePath(); ctx.fillStyle = ctx.strokeStyle; ctx.fill();
+  },
+  njfet(ctx) {
+    ctx.beginPath(); ctx.arc(0, 0, 22, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(4, -15); ctx.lineTo(4, 15); ctx.stroke();       // channel
+    ctx.beginPath(); ctx.moveTo(4, -10); ctx.lineTo(12, -10); ctx.lineTo(12, -32); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(4, 10); ctx.lineTo(12, 10); ctx.lineTo(12, 32); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(4, 0); ctx.stroke();        // gate
+    // n channel: the gate arrow points in, towards the channel
+    ctx.beginPath(); ctx.moveTo(3, 0); ctx.lineTo(-5, -3.6); ctx.lineTo(-5, 3.6);
+    ctx.closePath(); ctx.fillStyle = ctx.strokeStyle; ctx.fill();
+  },
+  dgmos(ctx) {
+    ctx.beginPath(); ctx.arc(0, 0, 22, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(6, -16); ctx.lineTo(6, 16); ctx.stroke();       // channel, solid: depletion
+    ctx.beginPath(); ctx.moveTo(6, -12); ctx.lineTo(12, -12); ctx.lineTo(12, -32); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(6, 12); ctx.lineTo(12, 12); ctx.lineTo(12, 32); ctx.stroke();
+    // substrate tied to the source, arrow in for n channel
+    ctx.beginPath(); ctx.moveTo(12, 12); ctx.lineTo(12, 0); ctx.lineTo(8, 0); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(6.5, 0); ctx.lineTo(11, -2.8); ctx.lineTo(11, 2.8);
+    ctx.closePath(); ctx.fillStyle = ctx.strokeStyle; ctx.fill();
+    // two insulated gates: gate 1 beside the source end, gate 2 beside the drain
+    ctx.beginPath(); ctx.moveTo(1, 3); ctx.lineTo(1, 15); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(1, -15); ctx.lineTo(1, -3); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-10, 0); ctx.lineTo(-10, 9); ctx.lineTo(1, 9); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(1, -9); ctx.lineTo(-14, -9); ctx.lineTo(-14, -40); ctx.stroke();
+    // labels clear of every lead: G1 below its lead, G2 left of its own
+    ctx.font = '11px sans-serif'; ctx.fillStyle = ctx.strokeStyle;
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    ctx.fillText('G1', -14, 15); ctx.fillText('G2', -18, -26);
+  }
+};
+// where gate 2 of a dual gate device leaves its symbol, relative to its centre
+const DG_G2 = [-14, -40];
+
+if (typeof window !== 'undefined' && window.Schematic && window.Schematic.draw &&
+    !window.Schematic.draw.withDevices) {
+  const plainDraw = window.Schematic.draw;
+  const withDevices = function (canvas, layout, opts) {
+    const special = (layout.elements || []).filter(e => e.kind && DEVICE[e.kind]);
+    if (!special.length) return plainDraw(canvas, layout, opts);
+    const rest = Object.assign({}, layout,
+      { elements: layout.elements.filter(e => special.indexOf(e) < 0) });
+    plainDraw(canvas, rest, opts);
+    // the engine leaves its context scaled into layout units, so the devices
+    // land exactly where their pins were laid out
+    const ctx = canvas.getContext('2d');
+    const t = (opts && opts.tokens) || {};
+    for (const el of special) {
+      ctx.save();
+      ctx.translate(el.at[0], el.at[1]);
+      ctx.strokeStyle = t.wire || '#444';
+      ctx.lineWidth = 1.6;
+      DEVICE[el.kind](ctx);
+      ctx.restore();
+      if (el.label) {
+        ctx.fillStyle = t.ink || '#111';
+        ctx.font = '11px ' + (t.font || 'sans-serif');
+        ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        ctx.fillText(el.label, el.at[0] + 26, el.at[1]);
+      }
+    }
+  };
+  withDevices.withDevices = true;
+  window.Schematic.draw = withDevices;
 }
 
 /*
@@ -1778,6 +2049,454 @@ function configLayout(kind) {
 }
 
 /*
+ * 2I3 at Full: biasing the other devices. Each is drawn the way it is
+ * normally built, and the sliders keep their meaning: R1 and R2 are the
+ * divider the device takes its bias from, RC the load, RE the resistor in the
+ * emitter or source.
+ */
+
+/*
+ * PNP: the NPN stage turned upside down. The emitter resistor goes to the
+ * positive rail and the load to ground, and the divider puts the base a fixed
+ * fraction of the supply below the rail. Measured down from the rail every
+ * figure is the NPN's, which is the point: same sums, opposite polarity.
+ * In the small signal circuit the rail is ground, so the netlist is the
+ * common emitter one; each part is written so that a to b runs the way the
+ * signal current flows on the drawing.
+ */
+function pnpNetlist(d) {
+  const F = window.Fmt;
+  const ic = Math.max(1e-9, d.ic), gm = ic / 0.026;
+  return 'V1 in 0 1\nRS in b 50\nR1 b 0 ' + F.sci(d.r1) + '\nR2 b 0 ' + F.sci(d.r2) +
+    '\nRpi b e ' + F.sci(Math.max(1, d.beta / gm)) + '\nG1 c e b e ' + F.sci(gm) +
+    '\nRO c e ' + F.sci(EARLY / ic) + '\nRE e 0 ' + F.sci(d.re) +
+    '\nCE1 e 0 ' + F.sci(BYPASS) + '\nRC 0 c ' + F.sci(d.rc);
+}
+function pnpLayout() {
+  return {
+    w: 320, h: 262,
+    elements: [
+      { name: 'Q1', type: 'Q', kind: 'pnp', at: [180, 140], label: '' },
+      // R2 now runs from the rail: the voltage across it is the one the
+      // emitter sits below the rail by, plus a junction drop
+      { name: 'R2', type: 'R', at: [120, 48], rot: 270, label: 'R2', labelAt: 'left' },
+      { name: 'R1', type: 'R', at: [120, 170], rot: 90, label: 'R1', labelAt: 'left' },
+      { name: 'RE', type: 'R', at: [192, 48], rot: 270, label: 'RE' },
+      { name: 'CE1', type: 'C', at: [244, 48], rot: 270, label: 'CE' },
+      { name: 'RC', type: 'R', at: [192, 202], rot: 270, label: 'RC' },
+      { name: 'C1', type: 'C', at: [90, 140], label: 'C1', flow: 'RS' },
+      { name: 'C2', type: 'C', at: [250, 172], label: 'C2', flow: '-' }
+    ],
+    wires: [
+      [120, 18, 192, 18, 'RE'], [192, 18, 244, 18, 'CE1'],
+      [120, 140, 120, 78, 'R2'],
+      [120, 140, 150, 140, 'Rpi'],
+      [192, 108, 192, 92, 'G1'], [192, 92, 192, 78, 'RE'],
+      [192, 92, 244, 92, 'CE1'], [244, 92, 244, 78, 'CE1'],
+      [192, 172, 220, 172, '-'], [280, 172, 292, 172, '-']
+    ],
+    grounds: [[120, 200], [192, 232]],
+    terminals: [{ at: [60, 140], label: 'in', align: 'right' },
+                { at: [292, 172], label: 'out' }, { at: [156, 10], label: '+V' }]
+  };
+}
+
+/* Transconductance from the device law itself, so it is right in every region. */
+function fetGm(vgs, vds, idss, vp) {
+  const h = 1e-4;
+  return Math.max(0, (DC.jfetCurrent(vgs + h, vds, idss, vp) -
+                      DC.jfetCurrent(vgs - h, vds, idss, vp)) / (2 * h));
+}
+
+/*
+ * JFET: the exam's common source stage, divider on the gate, source resistor
+ * bypassed, load in the drain. Laid out on the common emitter frame, with the
+ * gate lead declared dead: a gate draws no current, signal or steady.
+ */
+function jfetNetlist(d) {
+  const F = window.Fmt, f = d.fet;
+  const gm = Math.max(1e-9, fetGm(f.vgs, f.vds, FET_IDSS, FET_VP));
+  return 'V1 in 0 1\nRS in b 50\nR1 b 0 ' + F.sci(d.r1) + '\nR2 b 0 ' + F.sci(d.r2) +
+    '\nG1 c e b e ' + F.sci(gm) + '\nRO c e ' + F.sci(EARLY / Math.max(1e-6, f.id)) +
+    '\nRE e 0 ' + F.sci(d.re) + '\nCE1 e 0 ' + F.sci(BYPASS) + '\nRC 0 c ' + F.sci(d.rc);
+}
+function jfetLayout() {
+  const lay = configLayout('ce');
+  lay.elements = lay.elements.map(e => {
+    if (e.name === 'Q1') return Object.assign({}, e, { kind: 'njfet' });
+    if (e.name === 'RC') return Object.assign({}, e, { label: 'RD' });
+    if (e.name === 'RE') return Object.assign({}, e, { label: 'RS' });
+    if (e.name === 'CE1') return Object.assign({}, e, { label: 'CS' });
+    return e;
+  });
+  lay.wires = lay.wires.map(w => (w[4] === 'Rpi' ? w.slice(0, 4).concat('-') : w));
+  return lay;
+}
+
+/*
+ * Dual gate MOSFET. Gate 1 takes the signal and is returned to ground through
+ * RG, so the source resistor biases it exactly as it would a single FET.
+ * Gate 2 is held a few volts up by R1 and R2 and tied to signal ground by CG,
+ * so it carries no signal at all: its steady voltage sets how much of the
+ * device's gain is available.
+ */
+function dualGateNetlist(d) {
+  const F = window.Fmt, g = d.dg;
+  // gain from gate 1 with the source held still by its bypass capacitor
+  const h = 1e-3;
+  const up = dualGatePoint(d, h, g.vs).id, dn = dualGatePoint(d, -h, g.vs).id;
+  const gm = Math.max(1e-9, (up - dn) / (2 * h));
+  return 'V1 in 0 1\nRIN in g 50\nRG g 0 ' + F.sci(DG_RG) +
+    '\nG1 d s g s ' + F.sci(gm) + '\nRO d s ' + F.sci(EARLY / Math.max(1e-6, g.id)) +
+    '\nRS s 0 ' + F.sci(d.re) + '\nCS s 0 ' + F.sci(BYPASS) + '\nRD 0 d ' + F.sci(d.rc);
+}
+function dualGateLayout() {
+  const at = [240, 160];
+  const g2 = [at[0] + DG_G2[0], at[1] + DG_G2[1]];      // (226, 120)
+  return {
+    w: 360, h: 262,           // room for the 'out' label past the terminal
+    elements: [
+      { name: 'Q1', type: 'Q', kind: 'dgmos', at: at, label: '' },
+      { name: 'R1', type: 'R', at: [40, 48], rot: 270, label: 'R1', labelAt: 'left', flow: '-' },
+      { name: 'R2', type: 'R', at: [40, 150], rot: 90, label: 'R2', labelAt: 'left', flow: '-' },
+      { name: 'CG', type: 'C', at: [g2[0], 90], rot: 270, label: 'CG', labelAt: 'left', flow: '-' },
+      { name: 'RG', type: 'R', at: [180, 190], rot: 90, label: 'RG' },
+      { name: 'C1', type: 'C', at: [150, 160], label: 'C1', flow: 'RIN' },
+      { name: 'RD', type: 'R', at: [252, 48], rot: 90, label: 'RD' },
+      { name: 'C2', type: 'C', at: [300, 100], label: 'C2', flow: '-' },
+      { name: 'RS', type: 'R', at: [252, 222], rot: 90, label: 'RS', labelAt: 'left' },
+      { name: 'CS', type: 'C', at: [300, 222], rot: 90, label: 'CS' }
+    ],
+    wires: [
+      // gate 2's network carries no signal current: CG holds it at signal
+      // ground, and an insulated gate draws nothing steady either
+      [40, 18, g2[0], 18, '-'], [g2[0], 18, 252, 18, 'RD'],
+      [40, 120, 40, 78, '-'],
+      [g2[0], g2[1], 40, 120, '-'],
+      [g2[0], 60, g2[0], 18, '-'],                    // CG to the rail, signal ground
+      [180, 160, 210, 160, '-'],                      // gate 1 draws nothing
+      [252, 78, 252, 100, 'RD'], [252, 100, 252, 128, 'RD'],
+      [252, 100, 270, 100, '-'],
+      [252, 192, 300, 192, 'CS']
+    ],
+    grounds: [[40, 180], [180, 220], [252, 252], [300, 252]],
+    terminals: [{ at: [120, 160], label: 'in', align: 'right' },
+                { at: [330, 100], label: 'out' }, { at: [150, 10], label: '+V' }]
+  };
+}
+
+/*
+ * 2I4 at Full: the typical circuit for each class, drawn beside the current
+ * pulse. The class figures come from one device biased by the divider, whose
+ * emitter resistor is left unbypassed so that its current follows the base
+ * voltage above the turn on point in a straight line: exactly the truncated
+ * sine dc.js takes the Fourier coefficients of. The netlists solve each
+ * circuit at the fundamental, with the device delivering the fundamental of
+ * its pulse, (theta - sin theta) / 2 pi of what it would at full conduction.
+ */
+const CLASS_F = 1e6;                       // the tuned circuits' frequency
+const CLASS_LT = 10e-6;
+const CLASS_CT = 1 / (Math.pow(2 * Math.PI * CLASS_F, 2) * CLASS_LT);
+const CLASS_RL = 2000, PP_RL = 50, PP_RB = 10e3, PP_RD = 26, PP_GM = 0.4;
+
+function pulseShare(theta) {
+  return Math.max(1e-6, (theta - Math.sin(theta)) / (2 * Math.PI));
+}
+
+function classKind(cls) {
+  return cls === 'B' ? 'B' : cls === 'AB' ? 'AB' : (cls === 'C' || cls === 'off') ? 'C' : 'A';
+}
+
+function classNetlist(kind, d) {
+  const F = window.Fmt;
+  if (kind === 'AB' || kind === 'B') {
+    const gm = PP_GM * pulseShare(d.theta), rp = F.sci(Math.max(1, d.beta / gm));
+    const top = kind === 'AB' ? 'a' : 'm', bot = kind === 'AB' ? 'n' : 'm';
+    return 'V1 in 0 1\nRIN in m 50' +
+      '\nRB1 0 ' + top + ' ' + F.sci(PP_RB) +
+      (kind === 'AB' ? '\nRD1 a m ' + PP_RD + '\nRD2 m n ' + PP_RD : '') +
+      '\nRB2 ' + bot + ' 0 ' + F.sci(PP_RB) +
+      '\nRP1 ' + top + ' o ' + rp + '\nG1 0 o ' + top + ' o ' + F.sci(gm) +
+      '\nRP2 o ' + bot + ' ' + rp + '\nG2 o 0 o ' + bot + ' ' + F.sci(gm) +
+      '\nRLD o 0 ' + PP_RL;
+  }
+  const ipk = Math.max(1e-6, (Math.max(0, d.headroom) + d.drive) / d.re);
+  const gm = ipk / 0.026 * pulseShare(d.theta);
+  const head = 'V1 in 0 1\nRS in b 50\nR1 b 0 ' + F.sci(d.r1) + '\nR2 b 0 ' + F.sci(d.r2) +
+    '\nRpi b e ' + F.sci(Math.max(1, d.beta / gm)) + '\nG1 c e b e ' + F.sci(gm) +
+    '\nRO c e ' + F.sci(EARLY / Math.max(1e-6, ipk)) + '\nRE e 0 ' + F.sci(d.re);
+  return kind === 'C'
+    ? head + '\nLT 0 c ' + F.sci(CLASS_LT) + '\nCT 0 c ' + F.sci(CLASS_CT) + '\nRLD c 0 ' + CLASS_RL
+    : head + '\nRC 0 c ' + F.sci(d.rc);
+}
+
+function classLayout(kind) {
+  if (kind === 'AB' || kind === 'B') {
+    const ab = kind === 'AB';
+    return {
+      w: 340, h: 272,         // room for the load's label
+      elements: [
+        // a blank label: the engine would otherwise print the name over the
+        // collector lead; which device is which is in the note beneath
+        { name: 'Q1', type: 'Q', at: [200, 78], label: ' ' },
+        { name: 'Q2', type: 'Q', kind: 'pnp', at: [200, 198], label: '' },
+        { name: 'RB1', type: 'R', at: [140, 48], rot: 90, label: 'RB1', labelAt: 'left' },
+        { name: 'RB2', type: 'R', at: [140, 228], rot: 90, label: 'RB2', labelAt: 'left' },
+        { name: 'C1', type: 'C', at: [100, 138], label: 'C1', flow: 'RIN' },
+        { name: 'C2', type: 'C', at: [260, 138], label: 'C2', flow: 'RLD' },
+        { name: 'RLD', type: 'R', at: [290, 168], rot: 90, label: 'load' }
+      ].concat(ab ? [
+        // labelled on the right, clear of C1's label on the left
+        { name: 'D1', type: 'D', at: [140, 108], rot: 90, label: 'D1', flow: 'RD1' },
+        { name: 'D2', type: 'D', at: [140, 168], rot: 90, label: 'D2', flow: 'RD2' }
+      ] : []),
+      wires: [
+        [140, 18, 212, 18, 'G1'], [212, 18, 212, 46, 'G1'],
+        [140, 78, 170, 78, 'RP1'],
+        [170, 198, 140, 198, 'RP2'],
+        [212, 110, 212, 138, 'G1'], [212, 138, 212, 166, 'G2'],
+        [212, 230, 212, 258, 'G2'],
+        [212, 138, 230, 138, 'RLD'],
+        [130, 138, 140, 138, 'RIN']
+      ].concat(ab ? [] : [
+        // with no diodes the two bases are simply joined to the input
+        [140, 78, 140, 138, 'RB1'], [140, 138, 140, 198, 'RB2']
+      ]),
+      grounds: [[140, 258], [212, 258], [290, 198]],
+      terminals: [{ at: [70, 138], label: 'in', align: 'right' },
+                  { at: [176, 10], label: '+V' }]
+    };
+  }
+  const lay = configLayout('ce');
+  // the classes are worked with the emitter resistor unbypassed, so draw it so
+  lay.elements = lay.elements.filter(e => e.name !== 'CE1');
+  lay.wires = lay.wires.filter(w => w[4] !== 'CE1');
+  if (kind === 'C') {
+    lay.w = 340;                // room for the load's label
+    lay.elements = lay.elements.filter(e => e.name !== 'RC' && e.name !== 'C2').concat([
+      { name: 'LT', type: 'L', at: [192, 48], rot: 90, label: 'L', labelAt: 'left' },
+      { name: 'CT', type: 'C', at: [244, 48], rot: 90, label: 'C' },
+      { name: 'C2', type: 'C', at: [250, 108], label: 'C2', flow: 'RLD' },
+      { name: 'RLD', type: 'R', at: [280, 138], rot: 90, label: 'load' }
+    ]);
+    lay.wires = lay.wires.filter(w => !(w[0] === 192 && w[1] === 78) && w[4] !== '-')
+      .concat([[192, 18, 244, 18, 'CT'], [244, 78, 192, 78, 'CT'],
+               [192, 78, 192, 108, 'G1'], [192, 108, 220, 108, 'RLD']]);
+    lay.grounds = lay.grounds.concat([[280, 168]]);
+    lay.terminals = lay.terminals.filter(t => t.label !== 'out');
+  }
+  return lay;
+}
+
+/*
+ * The Colpitts oscillator the syllabus draws: the transistor as an emitter
+ * follower, the coil from base to ground (through a blocking capacitor so it
+ * does not short the bias), and two capacitors in series across it. Their
+ * junction is the tap, and the emitter drives it.
+ *
+ * Where the loop gain comes from. A follower's voltage gain is below one, so
+ * on its own it cannot make up anything. The tuned circuit can: at resonance
+ * the two capacitors act as a step up transformer, and the base, at the top of
+ * the coil, swings (CA + CB) / CA times as far as the tap does. With equal
+ * capacitors that is twice. What the transistor supplies is current, at about
+ * beta + 1 times what the base draws, and that is what replaces the energy
+ * the coil's resistance and the bias resistors take out of the tank on every
+ * cycle. The loop gain is the follower's gain times the step up, less those
+ * losses, and it has to come to at least one.
+ *
+ * It is solved, not quoted. An oscillator has no input to drive, so the loop
+ * is opened at the one place that does not disturb it: the voltage that
+ * controls the transistor's current. A test signal there, the circuit
+ * otherwise intact (the base still loads the tank through r_pi), and what
+ * comes back at the base divided by what went in is the loop gain. The
+ * frequency is where it comes back in phase.
+ *
+ * Amplitude. The transistor's current is an exponential of the voltage
+ * between its base and its emitter, so a swing there of more than the 26 mV
+ * thermal voltage no longer comes out in proportion. The standing current is
+ * held by RE, so as the swing grows the current becomes a pulse on the peaks
+ * and stops altogether on the troughs, and the part of it at the oscillating
+ * frequency can never exceed twice the standing current. The standard result
+ * for that (the large signal transconductance of a bipolar device whose
+ * average current is fixed) is gm x 2 I1(x) / (x I0(x)), x being the
+ * swing in thermal voltages and I0, I1 the modified Bessel functions. A
+ * follower's base and emitter move almost together, so the base has to swing
+ * a long way before that swing gets large, but when it does the follower's
+ * gain falls, the loop gain with it, and the oscillation settles where it has
+ * fallen to exactly one. The emitter running into the supply would limit it
+ * too, the transistor saturating and clamping the swing like a limiter; that
+ * is allowed for, though at the starting settings the current runs out first.
+ *
+ * The Drive control is the swing at the base, as it is on every other panel.
+ * Below the settling amplitude the loop gain is over one and the swing grows;
+ * above it, under one and it shrinks back; and if even a tiny swing sees a
+ * loop gain short of one, it dies away from any amplitude.
+ */
+const OSC_L = 4.7e-6, OSC_CA = 1000e-12, OSC_CB = 1000e-12, OSC_Q = 100;
+const OSC_CS = 100e-9;        // blocks DC from the coil, a short at RF
+const OSC_CSER = OSC_CA * OSC_CB / (OSC_CA + OSC_CB);
+const OSC_F0 = 1 / (2 * Math.PI * Math.sqrt(OSC_L * OSC_CSER));
+const OSC_RCOIL = 2 * Math.PI * OSC_F0 * OSC_L / OSC_Q;
+const VT = 0.026;             // the thermal voltage at room temperature
+
+/* How much of the small signal transconductance survives a swing of x VT. */
+function largeSignalShare(x) {
+  if (!(x > 1e-4)) return 1;
+  let ratio;                                   // I1(x) / I0(x)
+  if (x > 30) {
+    ratio = 1 - 1 / (2 * x) - 1 / (8 * x * x) - 1 / (8 * x * x * x);
+  } else {
+    let i0 = 0, i1 = 0, t0 = 1, t1 = x / 2;
+    const q = x * x / 4;
+    for (let k = 0; k < 120; k++) {
+      i0 += t0; i1 += t1;
+      t0 *= q / ((k + 1) * (k + 1));
+      t1 *= q / ((k + 1) * (k + 2));
+    }
+    ratio = i1 / i0;
+  }
+  return 2 * ratio / x;
+}
+
+function oscNetlist(v, b, gm, vin) {
+  const F = window.Fmt;
+  const ic = Math.max(1e-9, b.ic);
+  gm = Math.max(1e-12, gm);
+  const rpi = Math.max(1, v.beta / gm), ro = EARLY / ic;
+  return 'V1 bx 0 ' + F.sci(vin || 1) +
+    '\nRpi b e ' + F.sci(rpi) +
+    '\nG1 0 e bx e ' + F.sci(gm) +
+    '\nRO 0 e ' + F.sci(ro) +
+    '\nRE e 0 ' + F.sci(v.re) +
+    '\nR1 b 0 ' + F.sci(v.r1) + '\nR2 b 0 ' + F.sci(v.r2) +
+    '\nCA b e ' + F.sci(OSC_CA) + '\nCB e 0 ' + F.sci(OSC_CB) +
+    '\nCS b t ' + F.sci(OSC_CS) + '\nL1 t m ' + F.sci(OSC_L) +
+    '\nRL m 0 ' + F.sci(OSC_RCOIL);
+}
+
+/* The open loop at one transconductance: where it comes back in phase, and how big. */
+function oscLoopAt(v, b, gm) {
+  const M = window.MNA;
+  const ckt = M.parseNetlist(oscNetlist(v, b, gm, 1));
+  const at = f => M.solveAt(ckt, f);
+  const ph = f => M.arg(M.nodeV(at(f), 'b'));
+  let lo = OSC_F0 * 0.8, hi = OSC_F0 * 1.25;
+  for (let k = 0; k < 26; k++) {
+    const mid = (lo + hi) / 2;
+    if (ph(mid) > 0) lo = mid; else hi = mid;
+  }
+  const f = (lo + hi) / 2, s = at(f);
+  const vbOut = M.nodeV(s, 'b'), ve = M.nodeV(s, 'e');
+  const T = M.abs(vbOut), A = M.abs(ve);
+  // how sharply the phase turns is the loaded Q of the tank, which sets how
+  // quickly the amplitude can change from one cycle to the next
+  const df = f * 1e-4;
+  const slope = Math.abs(ph(f + df) - ph(f - df)) / (2 * df);
+  return { f: f, T: T, A: A, N: A > 0 ? T / A : 0,
+           // what is left between base and emitter, per volt at the base
+           ctl: M.abs(M.sub(M.cx(1, 0), ve)),
+           qL: Math.max(1, slope * f / 2) };
+}
+
+const oscCache = {};
+function oscillatorLoop(v) {
+  const vcc = v.vcc || VCC;
+  const key = [vcc, v.r1, v.r2, v.re, v.beta].join('|');
+  let o = oscCache[key];
+  if (!o) {
+    // the follower's collector goes straight to the rail
+    const b = DC.dividerBias(vcc, v.r1, v.r2, 0, v.re, v.beta, { vbe: VBE, vsat: VSAT });
+    if (b.state !== 'active') {
+      o = { state: b.state, b: b, curve: [], Tss: 0, settle: 0, gm0: 0 };
+    } else {
+      const gm0 = b.ic / VT;
+      const room = Math.max(0, vcc - VSAT - b.ve);    // emitter's distance to the rail
+      const curve = [];
+      // swept by the base to emitter swing, which gives the base swing directly
+      for (let i = 0; i <= 32; i++) {
+        const x = 0.01 * Math.pow(1e5, i / 32);
+        const gm = gm0 * largeSignalShare(x);
+        const s = oscLoopAt(v, b, gm);
+        const vb = x * VT / Math.max(1e-9, s.ctl);
+        // past the rail the transistor saturates and clamps the swing, so
+        // from there on it behaves as a limiter: what comes back stops growing
+        const k = DC.fundamentalGain(s.A * vb, room, room);
+        curve.push({ vb: vb, T: s.T * k, A: s.A * k, N: s.N, f: s.f, qL: s.qL, gm: gm });
+      }
+      const Tss = curve[0].T;
+      let settle = 0;
+      if (Tss > 1) {
+        for (let i = 1; i < curve.length; i++) {
+          if (curve[i].T < 1) {
+            const p = curve[i - 1], q = curve[i];
+            const u = (p.T - 1) / (p.T - q.T);
+            settle = p.vb * Math.pow(q.vb / p.vb, u);
+            break;
+          }
+        }
+      }
+      o = { state: 'active', b: b, curve: curve, Tss: Tss, settle: settle, gm0: gm0 };
+    }
+    oscCache[key] = o;
+  }
+  // everything at the swing the Drive control sets
+  const here = oscAtSwing(o, v.drive);
+  return Object.assign({}, o, here);
+}
+
+/* The loop at a given swing at the base, read off the curve. */
+function oscAtSwing(o, a) {
+  const c = o.curve;
+  if (!c.length) return { T: 0, A: 0, N: 0, f: OSC_F0, qL: OSC_Q, gm: 0 };
+  if (!(a > c[0].vb)) return c[0];
+  for (let i = 1; i < c.length; i++) {
+    if (a <= c[i].vb) {
+      const p = c[i - 1], q = c[i];
+      const u = Math.log(a / p.vb) / Math.log(q.vb / p.vb);
+      const mix = k => p[k] + u * (q[k] - p[k]);
+      return { vb: a, T: mix('T'), A: mix('A'), N: mix('N'), f: mix('f'),
+               qL: mix('qL'), gm: p.gm * Math.pow(q.gm / p.gm, u) };
+    }
+  }
+  return c[c.length - 1];
+}
+
+/*
+ * The Colpitts as it is drawn. Divider on the left, the coil and its blocking
+ * capacitor, then CA from the base line down to the tap, CB from the tap to
+ * ground, and the transistor on the right with its emitter feeding the tap.
+ * Every wire on the base line is drawn in the direction its current runs on a
+ * positive half cycle.
+ */
+function colpittsLayout() {
+  return {
+    w: 300, h: 262,
+    elements: [
+      { name: 'Q1', type: 'Q', at: [230, 120], label: ' ' },   // its name would sit on the collector lead
+      { name: 'R1', type: 'R', at: [40, 48], rot: 270, label: 'R1', labelAt: 'left' },
+      { name: 'R2', type: 'R', at: [40, 150], rot: 90, label: 'R2', labelAt: 'left' },
+      { name: 'CS', type: 'C', at: [100, 150], rot: 90, label: 'CS', labelAt: 'left' },
+      { name: 'L1', type: 'L', at: [100, 210], rot: 90, label: 'L', labelAt: 'left' },
+      { name: 'CA', type: 'C', at: [150, 150], rot: 90, label: 'CA' },
+      { name: 'CB', type: 'C', at: [150, 210], rot: 90, label: 'CB' },
+      { name: 'RE', type: 'R', at: [242, 210], rot: 90, label: 'RE' }
+    ],
+    wires: [
+      [40, 18, 242, 18, 'G1'],          // the rail
+      [242, 18, 242, 88, 'G1'],         // into the collector
+      [40, 120, 40, 78, 'R1'],
+      [100, 120, 40, 120, 'R2'],        // the divider's share of the base line
+      [150, 120, 100, 120, 'L1'],       // the coil's share
+      [150, 120, 200, 120, 'Rpi'],      // what the base itself draws
+      [242, 152, 242, 180, 'G1'],       // out of the emitter
+      [242, 180, 150, 180, 'CB']        // along to the tap
+    ],
+    grounds: [[40, 180], [100, 240], [150, 240], [242, 240]],
+    terminals: [{ at: [140, 10], label: '+V' }]
+  };
+}
+
+/*
  * Where a diode actually sits when it is fed through a resistor.
  *
  * The supply has to divide between the resistor and the diode, and the diode
@@ -1792,6 +2511,7 @@ function configLayout(kind) {
  * a little as the current through it rises.
  */
 const ZENER_SLOPE = 5;
+const ZENER_V = 5.1;
 
 function zenerOperating(vsupply, r, vz) {
   if (vsupply <= vz) return { i: 0, vd: vsupply, vr: 0, p: 0 };
@@ -1890,10 +2610,22 @@ const BENCH = {
         netlist: configCircuit('cc', d).netlist },
       { name: 'common base', layout: configLayout('cb'),
         netlist: configCircuit('cb', d).netlist },
+      { name: 'PNP', layout: pnpLayout(), netlist: pnpNetlist(d) },
+      { name: 'JFET', layout: jfetLayout(), netlist: jfetNetlist(d) },
+      { name: 'dual gate MOSFET', layout: dualGateLayout(), netlist: dualGateNetlist(d) }
+    ].concat(['A', 'AB', 'B', 'C'].map(k => {
+      // each class circuit solved at a bias that puts the stage in that class
+      const at = { A: d, AB: Object.assign({}, d, { theta: 1.3 * Math.PI }),
+                   B: Object.assign({}, d, { theta: Math.PI }),
+                   C: Object.assign({}, d, { theta: 0.6 * Math.PI, headroom: -0.2 }) }[k];
+      return { name: 'class ' + k, layout: classLayout(k), netlist: classNetlist(k, at) };
+    })).concat([
+      { name: 'Colpitts', layout: colpittsLayout(),
+        netlist: oscNetlist(d, d.osc.b, d.osc.gm || 1e-3, d.drive) },
       { name: 'diode', layout: diodeLayout(false), netlist: 'series' },
       { name: 'zener', layout: diodeLayout(true), netlist: 'series' },
       { name: 'varicap', layout: varicapLayout(60e-12), netlist: varicapNetlist(60e-12) }
-    ];
+    ]);
   },
   bank: {
     url: 'https://rsgb.services/public/exams/eqdb/',
@@ -1983,22 +2715,30 @@ const BENCH = {
 
   derive: (v) => {
     const b = bias(v);
-    const ll = DC.loadLine(v.vcc || VCC, v.rc + v.re);
+    const vcc = v.vcc || VCC;
+    const ll = DC.loadLine(vcc, v.rc + v.re);
     // How far the base sits above the point it starts conducting, measured in
     // volts, against the peak of the drive. That ratio is what decides how
     // much of each cycle the device is switched on for.
     const headroom = b.vb - VBE;
     const theta = DC.conductionAngle(headroom, v.drive);
     const perf = DC.classPerformance(theta);
+    // A saturated device is a closed switch, not an amplifier of any class.
+    const saturated = b.state === 'saturated';
     return {
-      vcc: v.vcc || VCC, r1: v.r1, r2: v.r2, rc: v.rc, re: v.re,
+      vcc: vcc, r1: v.r1, r2: v.r2, rc: v.rc, re: v.re,
       beta: v.beta, drive: v.drive,
-      vb: b.vb, vth: b.vth, ve: b.ve, ic: b.ic, icq: b.ic, ib: b.ib, vce: b.vce, vceq: b.vce,
+      vb: b.vb, vth: b.vth, rth: b.rth, ve: b.ve, ic: b.ic, icq: b.ic, ib: b.ib, ie: b.ie,
+      vce: b.vce, vceq: b.vce, state: b.state, saturated: saturated, icSat: b.icMax,
       conducting: b.conducting, headroom: headroom,
       iMax: ll.iMax,
       theta: theta, thetaDeg: theta * 180 / Math.PI,
-      cls: DC.classOf(theta),
-      eff: perf.efficiency, a0: perf.a0, a1: perf.a1,
+      cls: saturated ? 'saturated' : DC.classOf(theta),
+      eff: saturated ? 0 : perf.efficiency, a0: perf.a0, a1: perf.a1,
+      zener: zenerOperating(vcc, v.rc, ZENER_V),
+      fet: fetPoint(v),
+      dg: dualGatePoint(v),
+      osc: oscillatorLoop(v),
       f0: 0
     };
   },
@@ -2024,36 +2764,73 @@ const BENCH = {
                            FI.eng(d.re, 'Ω', 3) + '</b>',
                            'about ' + FI.eng(Math.max(0, d.vth - 0.6) / d.re, 'A', 3) +
                            ' (the base current pulls it to ' + FI.eng(d.ic + d.ib, 'A', 3) + ')'] },
+    // The booklet prints P = IV and V = IR. The Zener sums are those two
+    // applied, so they are marked given, and they use the voltage the
+    // readouts show: the rated 5.1 V plus what the slope resistance adds.
     zpower: { given: true, name: 'Power the Zener has to get rid of',
-              eq: 'P = V<sub>Z</sub> &times; I',
+              eq: 'P = IV, with V the voltage across the Zener',
               work: d => {
-                const vz = 5.1, i = Math.max(0, (d.vcc - vz) / (d.rc + 5));
-                return ['<b>' + vz + ' V</b> &times; <b>' + FI.eng(i, 'A', 3) + '</b>',
-                        FI.eng(vz * i, 'W', 3) + ' turned into heat in the diode'];
+                const z = d.zener;
+                if (!(z.i > 0)) {
+                  return ['<b>' + FI.trim(d.vcc, 3) + ' V</b> supply, below the ' + ZENER_V + ' V it needs',
+                          'nothing: the Zener is not conducting'];
+                }
+                return ['<b>' + FI.eng(z.i, 'A', 3) + '</b> &times; <b>' + FI.trim(z.vd, 3) + ' V</b>',
+                        FI.eng(z.p, 'W', 3) + ' turned into heat in the diode'];
               } },
     zseries: { given: true, name: 'The resistor that sets the Zener current',
-               eq: 'R = (V<sub>supply</sub> &minus; V<sub>Z</sub>) / I',
+               eq: 'V = IR, so R = (V<sub>supply</sub> &minus; V<sub>Z</sub>) / I',
                work: d => {
-                 const vz = 5.1, i = Math.max(1e-9, (d.vcc - vz) / (d.rc + 5));
-                 return ['(<b>' + d.vcc + ' V</b> &minus; <b>' + vz + ' V</b>) / <b>' +
-                         FI.eng(i, 'A', 3) + '</b>',
-                         FI.eng((d.vcc - vz) / i, 'Ω', 3)];
+                 const z = d.zener;
+                 if (!(z.i > 0)) {
+                   return ['<b>' + FI.trim(d.vcc, 3) + ' V</b> supply, below the ' + ZENER_V + ' V it needs',
+                           'no current flows, so there is nothing for R to set'];
+                 }
+                 return ['(<b>' + FI.trim(d.vcc, 3) + ' V</b> &minus; <b>' + FI.trim(z.vd, 3) +
+                         ' V</b>) / <b>' + FI.eng(z.i, 'A', 3) + '</b>',
+                         FI.eng((d.vcc - z.vd) / z.i, 'Ω', 3)];
                } },
-    beta: { given: true, tag: { intermediate: 'learn' }, name: 'Current gain', eq: 'I<sub>C</sub> = &beta; &times; I<sub>B</sub>',
-            work: d => ['<b>' + FI.trim(d.beta, 3) + '</b> &times; <b>' + FI.eng(d.ib, 'A', 3) + '</b>',
-                        FI.eng(d.icq, 'A', 3)] },
+    // printed on both the Intermediate and the Full formula sheets
+    beta: { given: true, tag: { intermediate: 'given' }, name: 'Current gain', eq: 'I<sub>C</sub> = &beta; &times; I<sub>B</sub>',
+            work: d => d.saturated
+              ? ['<b>' + FI.trim(d.beta, 3) + '</b> &times; <b>' + FI.eng(d.ib, 'A', 3) + '</b> would be ' +
+                 FI.eng(d.beta * d.ib, 'A', 3),
+                 FI.eng(d.icq, 'A', 3) + ' is all the resistors allow: saturated, so beta no longer applies']
+              : ['<b>' + FI.trim(d.beta, 3) + '</b> &times; <b>' + FI.eng(d.ib, 'A', 3) + '</b>',
+                 FI.eng(d.icq, 'A', 3)] },
+    vgs:  { given: false, name: 'Gate to source voltage of the FET',
+            eq: 'V<sub>GS</sub> = V<sub>G</sub> &minus; V<sub>S</sub>',
+            work: d => ['<b>' + FI.trim(d.fet.vg, 3) + ' V</b> &minus; <b>' + FI.trim(d.fet.vs, 3) + ' V</b>',
+                        FI.trim(d.fet.vgs, 3) + ' V' + (d.fet.vgs < 0
+                          ? ', the gate below the source, as a depletion FET needs'
+                          : ', the gate above the source: too far for a JFET')] },
     theta: { given: false, name: 'How much of the cycle it conducts for',
              eq: '&theta; = 360&deg; for A, 180&deg; for B, less for C',
-             work: d => ['at this bias and drive',
-                         FI.trim(d.thetaDeg, 4) + '&deg;, which is class ' + d.cls] },
-    eff:  { given: false, name: 'Efficiency',
-            eq: '&eta; = RF power out / DC power in',
-            work: d => ['from the shape of the current pulse',
-                        FI.trim(d.eff * 100, 3) + '%'] },
-    diss: { given: false, name: 'What the transistor has to get rid of',
-            eq: 'P = V<sub>CE</sub> &times; I<sub>C</sub>',
+             work: d => d.saturated
+               ? ['at this bias', 'none of these: the transistor is saturated, a closed switch']
+               : (d.cls === 'off'
+                 ? ['at this bias and drive', '0&deg;: the drive never reaches turn on, so no class at all']
+                 : ['at this bias and drive',
+                    FI.trim(d.thetaDeg, 4) + '&deg;, which is class ' + d.cls]) },
+    eff:  { given: false, name: 'The most efficient it can be at that angle',
+            eq: '&eta;<sub>max</sub> = RF power out / DC power in, at full swing',
+            work: d => d.saturated
+              ? ['saturated', 'no figure: nothing is being amplified']
+              : ['from the shape of the current pulse, with the collector swinging the whole supply',
+                 'at best ' + FI.trim(d.eff * 100, 3) + '%'] },
+    diss: { given: true, name: 'What the transistor has to get rid of',
+            eq: 'P = IV, here P = V<sub>CE</sub> &times; I<sub>C</sub>',
             work: d => ['<b>' + FI.trim(d.vceq, 3) + ' V</b> &times; <b>' + FI.eng(d.icq, 'A', 3) + '</b>',
-                        FI.eng(Math.max(0, d.vceq) * d.icq, 'W', 3)] }
+                        FI.eng(d.vceq * d.icq, 'W', 3)] },
+    loop: { given: false, name: 'Gain round the oscillator loop',
+            eq: 'loop gain &ge; 1, where here loop gain = follower gain &times; step up of the tap',
+            work: d => {
+              const o = d.osc;
+              if (o.state === 'cut off') return ['the transistor is cut off', '0: no gain at all'];
+              return ['<b>' + FI.trim(o.A, 3) + '</b> &times; <b>' + FI.trim(o.N, 3) + '</b>',
+                      FI.trim(o.T, 3) + (o.T >= 1 ? ', at least one: the swing grows'
+                                                  : ', short of one: the swing shrinks')];
+            } }
   },
 
   terms: {
@@ -2071,6 +2848,9 @@ const BENCH = {
     'class B': 'Biased at cut off, so it conducts for half the cycle. At best 78.5% efficient, but one device alone distorts badly.',
     'class AB': 'Biased between A and B, conducting for more than half the cycle but less than all of it. The usual compromise for SSB.',
     'class C': 'Biased below cut off, conducting for well under half the cycle. Efficient, and only usable where a tuned circuit can restore the waveform.',
+    'pinch off': 'The gate voltage at which a FET\u2019s channel is squeezed shut and drain current stops. For an n channel depletion device it is a few volts below the source.',
+    'dual gate MOSFET': 'A field effect transistor with two insulated gates on one channel. Gate 1 takes the signal; the steady voltage on gate 2 sets how much gain is available.',
+    'crossover distortion': 'The kink a push pull stage puts in the waveform where one device hands over to the other, if neither is conducting at that moment.',
     'feedback': 'Returning part of the output to the input. Enough of it, in the right phase, and an amplifier becomes an oscillator.'
   },
 
@@ -2083,12 +2863,16 @@ const BENCH = {
      * altogether. Amplifier and switch are the same curve at different places.
      */
     transfer(ctx) {
-      const { p, d, t, Plot, swatch, ro, Fmt } = ctx;
+      const { p, d, t, level, Plot, swatch, ro, Fmt } = ctx;
       const { eng, trim } = Fmt;
+      // the device toggle is a Full level control; below Full it is always NPN
+      const dev = level === 'full' ? (p.topology || 'npn') : 'npn';
+      if (dev === 'jfet') return BENCH.panels.fetBias(ctx);
+      if (dev === 'dualgate') return BENCH.panels.dualGateBias(ctx);
 
-      const iMax = (d.vcc - 0.2) / (d.rc + d.re);      // most the circuit can pass
+      const iMax = d.icSat;                            // most the circuit can pass
       const ibFull = iMax / d.beta;                    // base current that gets there
-      const ibMax = Math.max(ibFull * 1.6, d.ib * 2.2);
+      const ibMax = Math.max(ibFull * 1.6, d.ib * 1.3);
 
       const pts = [], ideal = [];
       for (let i = 0; i <= 400; i++) {
@@ -2103,7 +2887,7 @@ const BENCH = {
                  { pts: pts, colour: t.trace, fill: t.fill, axis: 'left', width: 2.4 }],
         marks: [{ x: ibFull, colour: t.marker }],
         cursor: { x: Math.min(d.ib, ibMax), colour: t.phase,
-                  dot: { y: Math.min(d.beta * d.ib, iMax), axis: 'left' },
+                  dot: { y: d.ic, axis: 'left' },
                   label: 'where it is biased' }
       };
       Plot.draw(p.graph, spec);
@@ -2112,19 +2896,144 @@ const BENCH = {
         swatch(t.marker, 'Saturated beyond here') +
         swatch(t.phase, 'The operating point');
 
-      const state = d.ib <= 0 ? 'cut off, no current at all'
-        : (d.beta * d.ib >= iMax ? 'saturated, a closed switch'
-                                 : 'amplifying, on the straight part');
+      const state = d.state === 'cut off' ? 'cut off, no current at all'
+        : (d.saturated ? 'saturated, a closed switch' : 'amplifying, on the straight part');
+      const pnp = dev === 'pnp';
+      // a PNP's voltages are the NPN's measured down from the rail
+      const at = v => trim(pnp ? d.vcc - v : v, 3) + ' V';
       p.readouts.innerHTML = ro([
         ['Base current', eng(d.ib, 'A', 3)],
         ['Collector current', eng(d.ic, 'A', 3)],
-        ['That is beta times', trim(d.beta, 3) + ' larger'],
-        ['State', state, d.beta * d.ib >= iMax]
+        ['Against the base current', d.ib > 0 ? trim(d.ic / d.ib, 3) + ' times' +
+          (d.saturated ? ', less than beta: it has run out of room' : ', which is beta') : 'no base current'],
+        ['Base, emitter, collector', at(d.vb) + ', ' + at(d.ve) + ', ' +
+          at(d.vce + d.ve) + (pnp ? ' above ground' : '')],
+        ['Collector to emitter', trim(d.vce, 3) + ' V' + (pnp ? ', the collector the lower' : '')],
+        ['State', state, d.saturated]
       ]);
-      if (p.schemNote) p.schemNote.textContent = 'the stage the controls are setting up';
+      if (p.schemNote) {
+        p.schemNote.textContent = pnp
+          ? 'A PNP is the same stage upside down: the emitter goes to the rail, ' +
+            'the load to ground, and the base sits R2/(R1 + R2) of the supply below the rail.'
+          : 'the stage the controls are setting up';
+      }
       p.fAnim = 1000;
+      if (pnp) return { layout: pnpLayout(), circuit: MI.parseNetlist(pnpNetlist(d)) };
       const ck = configCircuit('ce', d);
       return { layout: configLayout('ce'), circuit: MI.parseNetlist(ck.netlist) };
+    },
+
+    /*
+     * The JFET, worked the way it is drawn graphically: the device's own
+     * curve of drain current against gate voltage, and the line the source
+     * resistor imposes, vgs = vg - id rs. Where they cross is where it sits.
+     */
+    fetBias(ctx) {
+      const { p, d, t, Plot, swatch, ro, Fmt } = ctx;
+      const { eng, trim } = Fmt;
+      const f = d.fet;
+      const curve = [], line = [];
+      const xLo = FET_VP - 0.5, xHi = 0.6;
+      for (let i = 0; i <= 300; i++) {
+        const vgs = xLo + (xHi - xLo) * i / 300;
+        curve.push({ x: vgs, y: DC.jfetCurrent(vgs, 1e9, FET_IDSS, FET_VP) });
+        // the source resistor's line: id = (vg - vgs) / rs
+        line.push({ x: vgs, y: (f.vg - vgs) / d.re });
+      }
+      const top = FET_IDSS * 1.5;
+      Plot.draw(p.graph, {
+        xRange: [xLo, xHi], xFmt: x => trim(x, 2) + ' V', tokens: t,
+        left: { min: 0, max: top, fmt: y => eng(y, 'A', 2) },
+        traces: [{ pts: curve, colour: t.trace, fill: t.fill, axis: 'left', width: 2.4 },
+                 { pts: line.filter(q => q.y >= 0 && q.y <= top), colour: t.phase, axis: 'left', width: 1.6 }],
+        marks: [{ x: FET_VP, colour: t.marker }, { x: 0, colour: t.faint }],
+        cursor: { x: Math.max(xLo, Math.min(xHi, f.vgs)), colour: t.phase,
+                  dot: { y: f.id, axis: 'left' }, label: 'where it sits' }
+      });
+      p.legend.innerHTML = swatch(t.trace, 'Drain current against gate to source voltage') +
+        swatch(t.phase, 'What the source resistor allows') +
+        swatch(t.marker, 'Pinch off, ' + FET_VP + ' V');
+      const region = f.vgs > 0
+        ? 'gate above the source: a real JFET’s gate junction would conduct, so this is no way to bias one'
+        : { 'cut off': 'pinched right off, no current',
+            'pinched off': 'amplifying: the drain current follows the gate',
+            'ohmic': 'ohmic: the drain has run out of voltage, like a saturated transistor' }[f.region];
+      p.readouts.innerHTML = ro([
+        ['Gate, from the divider', trim(f.vg, 3) + ' V, and no gate current pulls it down'],
+        ['Source', trim(f.vs, 3) + ' V'],
+        ['Gate to source', trim(f.vgs, 3) + ' V', true],
+        ['Drain current', eng(f.id, 'A', 3)],
+        ['Drain', trim(f.vd, 3) + ' V'],
+        ['State', region, f.region !== 'pinched off' || f.vgs > 0]
+      ]);
+      if (p.schemNote) {
+        p.schemNote.textContent = 'RC is the drain resistor RD here and RE the source ' +
+          'resistor RS. Beta does nothing: a FET has no base current.';
+      }
+      p.fAnim = 1000;
+      return { layout: jfetLayout(), circuit: MI.parseNetlist(jfetNetlist(d)) };
+    },
+
+    /*
+     * The dual gate MOSFET. Gate 2's steady voltage is the control here, so
+     * the graph is the drain current against it, with the operating point.
+     */
+    dualGateBias(ctx) {
+      const { p, d, t, Plot, swatch, ro, Fmt } = ctx;
+      const { eng, trim } = Fmt;
+      const g = d.dg, vg2 = d.vcc * d.r2 / (d.r1 + d.r2);
+      const hi = Math.max(4, Math.min(d.vcc, vg2 * 1.5));
+      const pts = [];
+      for (let i = 0; i <= 120; i++) {
+        const v = -2.5 + (hi + 2.5) * i / 120;
+        // the same stage with gate 2 moved, everything else as set
+        pts.push({ x: v, y: DC.dualGateBias({ vcc: d.vcc, vg1: 0, vg2: v, rd: d.rc, rs: d.re,
+                                              idss: DG_IDSS, vp: DG_VP }).id });
+      }
+      const top = Math.max(1e-6, ...pts.map(q => q.y)) * 1.25;
+      Plot.draw(p.graph, {
+        xRange: [-2.5, hi], xFmt: x => trim(x, 2) + ' V', tokens: t,
+        left: { min: 0, max: top, fmt: y => eng(y, 'A', 2) },
+        traces: [{ pts: pts, colour: t.trace, fill: t.fill, axis: 'left', width: 2.4 }],
+        marks: [{ x: 0, colour: t.faint }],
+        cursor: { x: vg2, colour: t.phase, dot: { y: g.id, axis: 'left' },
+                  label: 'gate 2 here' }
+      });
+      p.legend.innerHTML = swatch(t.trace, 'Drain current against the voltage on gate 2') +
+        swatch(t.phase, 'Where R1 and R2 hold gate 2');
+      // gain from gate 1 with the source bypassed, against its most
+      const gmOf = vg2v => {
+        const vs = DC.dualGateBias({ vcc: d.vcc, vg1: 0, vg2: vg2v, rd: d.rc, rs: d.re,
+                                     idss: DG_IDSS, vp: DG_VP }).vs;
+        const at = x => DC.dualGateBias({ vcc: d.vcc, vg1: x, vg2: vg2v, rd: d.rc, rs: d.re,
+                                          idss: DG_IDSS, vp: DG_VP, vs: vs }).id;
+        return (at(1e-3) - at(-1e-3)) / 2e-3;
+      };
+      const gmHere = gmOf(vg2), gmFull = gmOf(Math.max(vg2, 6));
+      // Gate 2 is only throttling if raising it would let more current
+      // through. If it would not, and the lower half is still short of
+      // voltage, it is the drain resistor that has starved the device.
+      const idHigh = DC.dualGateBias({ vcc: d.vcc, vg1: 0, vg2: Math.max(vg2, 6, d.vcc), rd: d.rc,
+                                       rs: d.re, idss: DG_IDSS, vp: DG_VP }).id;
+      const gate2Limits = g.id < 0.97 * idHigh;
+      p.readouts.innerHTML = ro([
+        ['Gate 2, from R1 and R2', trim(vg2, 3) + ' V'],
+        ['Gate 1', '0 V, returned to ground through RG'],
+        ['Source', trim(g.vs, 3) + ' V, so gate 1 is ' + trim(g.vg1s, 3) + ' V on it'],
+        ['Drain current', eng(g.id, 'A', 3)],
+        ['Gain from gate 1', trim(100 * gmHere / Math.max(1e-12, gmFull), 3) +
+          '% of what this stage can give', gate2Limits],
+        ['Gate 2 is', g.id < 1e-7 ? 'low enough to turn the device off'
+          : (gate2Limits ? 'throttling the current: turning the gain down'
+            : (g.throttled ? 'out of the way, but RD drops so much that the device is short of voltage'
+                           : 'high enough to stay out of the way')), true]
+      ]);
+      if (p.schemNote) {
+        p.schemNote.textContent = 'R1 and R2 hold gate 2, and CG ties it to the rail, ' +
+          'which is signal ground. RC is the drain resistor, RE the source resistor.';
+      }
+      p.fAnim = 1000;
+      return { layout: dualGateLayout(), circuit: MI.parseNetlist(dualGateNetlist(d)) };
     },
 
     /*
@@ -2144,6 +3053,11 @@ const BENCH = {
         * meaningless and hid the gain, which is the one thing worth seeing.
         */
       const vin = d.drive;
+      // A saturated or cut off transistor is a switch, closed or open, and a
+      // small signal at the base does not come out at all. The small signal
+      // figures would describe a stage that is not there, so say so instead.
+      const notAmp = d.saturated || d.state === 'cut off';
+      if (notAmp) cfg.av = 0;
       const vout = vin * cfg.av;
       // How far the output can actually swing before it runs into the supply
       // at one end or saturation at the other. A small signal model does not
@@ -2164,6 +3078,7 @@ const BENCH = {
       // and the same two signals as currents, which is where the difference
       // between these three configurations really shows
       const iin = vin / Math.max(1e-9, cfg.zin);
+      if (notAmp) cfg.ai = 0;
       const iout = iin * cfg.ai;
       const inI = [], outI = [];
       for (let i = 0; i <= 400; i++) {
@@ -2218,13 +3133,34 @@ const BENCH = {
         (sameV ? '<span>the two voltage traces sit on each other: gain of one</span>' : '') +
         (sameI ? '<span>the two current traces sit on each other: gain of one</span>' : '');
 
+      if (notAmp) {
+        p.readouts.innerHTML = ro([
+          ['State', d.saturated
+            ? 'saturated: the bias has turned it hard on, a closed switch'
+            : 'cut off: the base is below the 0.6 V it needs, an open switch', true],
+          ['Voltage gain', 'none: the signal does not get through'],
+          ['Current gain', 'none'],
+          ['To amplify', d.saturated ? 'lower the base: raise R1 or lower R2, or raise RE'
+                                     : 'raise the base: lower R1 or raise R2']
+        ]);
+        // no signal current moves, so none is drawn
+        if (p.schemNote) p.schemNote.textContent = 'no signal gets through, so nothing moves';
+        return { layout: configLayout(p.topology) };
+      }
+      // what the transistor does with current, before the bias divider takes
+      // its share of the input: beta for common emitter, beta + 1 for the
+      // follower, just under one for common base
+      const device = { ce: ['beta', d.beta], cc: ['beta + 1', d.beta + 1],
+                       cb: ['beta / (beta + 1)', d.beta / (d.beta + 1)] }[p.topology];
       p.readouts.innerHTML = ro([
         ['Input impedance of the stage', eng(cfg.zin, 'Ω', 3), p.topology === 'cb'],
         ['of the transistor alone', eng(cfg.zinDevice, 'Ω', 3)],
         ['Output impedance of the stage', eng(cfg.zout, 'Ω', 3), p.topology === 'cc'],
         ['of the transistor alone', eng(cfg.zoutDevice, 'Ω', 3)],
         ['Voltage gain', cfg.av < 1.5 ? trim(cfg.av, 3) : '×' + trim(cfg.av, 3)],
-        ['Current gain', trim(cfg.ai, 3)],
+        ['Current gain of the stage', trim(cfg.ai, 3) +
+          (p.topology === 'cc' ? ', after R1 and R2 take most of the input current' : '')],
+        ['of the transistor alone', trim(device[1], 3) + ', ' + device[0]],
         ['Phase change', cfg.phase + '°, ' +
           (cfg.phase > 90 ? 'inverted' : 'in phase'), cfg.phase > 90],
         ['Signal current in', eng(iin, 'A', 3)],
@@ -2267,8 +3203,12 @@ const BENCH = {
         swatch(t.marker, zener ? 'Breakdown, ' + zener + ' V' : 'Where the circuit puts it');
       if (p.schemNote) {
         p.schemNote.textContent = zener
-          ? 'R here is the RC slider. It sets the current through the Zener, ' +
-            'and the Zener holds its voltage whatever that current is.'
+          ? (op.i > 0
+            ? 'R here is the RC slider. It sets the current through the Zener, ' +
+              'and the Zener holds close to its rated 5.1 V: the little it rises ' +
+              'with more current is its slope resistance, 5 Ω here.'
+            : 'R here is the RC slider. The supply is below 5.1 V, so the Zener ' +
+              'is not conducting and the whole supply sits across it.')
           : 'R here is the RC slider. It is the only control that changes ' +
             'anything on this panel: it sets the current, and the diode then ' +
             'takes whatever voltage goes with it.';
@@ -2276,7 +3216,7 @@ const BENCH = {
       p.readouts.innerHTML = ro(zener ? [
         ['Supply', trim(d.vcc, 3) + ' V'],
         ['Across the resistor', trim(op.vr, 3) + ' V'],
-        ['Held across the Zener', trim(op.vd, 3) + ' V', true],
+        [op.i > 0 ? 'Held across the Zener' : 'Across the Zener, not conducting', trim(op.vd, 3) + ' V', true],
         ['Current through both', eng(op.i, 'A', 3)],
         ['Power in the Zener', eng(op.p, 'W', 3) +
           (op.p > 0.4 ? ', more than a 400 mW diode will take' : ', within a 400 mW diode'),
@@ -2422,9 +3362,11 @@ const BENCH = {
          Math.abs(d.vceq - d.vcc / 2) > d.vcc * 0.12],
         ['Base current needed', eng(d.ib, 'A', 3)],
         ['Current down the divider', eng(dividerI, 'A', 3)],
-        ['Divider against base current', trim(ratio, 2) + ' times' +
-          (ratio < 10 ? ', under ten times: the base current pulls the bias down' : ', enough to hold the bias'),
-         ratio < 10],
+        ['Divider against base current', d.ib > 0
+          ? trim(ratio, 2) + ' times' +
+            (ratio < 10 ? ', under ten times: the base current pulls the bias down' : ', enough to hold the bias')
+          : 'no base current: the transistor is cut off',
+         d.ib > 0 && ratio < 10],
         ['Headroom', clipping ? 'will clip' : 'room both ways', clipping],
         ['Power in the transistor', (() => {
           const pw = Math.max(0.2, d.vceq) * d.icq;
@@ -2445,28 +3387,26 @@ const BENCH = {
     classes(ctx) {
       const { p, d, t, Plot, swatch, ro, Fmt } = ctx;
       const { eng, trim } = Fmt;
+      const kind = classKind(d.cls);
 
       // the current pulse the device passes, over two cycles
       const N = 1024;
       // headroom and drive are both in volts, so the pulse comes out in volts
       const wave = DC.collectorWave(d.headroom, d.drive, N);
       const peak = Math.max(1e-6, d.headroom + d.drive);
-      const pts = [];
-      for (let i = 0; i < N * 2; i++) pts.push({ x: i / N, y: wave[i % N] / peak });
-      const drivePts = [];
+      const pts = [], drivePts = [];
       for (let i = 0; i < N * 2; i++) {
+        pts.push({ x: i / N, y: d.saturated ? 1 : wave[i % N] / peak });
         drivePts.push({ x: i / N, y: (d.headroom + d.drive * Math.sin(2 * Math.PI * i / N)) / peak });
       }
-      if (p.schem) {
-        Plot.draw(p.schem, {
-          xRange: [0, 2], xFmt: x => trim(x, 2) + ' cyc', tokens: t,
-          left: { min: -1.1, max: 1.15, fmt: y => trim(y * peak, 2) + ' V' },
-          traces: [{ pts: drivePts, colour: t.phase, axis: 'left', width: 1.4 },
-                   { pts: pts, colour: t.trace, fill: t.fill, axis: 'left', width: 2 }],
-          cursor: null
-        });
-      }
-      if (p.schemNote) p.schemNote.textContent = 'drive in, collector current out';
+      Plot.draw(p.graph, {
+        xRange: [0, 2], xFmt: x => trim(x, 2) + ' cyc', tokens: t,
+        band: [0, 0.46], hideX: true,
+        left: { min: -1.1, max: 1.15, fmt: y => trim(y * peak, 2) + ' V' },
+        traces: [{ pts: drivePts, colour: t.phase, axis: 'left', width: 1.4 },
+                 { pts: pts, colour: t.trace, fill: t.fill, axis: 'left', width: 2 }],
+        cursor: null
+      });
 
       // and what that pulse contains
       const rep = new Float64Array(8192);
@@ -2478,83 +3418,142 @@ const BENCH = {
       }
       Plot.draw(p.graph, {
         xRange: [0, 6], xFmt: x => trim(x, 2) + 'f', tokens: t,
+        band: [0.54, 1], append: true,
         left: { max: 75, fmt: y => Math.round(y - 70) + ' dB' },
-        traces: [{ pts: fpts, colour: t.trace, fill: t.fill, axis: 'left', width: 1.4 }],
+        traces: [{ pts: d.saturated ? [] : fpts, colour: t.trace, fill: t.fill, axis: 'left', width: 1.4 }],
         marks: [1, 2, 3, 4, 5].map(k => ({ x: k, colour: t.marker })),
         cursor: null
       });
-      p.legend.innerHTML = swatch(t.trace, 'What the collector current contains') +
+      p.legend.innerHTML = swatch(t.phase, 'Base voltage above turn on') +
+        swatch(t.trace, 'Current one device passes') +
+        '<span>upper: two cycles &nbsp; lower: what that current contains</span>' +
         swatch(t.marker, 'Fundamental and its harmonics');
 
-      p.readouts.innerHTML = ro([
+      const circuitName = { A: 'one device, its collector load a resistor',
+        AB: 'two devices in push pull, two diodes holding each just on',
+        B: 'two devices in push pull, each taking one half',
+        C: 'one device, its collector load a tuned circuit' }[kind];
+      p.readouts.innerHTML = ro(d.saturated ? [
+        ['Which is class', 'none: the bias has saturated the transistor', true],
+        ['To get back to class A', 'lower the base: raise R1 or lower R2, or raise RE']
+      ] : [
         ['Conducts for', trim(d.thetaDeg, 4) + '°'],
-        ['Which is class', d.cls, true],
-        ['Efficiency', trim(d.eff * 100, 3) + '%'],
-        ['Needs a tuned load?', d.cls === 'C' ? 'yes, essential' : (d.cls === 'B' ? 'yes, or push pull' : 'no'),
+        ['Which is class', d.cls === 'off' ? 'none: the drive never reaches turn on' : d.cls, true],
+        ['Efficiency at best', trim(d.eff * 100, 3) + '%, with the output swinging the full supply'],
+        ['Typical circuit, drawn', circuitName],
+        ['Needs a tuned load?', d.cls === 'off' ? 'nothing to load: no current flows'
+          : d.cls === 'C' ? 'yes, essential'
+          : (d.cls === 'B' || d.cls === 'AB' ? 'one device alone would; two in push pull do not' : 'no'),
          d.cls === 'C']
       ]);
-      return {};
+      if (p.schemNote) {
+        p.schemNote.textContent = {
+          A: 'RE is left unbypassed: the current then follows the base above 0.6 V in a straight line.',
+          AB: 'An NPN on top for the positive half, a PNP below for the negative. The diodes hold each base a little past turn on, so the handover is smooth.',
+          B: 'An NPN on top for the positive half, a PNP below for the negative. Bases joined: each waits for 0.6 V of its own, which leaves a dead band at the crossover.',
+          C: 'The tuned circuit rings at the fundamental and ignores the harmonics.'
+        }[kind];
+      }
+      if (p.schemNote && kind !== 'A') {
+        p.schemNote.textContent += ' This is the usual circuit for the class the bias has reached; the figures are worked for one device biased by R1, R2 and RE.';
+      }
+      p.fAnim = kind === 'A' ? 1000 : CLASS_F;
+      return { layout: classLayout(kind), circuit: MI.parseNetlist(classNetlist(kind, d)) };
     },
 
     /** Feedback around a stage, and the two conditions for oscillation. */
     oscillator(ctx) {
       const { p, d, t, Plot, swatch, ro, Fmt } = ctx;
       const { trim, eng } = Fmt;
+      const o = d.osc;
+      const off = o.state !== 'active';
 
-      // A Colpitts. The coil and the two capacitors in series set the
-      // frequency; the junction between the capacitors is the tap the emitter
-      // drives, so their ratio sets how much of the tuned circuit's swing
-      // comes back to the base.
-      const L = 4.7e-6, C1 = 4700e-12, C2 = 470e-12, Q = 100;
-      const cs = C1 * C2 / (C1 + C2);
-      const f0 = 1 / (2 * Math.PI * Math.sqrt(L * cs));
-      const fraction = C1 / (C1 + C2);
-
-      // what the tuned circuit looks like at resonance, and what the stage can
-      // make across it. Rd = L / CR is the same figure the tuned circuit bench
-      // arrives at, and the coil's loss resistance comes from its Q.
-      const rCoil = 2 * Math.PI * f0 * L / Q;
-      const rd = L / (cs * rCoil);
-      const gm = Math.max(1e-9, d.ic) / 0.026;
-      const available = gm * rd;
-      const needed = 1 / fraction;
-      const willRun = available >= needed;
-
-      const pts = [];
-      for (let i = 0; i <= 400; i++) {
-        const cyc = i / 40;
-        // above one it grows until the stage runs out of room, below it decays
-        const per = Math.pow(available / needed, 1 / 6);
-        const amp = Math.min(1, 0.05 * Math.pow(per, cyc));
-        pts.push({ x: cyc, y: amp * Math.sin(2 * Math.PI * cyc) });
+      /*
+       * How the amplitude moves from cycle to cycle. Each trip round the loop
+       * multiplies it by the loop gain at that amplitude, spread over the
+       * cycles the tank's loaded Q takes to respond: a gain of one leaves it
+       * where it is, more grows it, less lets it decay.
+       */
+      const cycles = 30, perCycle = 24;
+      const env = [d.drive];
+      for (let n = 0; n < cycles; n++) {
+        const a = env[n], here = oscAtSwing(o, a);
+        env.push(off ? 0 : a * Math.exp(Math.PI * (here.T - 1) / here.qL));
       }
+      const pts = [];
+      for (let i = 0; i <= cycles * perCycle; i++) {
+        const cyc = i / perCycle, n = Math.min(cycles - 1, Math.floor(cyc)), u = cyc - n;
+        const a = off ? 0 : env[n] * Math.pow(env[n + 1] / Math.max(1e-12, env[n]), u);
+        pts.push({ x: cyc, y: a * Math.sin(2 * Math.PI * cyc) });
+      }
+      const top = Math.max(1e-6, ...env) * 1.15;
       Plot.draw(p.graph, {
-        xRange: [0, 10], xFmt: x => trim(x, 2) + ' cyc', tokens: t,
-        left: { min: -1.15, max: 1.15, fmt: y => trim(y, 2) },
-        traces: [{ pts: pts, colour: t.trace, axis: 'left', width: 1.8 }],
+        xRange: [0, cycles], xFmt: x => trim(x, 2) + ' cyc', tokens: t,
+        band: [0, 0.46], hideX: true,
+        left: { min: -top, max: top, fmt: y => eng(y, 'V', 2) },
+        traces: [{ pts: pts, colour: t.trace, axis: 'left', width: 1.6 }],
         cursor: null
       });
-      p.legend.innerHTML = swatch(t.trace, willRun
-        ? 'Building until the stage runs out of room'
-        : 'Dying away, the loop cannot replace what is lost');
-      p.readouts.innerHTML = ro([
-        ['Frequency of the tuned circuit', eng(f0, 'Hz', 4), true],
-        ['Coil, and the two in series', eng(L, 'H', 2) + ' with ' + eng(cs, 'F', 3)],
-        ['Fed back to the base', trim(fraction * 100, 3) + '% of the swing'],
-        ['So the loop needs a gain of', trim(needed, 3)],
-        ['The stage can manage', trim(available, 3) +
-          ' into the tuned circuit'],
-        ['Will it start', willRun ? 'yes, and it will settle where the stage clips'
-                                  : 'no, the loop loses more than it makes', !willRun],
-        ['The other condition', 'the feedback has to arrive in phase, 0\u00b0 round the loop']
+
+      // and the reason: the loop gain against the size of the swing, on a
+      // logarithmic scale of swing from 1 mV to 10 V at the base
+      const lx0 = -3, lx1 = 1;
+      const gainPts = [], unity = [];
+      for (let i = 0; i <= 160; i++) {
+        const lx = lx0 + (lx1 - lx0) * i / 160;
+        gainPts.push({ x: lx, y: off ? 0 : oscAtSwing(o, Math.pow(10, lx)).T });
+        unity.push({ x: lx, y: 1 });
+      }
+      const gTop = Math.max(2, Math.ceil(o.Tss * 1.15 / 0.4) * 0.4);
+      const at10 = lx => Math.max(lx0, Math.min(lx1, lx));
+      Plot.draw(p.graph, {
+        xRange: [lx0, lx1], xFmt: x => eng(Math.pow(10, x), 'V', 1), tokens: t,
+        band: [0.54, 1], append: true,
+        left: { min: 0, max: gTop, fmt: y => trim(y, 2) },
+        traces: [{ pts: unity, colour: t.faint, axis: 'left', width: 1.2 },
+                 { pts: gainPts, colour: t.phase, axis: 'left', width: 2.2 }],
+        marks: o.settle > 0 ? [{ x: at10(Math.log10(o.settle)), colour: t.marker }] : [],
+        cursor: { x: at10(Math.log10(d.drive)), colour: t.trace,
+                  dot: { y: o.T, axis: 'left' }, label: 'Drive' }
+      });
+      const growing = o.T >= 1;
+      p.legend.innerHTML = swatch(t.trace, 'Swing at the base over ' + cycles +
+        ' cycles, starting from the Drive setting: ' +
+        (off ? 'nothing, the transistor is not amplifying'
+          : growing ? 'growing, the loop makes more than it loses'
+            : (o.Tss > 1 ? 'shrinking back towards where it settles'
+                         : 'dying away, the loop cannot replace what is lost'))) +
+        swatch(t.phase, 'Loop gain against the swing at the base, 1 mV to 10 V') +
+        swatch(t.faint, 'A loop gain of one') +
+        (o.settle > 0 ? swatch(t.marker, 'Where it settles') : '') +
+        '<span>upper: the swing, cycle by cycle &nbsp; lower: why it grows or shrinks</span>';
+
+      p.readouts.innerHTML = ro(off ? [
+        ['Will it start', o.state === 'cut off'
+          ? 'no: the transistor is cut off, so there is no gain at all'
+          : 'no: the bias has saturated the transistor, hard on, so there is no gain', true]
+      ] : [
+        ['Frequency, where the loop comes back in phase', eng(o.f, 'Hz', 4)],
+        ['Coil, and CA and CB in series', eng(OSC_L, 'H', 2) + ' with ' + eng(OSC_CSER, 'F', 3)],
+        ['Emitter follower voltage gain', trim(o.A, 3) + ', under one as a follower always is'],
+        ['Tap back up to the base', '×' + trim(o.N, 3) + ', against (CA + CB) / CA = 2 with no losses'],
+        ['So the follower needs at least', trim(1 / Math.max(1e-9, o.N), 3)],
+        ['Loop gain at this swing', trim(o.T, 3) + (growing ? ', at least one: it grows' : ', under one: it shrinks'), true],
+        ['Loop gain for a tiny swing', trim(o.Tss, 3) + (o.Tss > 1 ? ', so it starts from noise' : ', so it will never start')],
+        ['Settles at', o.settle > 0 ? eng(o.settle, 'V', 3) + ' peak at the base, where the loop gain has fallen to one'
+                                    : 'nothing: it dies away'],
+        ['The other condition', 'the feedback has to arrive in phase, 0° round the loop']
       ]);
       if (p.schemNote) {
-        p.schemNote.textContent = 'The transistor runs as an emitter ' +
-          'follower here, with the tuned circuit and the two capacitors ' +
-          'around it.';
+        p.schemNote.textContent = 'The transistor runs as an emitter follower. ' +
+          'Its emitter drives the tap between CA and CB; the coil and the two ' +
+          'capacitors ring together, and the top of the coil feeds the base. ' +
+          'R1, R2 and RE are the sliders; the coil and capacitors are fixed.';
       }
-      p.fAnim = 1000;
-      return { layout: configLayout('cc') };
+      p.fAnim = o.f || OSC_F0;
+      if (off) return { layout: colpittsLayout() };
+      return { layout: colpittsLayout(),
+               circuit: MI.parseNetlist(oscNetlist(d, o.b, o.gm, Math.max(1e-6, d.drive))) };
     }
   },
 
@@ -2598,9 +3597,16 @@ const BENCH = {
       code: '2I3',
       levels: ['intermediate', 'full'],
       panel: 'transfer',
+      // the Full syllabus asks for PNP and FET biasing too, dual gate included
+      toggle: {
+        label: 'Device',
+        levels: ['full'],
+        options: [['npn', 'NPN'], ['pnp', 'PNP'], ['jfet', 'FET'], ['dualgate', 'Dual gate MOSFET']]
+      },
+      circuit: 'npn',
       introduces: {
         intermediate: ['bias', 'operating point', 'load line', 'saturation', 'cut off'],
-        full: []
+        full: ['pinch off', 'dual gate MOSFET']
       },
       heading: { intermediate: 'A small current controlling a large one',
                  full: 'Biasing, and how far the device can be pushed' },
@@ -2611,10 +3617,10 @@ const BENCH = {
         full: 'Biasing bipolar transistors and FETs so they sit where you want them.'
       },
       formulas: { intermediate: ['beta'],
-                  full: ['divider', 'emitter', 'beta', 'diss'] },
+                  full: ['divider', 'emitter', 'beta', 'diss', 'vgs'] },
       workLead: {
         intermediate: 'One relationship: the current gain.',
-        full: 'Gain, the load line, and what the device has to dissipate while it sits there.'
+        full: 'The divider, the current it sets, and what the device has to dissipate while it sits there. The last row is the FET on the same divider.'
       },
       workNote: {
         intermediate: 'Beta is simply the collector current divided by the base current. How R1 and R2 set the operating point is shown on the curve; working it out is not needed at this level.',
@@ -2631,7 +3637,11 @@ const BENCH = {
         full: [
           'For a signal to swing both ways without running out of room, the operating point wants to sit on the straight part with space either side of it. That is what the exam means by biasing the collector midway between the supply and zero.',
           'Change R1 or R2 and watch the marked point travel along the curve. Push it too far up and it runs into the flat top, where more base current buys no more collector current and the top of the waveform is shaved off. Take it too far down and the bottom of the waveform is cut off instead.',
-          'FETs work by a different mechanism, controlled by voltage on a gate rather than current into a base, but the same reasoning applies: pick a point on the load line and make sure the signal has room either side of it.'
+          'Push the base far enough and the stage saturates: the collector has fallen as far as it can, to about 0.2 V above the emitter, and the collector current is whatever the supply and the two resistors allow. Beta stops describing it. Look at the base current against the collector current in that state and the ratio has fallen well below beta.',
+          'A PNP transistor is biased the same way with every polarity turned round. Pick PNP above: the emitter resistor now goes to the positive rail and the load to ground, and the divider sets the base a fixed fraction of the supply below the rail. Measured down from the rail, every figure is the NPN’s. Its emitter arrow points in, and conventional current flows in at the emitter and out of the collector.',
+          'A FET is controlled by the voltage on its gate rather than by a current, and the gate draws essentially none. Pick FET above: this is the common source stage the exam draws, with the divider on the gate and a resistor in the source. Because nothing flows into the gate, the divider gives exactly its unloaded voltage however large R1 and R2 are.',
+          'An n channel depletion FET conducts with its gate at the source voltage, and taking the gate more negative than the source pinches the channel down until, at the pinch off voltage, no drain current flows at all. So it is biased with the gate below the source. The source resistor arranges that: drain current lifts the source, and the current settles where the device curve meets the line the resistor imposes. Lower the gate and the drain current falls.',
+          'A dual gate MOSFET has two insulated gates on one channel, in effect two devices in series. Gate 1 takes the signal and is biased like a single FET. Gate 2 is held at a steady few volts by its own divider and tied to signal ground by a capacitor. Pick it above and lower gate 2 with R1 and R2: while it is high it stays out of the way, and below about half a volt, with the controls as they start, it begins throttling the current and the gain with it. That is how automatic gain control is applied to such a stage, and why the device is popular in RF amplifiers and mixers.'
         ]
       }
     },
@@ -2642,13 +3652,15 @@ const BENCH = {
       // A conventional divider bias design, worked the way any textbook
       // works it: choose the collector current, drop about half the rail
       // across the load, put a volt or so on the emitter, and run the divider
-      // at ten times the base current so that variation in gain between
-      // devices does not move the bias.
+      // at about ten times the base current so that variation in gain between
+      // devices does not move the bias. With these values the bench, which
+      // does not assume the divider is stiff, gives 1.04 mA, 4.9 V across
+      // the 4.7 k load and a volt on the emitter.
       presets: [{
         levels: ['full'],
-        label: 'A worked design: 10 V, 1 mA',
-        note: 'half the rail across the load, and the divider at ten times the base current',
-        values: { vcc: 10, r1: 79e3, r2: 21e3, rc: 4000, re: 1500, beta: 100 }
+        label: 'A worked design: 10 V, about 1 mA',
+        note: 'about half the rail across the load, a volt on the emitter, and the divider at about ten times the base current',
+        values: { vcc: 10, r1: 82e3, r2: 18e3, rc: 4700, re: 1000, beta: 100, drive: 0.01 }
       }],
       panel: { intermediate: 'loadline', full: 'amp' },
       toggle: {
@@ -2660,7 +3672,7 @@ const BENCH = {
       circuit: 'ce',
       introduces: {
         intermediate: [],
-        full: ['conduction angle', 'class A', 'class AB', 'class B', 'class C']
+        full: ['conduction angle', 'class A', 'class AB', 'class B', 'class C', 'crossover distortion']
       },
       heading: { intermediate: 'The common emitter amplifier',
                  full: 'Three configurations, and the classes they can be biased into' },
@@ -2677,7 +3689,7 @@ const BENCH = {
       },
       workNote: {
         intermediate: 'No calculation at this level: recognise the circuit, and know that a transistor has to be biased, given the right steady voltages and currents, before it will amplify. Choosing the resistors is Full level.',
-        full: 'Neither figure is quoted from a table. The efficiency is worked out from the shape of the current pulse the device actually passes, which is why it lands on 50% for class A and 78.5% for class B without either being written down.'
+        full: 'Neither figure is quoted from a table. The efficiency is worked out from the shape of the current pulse the device actually passes, which is why it lands on 50% for class A and 78.5% for class B without either being written down. It is the most the class can reach, with the output swinging the whole supply; a real stage driven less hard does worse. The conduction angle, unlike that best efficiency, depends on the drive.'
       },
       explain: {
         intermediate: [
@@ -2689,13 +3701,14 @@ const BENCH = {
           'There are three ways to wire one transistor as an amplifier, and the difference is simply which terminal the signal goes in at and which it comes out of. Switch between the first three views and watch all five figures move.',
           'Common emitter is the general purpose one: in at the base, out at the collector. It gives both voltage gain and current gain, and it inverts, because more base current means more drop across the collector resistor. Its input and output impedances are middling, which makes it awkward to match at high frequencies.',
           'The emitter follower takes its output from the emitter instead. Voltage gain is just under one, so it makes nothing larger, but the input impedance is high and the output impedance is low, which is exactly what you want for driving something demanding without loading whatever is feeding you.',
+          'Its current gain is the one to read carefully. The transistor itself passes beta + 1 times its base current out of the emitter, and that is the figure the questions mean. The stage figure is far lower, because R1 and R2 sit across the input and take most of the input current before the base sees it. The two readouts show both.',
           'Common base drives the emitter and takes the output from the collector. Current gain is about one, voltage gain is high, and the input impedance is very low indeed. It stays stable at VHF and above, where a common emitter stage will happily oscillate instead of amplifying.',
           'Now switch to the classes view, because the second half of this item is a different question about the same transistor: not how it is wired, but where it is biased.',
-          'Drag the bias control slowly downwards and watch the readouts. At the top the device conducts for the whole 360 degrees: that is class A, faithful and at best 50% efficient, because it draws the same current whether a signal is present or not.',
+          'Now lower the base voltage step by step, by raising R1 or lowering R2, and watch the readouts and the circuit beside them. With the base well up the device conducts for the whole 360 degrees: that is class A, faithful and at best 50% efficient, because it draws the same current whether a signal is present or not. The typical class A circuit is the single stage with a resistor for its load.',
           'Class A is therefore the one least likely to produce harmonics of the input, because every part of the waveform is amplified alike. That is what the exam means by lowest distortion.',
-          'Keep going and it starts switching off for part of the cycle. Somewhere below halfway you are in class AB, the usual compromise for SSB. At cut off exactly it conducts for 180 degrees, which is class B and tops out at 78.5%. Two devices in push pull, each taking one half of the waveform, is the class B arrangement, and it needs a smooth handover from one to the other.',
-          'Below that is class C. Take the bias low enough and there is no collector current at all until a signal arrives, so it draws nothing when idle. It relies on a strong drive to turn it on, which also makes it insensitive to the exact drive level, and thoroughly non-linear.',
-          'The spectrum shows what that costs: the output is full of harmonics. A tuned circuit in the collector rings at the fundamental and ignores the rest, which is the only reason class C is usable at all. It follows that class C suits modes carrying no information in their amplitude, which means CW and FM. Anything relying on amplitude, AM and SSB above all, needs a linear stage. Many data modes change level at each symbol and need linearity too.'
+          'Keep going and it starts switching off for part of the cycle. Somewhere below halfway you are in class AB, the usual compromise for SSB. At cut off exactly, with the base held right at the point of conduction, it conducts for 180 degrees, which is class B and tops out at 78.5%. One device then only reproduces half the waveform, so the typical circuit is two devices in push pull, an NPN for the positive half and a PNP for the negative. Join their bases and each waits for its own 0.6 V, which leaves a dead band, crossover distortion, where neither conducts. The class AB circuit adds two diodes between the bases to hold each device just on, so the handover is smooth.',
+          'Below that is class C. Take the bias low enough and there is no collector current at all until a signal arrives, so it draws nothing when idle. It relies on a strong drive to turn it on, and its output depends heavily on that drive: more drive widens and heightens every pulse. It is thoroughly non-linear.',
+          'The spectrum shows what that costs: the output is full of harmonics. A tuned circuit in the collector rings at the fundamental and ignores the rest, which is the only reason class C is usable at all, and it is what the typical class C circuit shows in place of the load resistor. It follows that class C suits modes carrying no information in their amplitude, which means CW and FM. Anything relying on amplitude, AM and SSB above all, needs a linear stage. Many data modes change level at each symbol and need linearity too.'
         ]
       }
     },
@@ -2713,10 +3726,10 @@ const BENCH = {
         intermediate: 'How a transistor keeps a tuned circuit ringing, and where crystals beat variable oscillators.',
         full: 'The feedback an oscillator needs to keep itself going.'
       },
-      formulas: { intermediate: [], full: [] },
+      formulas: { intermediate: [], full: ['loop'] },
       workNote: {
         intermediate: 'A tuned circuit rings when you hit it, and then dies away as its resistance turns the energy into heat. An oscillator is simply an amplifier topping it up on every cycle to replace exactly what was lost.',
-        full: 'The gain must at least make up what the feedback network loses, and the signal must come back in phase. Fall short on either and it will not start. The drive control here stands in for the loss round the loop.'
+        full: 'The gain must at least make up what the feedback network loses, and the signal must come back in phase. Fall short on either and it will not start. The Drive control sets the size of the swing at the base. The lower plot shows what that does: a small swing sees the full gain, and a large one drives the transistor to cut off on the troughs, so less comes back and the gain round the loop falls.'
       },
       explain: {
         intermediate: [
@@ -2726,7 +3739,9 @@ const BENCH = {
         ],
         full: [
           'Two conditions, both necessary. The gain round the whole loop must be at least unity, meaning the amplifier makes up everything the feedback network throws away. And the phase round the whole loop must come back to zero, so the returning signal reinforces rather than cancels.',
-          'Wind the drive control down, which here stands for a lossier feedback path, and watch the oscillation die out because the amplifier can no longer keep up. Wind it up and it builds.',
+          'This is a Colpitts oscillator, the one the exam draws, with the transistor as an emitter follower. A follower\u2019s voltage gain is always a little under one, so the voltage gain has to come from somewhere else: from the tuned circuit. Its two capacitors in series act as a step up transformer. The emitter drives the tap between them, and the top of the coil, which feeds the base, swings (CA + CB) / CA times as far, twice here. The loss is the energy the coil\u2019s resistance and the bias resistors take out of the tank each cycle; the transistor replaces it by supplying current, beta + 1 times what its base draws.',
+          'So the loop gain is the follower\u2019s gain times what the tap gives back, and it has to reach one. Starve the transistor of current, with a low supply and a large RE, and its gain falls until the loop is short of one: the trace dies away and it will never start. That is what the questions mean by the losses exceeding the gain.',
+          'The amplitude looks after itself. A small swing sees the full gain and grows. As it grows the transistor starts cutting off on the troughs, less of the fundamental comes out, and the loop gain falls. It settles where the loop gain is exactly one, marked on the lower plot. With the controls as they start that is about 2 V at the base, above the top of the Drive control, so across Drive’s range the loop gain hardly moves: the transistor is still working in proportion. Take the stage closer to the edge, with less supply or a larger RE, and the settling point comes down into range. Then wind Drive up past it and the loop gain drops below one and the swing shrinks back; wind it down and it grows again.',
           'The neatest way to hold the phase condition is this: either both stages shift by nothing, or both shift by 180 degrees. A common emitter stage inverts, so its feedback network must invert as well to bring the total back to zero. An emitter follower does not invert, so its network must not either.'
         ]
       }
@@ -2813,17 +3828,21 @@ const BENCH = {
                 'an n channel depletion FET is biased with the gate below its source',
                 'of the options only 3.2 V is below 4.5 V',
                 'which puts V<sub>GS</sub> at 3.2 V &minus; 4.5 V = &minus;1.3 V'],
-      source: { from: ['2I3'] }
+      source: { eq: ['vgs'], from: ['2I3'] },
+      // figures chosen to land on the diagram's 18 V rail, 4.5 V source and
+      // 14 V drain; the question gives no resistor values
+      seed: { vcc: 18, r1: 101.8e3, r2: 22e3, rc: 1556, re: 1751, beta: 200, drive: 0.01 },
+      seedNote: 'Pick FET above the 2I3 panel, then set the bench: it puts the source at 4.5 V and the drain at 14 V on an 18 V rail, as the diagram does, and the gate comes out near 3.2 V.'
     },
     '2025-Full679': {
       why: 'The diagram gives the emitter voltage, and the base has to sit about 0.6 V above it. R1 and R2 divide the supply down to that, so what the answer really turns on is the ratio of the two resistors rather than any one value.',
       working: ['base = emitter + 0.6 V = 1.5 V + 0.6 V = 2.1 V',
-                'the divider gives base = supply &times; R2 / (R1 + R2)',
-                'on a rail of about 9.5 V that needs R2 / (R1 + R2) = 2.1 / 9.5 = 0.22',
-                'with R2 = 22 k&Omega; that puts R1 at 78 k&Omega;'],
-      source: { eq: ['divider', 'beta'], from: ['2I3'] },
-      seed: { r1: 78e3, r2: 22e3, rc: 910, re: 470 },
-      seedNote: 'The bench is set to this divider. Read the base voltage it produces, then check where the collector ends up.'
+                'the divider gives base = supply &times; R2 / (R1 + R2), and the diagram&rsquo;s supply is 10 V',
+                'so R1 = R2 &times; (10 V &minus; 2.1 V) / 2.1 V = 22 k&Omega; &times; 7.9 / 2.1 = 82.8 k&Omega;',
+                'the nearest of the four options is 78 k&Omega;'],
+      source: { eq: ['divider', 'emitter'], from: ['2I3'] },
+      seed: { vcc: 10, r1: 78e3, r2: 22e3, rc: 3900, re: 1200, beta: 200, drive: 0.01 },
+      seedNote: 'The bench is set to this divider on the diagram&rsquo;s 10 V rail. With 78 k the divider alone gives 2.2 V; the base current pulls the base down a little, and the emitter lands at the 1.5 V the diagram marks. The diagram gives no collector or emitter resistor values; those chosen here put the collector near mid rail.'
     },
     '2025-Full321': {
       why: 'Common emitter. The collector resistor turns a large collector current change into a large voltage change, so the gain is well above one, and the collector moves the opposite way to the base, so the output is inverted.',
@@ -2845,8 +3864,8 @@ const BENCH = {
                 'nothing of the waveform is missing, and half the supply is heat',
                 'lowest distortion of the four, which is Class A'],
       source: { eq: ['theta', 'eff'], from: ['2I4'] },
-      seed: { r1: 78e3, r2: 22e3, re: 220, drive: 0.05 },
-      seedNote: 'Set the bench to class A and look at the spectrum: almost nothing but the fundamental.'
+      seed: { vcc: 12, r1: 78e3, r2: 22e3, rc: 2200, re: 1000, beta: 200, drive: 0.01 },
+      seedNote: 'This sets a stage biased well into class A, about half the supply between its collector and emitter. Switch the 2I4 view to Classes A to C and look at the spectrum: almost nothing but the fundamental.'
     },
     '2025-Full325': {
       why: 'Amplifying only one half of the waveform means conducting for half the cycle, which is 180 degrees, and that is class B. Class A takes the whole cycle, class AB rather more than half, class C rather less.',
@@ -2854,20 +3873,20 @@ const BENCH = {
                 '360&deg; / 2 = 180&deg;',
                 'which is class B, at best 78.5% efficient'],
       source: { eq: ['theta'], from: ['2I4'] },
-      seed: { r1: 200e3, r2: 12e3, re: 220, drive: 0.3 },
-      seedNote: 'The bench is set to the cut off point. Read the conduction angle and the class.'
+      seed: { vcc: 12, r1: 190e3, r2: 10e3, rc: 2200, re: 1000, beta: 200, drive: 0.3 },
+      seedNote: 'The divider puts the base at exactly 0.6 V, the cut off point. In the Classes A to C view the device conducts for 180\u00b0, only while the signal is positive: class B.'
     },
     '2025-Full3404': {
       why: 'Class C conducts for so little of the cycle that what comes out is a series of pulses rather than a waveform, so a tuned load is needed to ring at the fundamental and put the sine wave back. Its supply current is lower rather than higher, because it draws nothing at all until a signal arrives. Its distortion is worse rather than better. And push pull, where each device takes half the waveform, is a class B arrangement rather than a class C one.',
       source: { eq: ['theta', 'eff'], from: ['2I4'] },
-      seed: { r1: 400e3, r2: 10e3, re: 220, drive: 0.5 },
-      seedNote: 'Set the bench to class C and look at the harmonics on the right. That is what the tuned load has to remove.'
+      seed: { vcc: 12, r1: 400e3, r2: 10e3, rc: 2200, re: 1000, beta: 200, drive: 0.5 },
+      seedNote: 'This biases the base below cut off. In the Classes A to C view, look at the harmonics in the lower plot and the tuned circuit drawn in the collector: that is what removes them.'
     },
     '2025-Full7635': {
       why: 'Oscillation builds only if each trip round the loop returns at least as much as it started with. Gain has to exceed the losses, not match half of them or fall short.',
       source: { from: ['2I5'] },
-      seed: { re: 4700, vcc: 5 },
-      seedNote: 'The panel shows the gain the loop needs beside the gain the stage can manage. This setting cuts the standing current right down, and the gain available falls with it while the figure it has to beat stays where it is.'
+      seed: { vcc: 5, r1: 47e3, r2: 7.5e3, rc: 4700, re: 4700, beta: 200, drive: 0.01 },
+      seedNote: 'This setting starves the transistor of current. The follower\u2019s gain falls, the tap cannot make up the difference, and the loop gain drops below one: the trace dies away.'
     },
     '2025-Full7738': {
       why: 'The comparison is with the loss in the feedback network, not with the transistor\u2019s beta. Beta describes the device; what matters is whether the whole loop breaks even.',
@@ -2875,7 +3894,9 @@ const BENCH = {
     },
     '2025-Full7739': {
       why: 'Same condition stated again: the amplifier has to make up slightly more than the feedback network throws away. Slightly, because far more than that drives the stage into clipping and the output distorts.',
-      source: { from: ['2I5'] }
+      source: { from: ['2I5'] },
+      seed: { vcc: 8, r1: 47e3, r2: 7.5e3, rc: 4700, re: 4700, beta: 200, drive: 0.01 },
+      seedNote: 'This runs the oscillator with only a little gain to spare: about 1.5 round the loop for a tiny swing, and it settles at about 0.3 V at the base. Move Drive either side of that and watch the loop gain cross one, the swing growing below it and shrinking back above it.'
     },
     '2025-Full7764': {
       why: 'Two conditions have to hold together. Enough gain to cover the losses, and the returning signal in phase with what is already at the input. Either one alone is not enough.',
@@ -2884,8 +3905,8 @@ const BENCH = {
     '2025-Full7765': {
       why: 'If the feedback network loses more than the amplifier can replace, each trip round the loop is smaller than the last and the oscillation dies out. It will not start at all.',
       source: { from: ['2I5'] },
-      seed: { re: 4700, vcc: 5 },
-      seedNote: 'Compare the two figures on the oscillator panel. The trace builds while the stage can manage more than the loop needs, and decays when it cannot.'
+      seed: { vcc: 5, r1: 47e3, r2: 7.5e3, rc: 4700, re: 4700, beta: 200, drive: 0.01 },
+      seedNote: 'Compare the follower gain with the least it needs on the oscillator panel. Here it falls short, the loop gain is under one, and the trace decays. Put RE back to 1 k and the supply to 12 V and it builds.'
     },
     '2025-Full7766': {
       why: 'An emitter follower does not invert, so the signal arrives back at the input already in phase. The feedback network therefore has to add nothing. A common emitter stage inverts, and its network has to supply the other 180 degrees.',
@@ -3501,12 +4522,16 @@ const QUESTIONS = [{"code": "2I1", "ref": "2025-Full300", "q": "A zener diode is
 
   $('grpTag').textContent = BENCH.group;
   $('grpTitle').textContent = BENCH.title;
+  // The default words describe a circuit bench. A bench with no circuit on it
+  // says what its displays are computed from instead.
+  if (BENCH.standfirst) $('standfirst').textContent = BENCH.standfirst;
   $('colophon').innerHTML =
     '<span class="home"><a href="../index.html">All the Bench Test pages</a>' +
     ' &middot; built by Ian Henry, G0LFT, ' +
     '<a href="https://g0lft.org/">g0lft.org</a></span>' +
-    'Every curve is solved by a general complex nodal analysis engine, verified against ' +
-    'closed form results. Circuit symbols follow the RSGB specification. ' +
+    (BENCH.colophonNote ||
+     'Every curve is solved by a general complex nodal analysis engine, verified against ' +
+     'closed form results. Circuit symbols follow the RSGB specification.') + ' ' +
     'Item wording is our own. Questions are held by the RSGB and used under the terms ' +
     'published with the bank. ' + BENCH.bank.note;
 
