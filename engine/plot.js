@@ -7,7 +7,7 @@
  * the plot follows the page theme without the caller thinking about it.
  */
 
-const PAD = { l: 58, r: 52, t: 14, b: 34 };
+const PAD = { l: 70, r: 60, t: 14, b: 36 };   // room for 13 px axis labels
 
 /**
  * spec = {
@@ -58,7 +58,7 @@ function draw(canvas, spec) {
   /* grid and axis labels */
   ctx.strokeStyle = t.grid || '#ddd';
   ctx.lineWidth = 1;
-  ctx.font = '500 11px ' + font;
+  ctx.font = '500 13px ' + font;
   ctx.fillStyle = t.faint || '#888';
   for (let i = 0; i <= 4; i++) {
     const y = Math.round(PAD.t + yOff + H * i / 4) + 0.5;
@@ -108,7 +108,7 @@ function draw(canvas, spec) {
     const y = (l.axis === 'right' ? YR : YL)(l.y);
     if (y < PAD.t + yOff - 2 || y > PAD.t + yOff + H + 2) continue;
     ctx.fillStyle = l.colour;
-    ctx.font = '11px ' + font;
+    ctx.font = '13px ' + font;
     ctx.textAlign = 'right';
     ctx.textBaseline = 'bottom';
     ctx.fillText(l.text, X(l.x), y - 3);
@@ -159,7 +159,7 @@ function draw(canvas, spec) {
     }
     if (c.label) {
       ctx.fillStyle = t.soft || '#666';
-      ctx.font = '600 11px ' + font;
+      ctx.font = '600 13px ' + font;
       const nearRight = (xb - c.x) < (xb - xa) * 0.18;
       ctx.textAlign = nearRight ? 'right' : 'left';
       ctx.textBaseline = 'top';

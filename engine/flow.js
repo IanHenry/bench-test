@@ -94,13 +94,17 @@ function draw(ctx, layout, flow, span) {
   };
 
   for (const el of layout.elements) {
-    if (el.type === 'V') continue;          // the source body is not a wire run
+    if (el.type === 'V' || el.type === 'B') continue;   // a source body is not a wire run
     // a coupling capacitor is a short to the signal and so is absent from the
     // netlist, but it still carries a current, named here by el.flow
     const s = swing(el.flow || el.name);
     if (!s) continue;
+    // A part drawn the other way round from the current it is named for,
+    // such as a reverse biased diode, says so, and its dots run from its
+    // second end to its first.
     const [x1, y1, x2, y2] = endpoints(el, span);
-    dotsAlong(ctx, x1, y1, x2, y2, s.off, s.intensity, flow.colour);
+    if (el.flowReversed) dotsAlong(ctx, x2, y2, x1, y1, s.off, s.intensity, flow.colour);
+    else dotsAlong(ctx, x1, y1, x2, y2, s.off, s.intensity, flow.colour);
   }
 
   for (const w of (layout.wires || [])) {

@@ -1,12 +1,11 @@
 <title>Sampling Bench</title>
 <meta charset="utf-8">
 <meta name="robots" content="noindex, nofollow">
-<!-- Kept out of search while this is a work in progress being reviewed.
-     Delete this line when you want it found. -->
+<!-- Kept out of search for now. Delete the robots line when it should be found. -->
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Saira+Semi+Condensed:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Saira+Semi+Condensed:wght@400;500;600;700&family=Inter:ital,wght@0,400;0,600;1,400&display=swap">
 
 <style>
   :root {
@@ -17,7 +16,7 @@
     --phase:#16697F; --marker:#A62463; --wire:#54646F;
     --shadow:0 1px 2px rgba(15,26,34,.06),0 8px 24px rgba(15,26,34,.07);
     --f-panel:"Saira Semi Condensed","Helvetica Neue",Arial,sans-serif;
-    --f-text:"Source Serif 4",Georgia,"Times New Roman",serif;
+    --f-text:Inter,"Segoe UI",system-ui,sans-serif;
     --f-data:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
   }
   @media (prefers-color-scheme: dark) {
@@ -55,7 +54,7 @@
     .masthead .eyebrow, .masthead h1 { grid-column:1 / -1; }
     .masthead .levels { justify-self:end; align-self:center; }
   }
-  .eyebrow { font-family:var(--f-panel); font-size:12px; font-weight:600;
+  .eyebrow { font-family:var(--f-panel); font-size:15px; font-weight:600;
              letter-spacing:.14em; text-transform:uppercase; color:var(--ink-faint);
              display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
   .eyebrow .tag { color:var(--marker); border:1px solid currentColor;
@@ -67,7 +66,7 @@
   /* level switch */
   .levels { display:flex; gap:0; border:1px solid var(--rule); border-radius:3px;
             overflow:hidden; align-self:flex-start; background:var(--surface); }
-  .levels button { font-family:var(--f-panel); font-size:12.5px; font-weight:600;
+  .levels button { font-family:var(--f-panel); font-size:15px; font-weight:600;
                    letter-spacing:.1em; text-transform:uppercase;
                    padding:8px 16px; border:0; border-right:1px solid var(--rule);
                    background:transparent; color:var(--ink-soft); cursor:pointer; }
@@ -85,11 +84,11 @@
           display:flex; flex-direction:column; gap:6px; }
   .ctrl:last-child { border-right:none; }
   .ctrl-head { display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
-  .ctrl-name { font-family:var(--f-panel); font-size:12px; font-weight:600;
+  .ctrl-name { font-family:var(--f-panel); font-size:15px; font-weight:600;
                letter-spacing:.11em; text-transform:uppercase; color:var(--ink-soft); }
   .ctrl-val { font-family:var(--f-data); font-size:15px; font-weight:500;
               font-variant-numeric:tabular-nums; }
-  .ctrl-desc { font-size:13px; line-height:1.4; color:var(--ink-faint);
+  .ctrl-desc { font-size:15px; line-height:1.4; color:var(--ink-faint);
                margin:2px 0 0; max-width:34ch; }
 
   input[type=range] { -webkit-appearance:none; appearance:none; width:100%;
@@ -118,7 +117,7 @@
     .item-headline { grid-column:2; grid-row:2 / span 2; align-self:start;
                      border-left:2px solid var(--rule); padding-left:16px; margin:0; }
   }
-  .item-code { font-family:var(--f-panel); font-size:11px; font-weight:600;
+  .item-code { font-family:var(--f-panel); font-size:15px; font-weight:600;
                letter-spacing:.13em; text-transform:uppercase; color:var(--ink-faint);
                display:flex; gap:8px; align-items:center; }
   .item-code b { color:var(--marker); font-weight:700; }
@@ -126,11 +125,11 @@
                   letter-spacing:-.01em; margin:0; text-wrap:balance; }
   .item-lead { margin:0; font-size:17.5px; color:var(--ink); }
   .presets { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
-  .preset { font:inherit; font-size:13px; padding:5px 11px; cursor:pointer;
+  .preset { font:inherit; font-size:15px; padding:5px 11px; cursor:pointer;
             border:1px solid var(--rule); border-radius:999px;
             background:var(--surface); color:var(--ink); }
   .preset:hover { border-color:var(--marker); color:var(--marker); }
-  .preset-note { font-size:12.5px; color:var(--muted); }
+  .preset-note { font-size:15px; color:var(--ink-faint); }
   .item-headline { font-family:var(--f-text); font-size:15.5px; font-style:italic;
                    color:var(--ink-soft); margin:0; }
   /* framed and two column, like everything else on the page, so the measure
@@ -149,7 +148,7 @@
   .bench-intro:empty, .bench-outro:empty { display:none; }
   .anim { display:flex; align-items:center; gap:9px; padding:12px 16px;
           border-right:1px solid var(--rule-soft); }
-  .anim button { font-family:var(--f-panel); font-size:12px; font-weight:600;
+  .anim button { font-family:var(--f-panel); font-size:15px; font-weight:600;
                  letter-spacing:.09em; text-transform:uppercase; cursor:pointer;
                  padding:6px 12px; border:1px solid var(--rule); border-radius:3px;
                  background:transparent; color:var(--ink-soft); }
@@ -166,14 +165,14 @@
   .graph { padding:10px 10px 2px; }
   .graph canvas { display:block; width:100%; height:230px; touch-action:none; cursor:crosshair; }
   .legend { display:flex; flex-wrap:wrap; gap:16px; padding:6px 4px 8px;
-            font-family:var(--f-panel); font-size:11.5px; font-weight:600;
-            letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); }
+            font-family:var(--f-panel); font-size:15px; font-weight:600;
+            letter-spacing:.02em; color:var(--ink-soft); }
   .legend span { display:inline-flex; align-items:center; gap:6px; }
   .legend i { width:15px; height:3px; border-radius:2px; }
 
   .toggle { display:flex; flex-wrap:wrap; gap:0; border-top:1px solid var(--rule-soft);
             background:var(--surface-2); }
-  .toggle button { font-family:var(--f-panel); font-size:12px; font-weight:600;
+  .toggle button { font-family:var(--f-panel); font-size:15px; font-weight:600;
                    letter-spacing:.09em; text-transform:uppercase;
                    padding:9px 15px; border:0; border-right:1px solid var(--rule-soft);
                    background:transparent; color:var(--ink-soft); cursor:pointer; }
@@ -185,14 +184,14 @@
   .ro { padding:11px 16px 13px; border-right:1px solid var(--rule-soft);
         display:flex; flex-direction:column; gap:2px; }
   .ro:last-child { border-right:none; }
-  .ro-l { font-family:var(--f-panel); font-size:10.5px; font-weight:600;
+  .ro-l { font-family:var(--f-panel); font-size:15px; font-weight:600;
           letter-spacing:.12em; text-transform:uppercase; color:var(--ink-faint); }
   .ro-v { font-family:var(--f-data); font-size:17px; font-weight:500;
           font-variant-numeric:tabular-nums; }
   .ro.hot .ro-v { color:var(--marker); }
-  .ro-note { margin:6px 0 0; font-size:12px; color:var(--muted);
+  .ro-note { margin:6px 0 0; font-size:15px; color:var(--ink-faint);
              font-style:italic; }
-  .panel-failed { margin:0 0 10px; padding:8px 10px; font-size:13px;
+  .panel-failed { margin:0 0 10px; padding:8px 10px; font-size:15px;
                   border:1px solid var(--marker); border-radius:4px;
                   color:var(--marker); }
 
@@ -212,20 +211,20 @@
   .work-row { display:grid; grid-template-columns:1fr; gap:2px;
               padding:11px 0; border-bottom:1px solid var(--rule-soft); }
   .work-row:last-child { border-bottom:none; }
-  .work-name { font-family:var(--f-panel); font-size:11px; font-weight:600;
+  .work-name { font-family:var(--f-panel); font-size:15px; font-weight:600;
                letter-spacing:.12em; text-transform:uppercase; color:var(--ink-faint);
                display:flex; gap:9px; align-items:center; flex-wrap:wrap; }
   .given { border:1px solid currentColor; border-radius:2px; padding:0 5px;
-           font-size:9.5px; letter-spacing:.09em; }
+           font-size:15px; letter-spacing:.09em; }
   .given.yes { color:var(--phase); }
   .given.no  { color:var(--marker); }
   .given.int { color:var(--ink-faint); }
-  .work-eq { font-family:var(--f-data); font-size:14.5px; font-weight:500; }
-  .work-sub { font-family:var(--f-data); font-size:13.5px; color:var(--ink-soft);
+  .work-eq { font-family:var(--f-data); font-size:15.5px; font-weight:500; }
+  .work-sub { font-family:var(--f-data); font-size:15px; color:var(--ink-soft);
               font-variant-numeric:tabular-nums; }
   .work-sub b { color:var(--phase); font-weight:500; }
   .work-out { color:var(--marker); font-weight:600; }
-  .work-note { font-size:14.5px; color:var(--ink-soft); margin:9px 0 0; max-width:62ch; }
+  .work-note { font-size:15px; color:var(--ink-soft); margin:9px 0 0; max-width:62ch; }
   .work .lhs { color:var(--ink-faint); }
   .work .sub { color:var(--phase); }
   .work .out { color:var(--marker); font-weight:600; }
@@ -236,7 +235,7 @@
            border-top:1px dashed var(--rule); padding-top:12px; margin-top:3px; }
   .qs { display:flex; flex-direction:column; gap:0; margin-top:4px;
         border:1px solid var(--rule); border-radius:4px; overflow:hidden; }
-  .qs-head { font-family:var(--f-panel); font-size:11px; font-weight:700;
+  .qs-head { font-family:var(--f-panel); font-size:15px; font-weight:700;
              letter-spacing:.13em; text-transform:uppercase; color:var(--ink-faint);
              padding:10px 15px; background:var(--surface-2);
              border-bottom:1px solid var(--rule); }
@@ -251,59 +250,61 @@
             flex-direction:column; gap:5px; }
   .q-opts li { display:grid; grid-template-columns:24px 1fr; gap:8px;
                font-size:15.5px; align-items:baseline; }
-  .q-opts .k { font-family:var(--f-panel); font-weight:700; font-size:12.5px;
+  .q-opts .k { font-family:var(--f-panel); font-weight:700; font-size:15px;
                letter-spacing:.08em; color:var(--ink-faint); }
   .q.shown .q-opts li.right .k { color:var(--e-right,var(--phase)); }
   .q.shown .q-opts li.right { color:var(--ink); font-weight:600; }
   .q.shown .q-opts li.right .k::after { content:' \2713'; }
   .q-foot { display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
-  .q-foot button { font-family:var(--f-panel); font-size:11.5px; font-weight:600;
+  .q-foot button { font-family:var(--f-panel); font-size:15px; font-weight:600;
                    letter-spacing:.09em; text-transform:uppercase; cursor:pointer;
                    padding:5px 11px; border:1px solid var(--rule); border-radius:3px;
                    background:transparent; color:var(--ink-soft); }
   .q-foot button:focus-visible { outline:2px solid var(--marker); outline-offset:2px; }
-  .q-ref { font-family:var(--f-data); font-size:12px; color:var(--ink-faint); }
-  .q-attrib { font-size:13.5px; color:var(--ink-faint); padding:10px 15px;
+  .q-ref { font-family:var(--f-data); font-size:15px; color:var(--ink-faint); }
+  .q-attrib { font-size:15px; color:var(--ink-faint); padding:10px 15px;
               background:var(--surface-2); border-top:1px solid var(--rule); }
   .q-why { display:none; flex-direction:column; gap:9px;
            border-left:3px solid var(--phase); padding:2px 0 2px 14px; }
   .q.shown .q-why { display:flex; }
   .q-why p { margin:0; font-size:16px; }
-  .q-work { font-family:var(--f-data); font-size:13.5px; line-height:1.75;
+  .q-work { font-family:var(--f-data); font-size:15px; line-height:1.75;
             font-variant-numeric:tabular-nums; color:var(--ink-soft); }
   .q-work div:last-child { color:var(--marker); font-weight:600; }
-  .q-seed { align-self:flex-start; font-family:var(--f-panel); font-size:11.5px;
+  .q-seed { align-self:flex-start; font-family:var(--f-panel); font-size:15px;
             font-weight:600; letter-spacing:.09em; text-transform:uppercase;
             cursor:pointer; padding:6px 12px; border-radius:3px;
             border:1px solid var(--trace); background:transparent; color:var(--trace); }
   .q-seed:focus-visible { outline:2px solid var(--marker); outline-offset:2px; }
-  .schem-note { font-family:var(--f-panel); font-size:10.5px; font-weight:600;
-                letter-spacing:.09em; text-transform:uppercase; color:var(--ink-faint);
+  /* not upper case: these carry units, and mA, µH or Hz must not become MA, MH or HZ */
+  .schem-note { font-family:var(--f-panel); font-size:15px; font-weight:600;
+                letter-spacing:.02em; color:var(--ink-faint);
                 text-align:center; padding:0 0 6px; }
+  .schem-note::first-letter { text-transform:uppercase; }
   .work-lead { font-size:15.5px; color:var(--ink-soft); margin:0 0 8px; }
   .terms { border:1px solid var(--rule-soft); border-radius:3px;
            background:var(--surface-2); padding:4px 15px 8px; margin:0 0 4px; }
-  .terms-head { font-family:var(--f-panel); font-size:10.5px; font-weight:700;
+  .terms-head { font-family:var(--f-panel); font-size:15px; font-weight:700;
                 letter-spacing:.13em; text-transform:uppercase; color:var(--ink-faint);
                 padding:9px 0 7px; }
   .terms dl { margin:0; display:flex; flex-direction:column; gap:9px; }
-  .terms dt { font-family:var(--f-panel); font-size:14px; font-weight:700;
+  .terms dt { font-family:var(--f-panel); font-size:15px; font-weight:700;
               letter-spacing:.02em; color:var(--phase); }
   .terms dd { margin:2px 0 0; font-size:15.5px; color:var(--ink); max-width:60ch; }
   .term { border-bottom:1px dotted var(--phase); cursor:help; }
-  .q-src { font-size:14.5px; color:var(--ink-soft); border-top:1px dotted var(--rule);
+  .q-src { font-size:15.5px; color:var(--ink-soft); border-top:1px dotted var(--rule);
            padding-top:9px; }
-  .q-src b { font-family:var(--f-panel); font-size:12px; font-weight:700;
+  .q-src b { font-family:var(--f-panel); font-size:15px; font-weight:700;
              letter-spacing:.11em; text-transform:uppercase; color:var(--ink-faint);
              display:block; margin-bottom:4px; }
   .q-src a { color:var(--phase); }
-  .q-src code { font-family:var(--f-data); font-size:13px; background:var(--surface);
+  .q-src code { font-family:var(--f-data); font-size:15px; background:var(--surface);
                 padding:1px 5px; border-radius:3px; }
   .qlink a { color:var(--phase); }
-  .qlink code { font-family:var(--f-data); font-size:13px; background:var(--surface-2);
+  .qlink code { font-family:var(--f-data); font-size:15px; background:var(--surface-2);
                 padding:1px 5px; border-radius:3px; }
 
-  .colophon { font-size:14px; color:var(--ink-faint); border-top:1px solid var(--rule);
+  .colophon { font-size:15px; color:var(--ink-faint); border-top:1px solid var(--rule);
               padding-top:16px; max-width:72ch; }
   .colophon a { color:var(--phase); }
   .colophon .home { display:block; margin-bottom:10px; font-size:15px;
@@ -312,6 +313,27 @@
   @media (prefers-reduced-motion: reduce) { * { animation:none !important; } }
 </style>
 
+<!-- Shared g0lft.org header and footer. Keep in step with the header on course.g0lft.org. -->
+<style>
+  .g0-bar { background:#fff; border-bottom:1px solid #E1E4E8; position:sticky; top:0; z-index:20; }
+  .g0-bar .in { display:flex; align-items:center; gap:18px; max-width:1240px; margin:0 auto; padding:8px 16px; }
+  .g0-bar img { height:44px; width:auto; display:block; flex:none; }
+  .g0-bar nav { display:flex; gap:2px; min-width:0; overflow-x:auto; scrollbar-width:none; white-space:nowrap; }
+  .g0-bar nav::-webkit-scrollbar { display:none; }
+  .g0-bar nav a { color:#545556; padding:8px 9px; font:400 16px/1.4 Inter,"Segoe UI",system-ui,sans-serif;
+                  border-radius:6px; text-decoration:none; }
+  .g0-bar nav a:hover, .g0-bar nav a.on { color:#1F4DB6; }
+  .g0-foot { border-top:1px solid var(--rule,#E1E4E8); text-align:center; padding:24px 16px 32px;
+             font:400 15px/1.6 Inter,"Segoe UI",system-ui,sans-serif; color:var(--ink-soft,var(--muted,#444)); }
+  .g0-foot p { margin:6px auto; max-width:900px; }
+  .g0-foot a { color:#1F6AE1; }
+</style>
+<div class="g0-bar" role="banner"><div class="in">
+  <a href="https://g0lft.org" aria-label="G0LFT home"><img src="../images/g0lft-logo.png" alt="G0LFT"></a>
+  <nav aria-label="Site">
+    <a href="https://g0lft.org/index.html">Home</a><a href="https://g0lft.org/projects.html">Projects</a><a class="on" aria-current="page" href="https://g0lft.org/apps.html">Apps</a><a href="https://course.g0lft.org">Training</a><a href="https://g0lft.org/blog.html">Blog</a><a href="https://g0lft.org/thinking.html">Thinking</a><a href="https://g0lft.org/guides.html">Guides</a><a href="https://g0lft.org/notebook.html">Notebook</a><a href="https://g0lft.org/talks.html">Talks &amp; Publications</a><a href="https://g0lft.org/about.html">About</a>
+  </nav>
+</div></div>
 <div class="wrap">
   <header class="masthead">
     <div class="eyebrow">
@@ -335,6 +357,11 @@
   <p class="colophon" id="colophon"></p>
 </div>
 
+<div class="g0-foot" role="contentinfo">
+  <p>Bench Test goes with the free <a href="https://course.g0lft.org">amateur radio training course</a> and the <a href="https://g0lft.org/apps/signal-explorer/index.html">Signal Explorer</a>. Corrections and feedback: <a href="mailto:ian@g0lft.org">ian@g0lft.org</a>.</p>
+  <p>© 2026 Dr Ian Henry, G0LFT. Independent of the RSGB and Ofcom; the RSGB publishes the syllabus and the exams.</p>
+  <p><a href="https://g0lft.org/privacy.html">Privacy Policy</a> | <a href="https://g0lft.org/about.html">About</a> | <a href="https://g0lft.org/contact.html">Contact</a> | <a href="https://www.qrz.com/db/G0LFT">QRZ</a> | <a href="https://www.youtube.com/@G0LFT-AmateurRadio">YouTube</a></p>
+</div>
 <script>
 /* ============ engine ============ */
 /* ---- engine/format.js ---- */
@@ -358,17 +385,22 @@ const trim = (x, sig) => String(Number(x.toPrecision(sig || 4)));
 /** Round to 4 s.f. so the displayed value, the formula and the netlist agree exactly. */
 const round4 = v => parseFloat(v.toPrecision(4));
 
-/** 0.0001414 -> "141.4 uF". Pass a unit, get a unit. */
+const NBSP = String.fromCharCode(160);   // no-break space
+
+/**
+ * 0.0001414 -> "141.4 µF". Pass a unit, get a unit. The number is joined to
+ * its unit with a no-break space, so the two never split across a line.
+ */
 function eng(x, unit, sig) {
   sig = sig || 4;
   unit = unit || '';
   if (!isFinite(x)) return '—';
-  if (x === 0) return '0 ' + unit;
+  if (x === 0) return '0' + NBSP + unit;
   const sign = x < 0 ? '-' : '', a = Math.abs(x);
   for (const [mul, pre] of SI_PREFIXES) {
-    if (a >= mul) return sign + trim(a / mul, sig) + ' ' + pre + unit;
+    if (a >= mul) return sign + trim(a / mul, sig) + NBSP + pre + unit;
   }
-  return sign + trim(a / 1e-12, sig) + ' p' + unit;
+  return sign + trim(a / 1e-12, sig) + NBSP + 'p' + unit;
 }
 
 /** Same value with a bare SI suffix, the way you would type it into a netlist. */
@@ -1073,7 +1105,7 @@ if (typeof window !== 'undefined') window.DC = API;
  * the plot follows the page theme without the caller thinking about it.
  */
 
-const PAD = { l: 58, r: 52, t: 14, b: 34 };
+const PAD = { l: 70, r: 60, t: 14, b: 36 };   // room for 13 px axis labels
 
 /**
  * spec = {
@@ -1124,7 +1156,7 @@ function draw(canvas, spec) {
   /* grid and axis labels */
   ctx.strokeStyle = t.grid || '#ddd';
   ctx.lineWidth = 1;
-  ctx.font = '500 11px ' + font;
+  ctx.font = '500 13px ' + font;
   ctx.fillStyle = t.faint || '#888';
   for (let i = 0; i <= 4; i++) {
     const y = Math.round(PAD.t + yOff + H * i / 4) + 0.5;
@@ -1174,7 +1206,7 @@ function draw(canvas, spec) {
     const y = (l.axis === 'right' ? YR : YL)(l.y);
     if (y < PAD.t + yOff - 2 || y > PAD.t + yOff + H + 2) continue;
     ctx.fillStyle = l.colour;
-    ctx.font = '11px ' + font;
+    ctx.font = '13px ' + font;
     ctx.textAlign = 'right';
     ctx.textBaseline = 'bottom';
     ctx.fillText(l.text, X(l.x), y - 3);
@@ -1225,7 +1257,7 @@ function draw(canvas, spec) {
     }
     if (c.label) {
       ctx.fillStyle = t.soft || '#666';
-      ctx.font = '600 11px ' + font;
+      ctx.font = '600 13px ' + font;
       const nearRight = (xb - c.x) < (xb - xa) * 0.18;
       ctx.textAlign = nearRight ? 'right' : 'left';
       ctx.textBaseline = 'top';
@@ -1434,6 +1466,25 @@ const SYMBOL = {
     ctx.stroke();
     lead(ctx, -SPAN / 2, -r);
     lead(ctx, r, SPAN / 2);
+  },
+
+  /*
+   * DC source, drawn as a cell: the long plate is positive and sits at the
+   * start of the axis, so at rot 90 the positive end is at the top.
+   */
+  B(ctx) {
+    const gap = 3.5;
+    ctx.beginPath();
+    ctx.moveTo(-gap, -12); ctx.lineTo(-gap, 12);
+    ctx.stroke();
+    const w = ctx.lineWidth;
+    ctx.lineWidth = w * 2;
+    ctx.beginPath();
+    ctx.moveTo(gap, -6); ctx.lineTo(gap, 6);
+    ctx.stroke();
+    ctx.lineWidth = w;
+    lead(ctx, -SPAN / 2, -gap);
+    lead(ctx, gap, SPAN / 2);
   }
 };
 
@@ -1530,7 +1581,7 @@ function draw(canvas, layout, opts) {
     ctx.arc(term.at[0], term.at[1], 3, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = t.soft || '#666';
-    ctx.font = '600 10.5px ' + (t.font || 'sans-serif');
+    ctx.font = '600 13px ' + (t.font || 'sans-serif');
     ctx.textAlign = term.align || 'left';
     ctx.textBaseline = 'middle';
     ctx.fillText(term.label, term.at[0] + (term.align === 'right' ? -8 : 8), term.at[1]);
@@ -1552,16 +1603,16 @@ function draw(canvas, layout, opts) {
       const vertical = (el.rot || 0) % 180 !== 0;
       const leftOf = el.labelAt === 'left';
       ctx.fillStyle = hot ? colour : (t.ink || '#111');
-      ctx.font = (hot ? '600 ' : '') + '11px ' + (t.font || 'sans-serif');
+      ctx.font = (hot ? '600 ' : '') + '13px ' + (t.font || 'sans-serif');
       ctx.textAlign = vertical ? (leftOf ? 'right' : 'left') : 'center';
       ctx.textBaseline = vertical ? 'middle' : 'bottom';
       const lx = el.at[0] + (vertical ? (leftOf ? -20 : 20) : 0);
-      const ly = el.at[1] + (vertical ? 0 : -18);
+      const ly = el.at[1] + (vertical ? 0 : -22);   // clear of the body, with a value under it
       ctx.fillText(label, lx, ly);
       if (value) {
         ctx.fillStyle = hot ? colour : (t.soft || '#666');
-        ctx.font = '10.5px ' + (t.mono || 'monospace');
-        ctx.fillText(value, lx, ly + (vertical ? 13 : 12));
+        ctx.font = '13px ' + (t.mono || 'monospace');
+        ctx.fillText(value, lx, ly + (vertical ? 15 : 14));
       }
     }
   }
@@ -1674,13 +1725,17 @@ function draw(ctx, layout, flow, span) {
   };
 
   for (const el of layout.elements) {
-    if (el.type === 'V') continue;          // the source body is not a wire run
+    if (el.type === 'V' || el.type === 'B') continue;   // a source body is not a wire run
     // a coupling capacitor is a short to the signal and so is absent from the
     // netlist, but it still carries a current, named here by el.flow
     const s = swing(el.flow || el.name);
     if (!s) continue;
+    // A part drawn the other way round from the current it is named for,
+    // such as a reverse biased diode, says so, and its dots run from its
+    // second end to its first.
     const [x1, y1, x2, y2] = endpoints(el, span);
-    dotsAlong(ctx, x1, y1, x2, y2, s.off, s.intensity, flow.colour);
+    if (el.flowReversed) dotsAlong(ctx, x2, y2, x1, y1, s.off, s.intensity, flow.colour);
+    else dotsAlong(ctx, x1, y1, x2, y2, s.off, s.intensity, flow.colour);
   }
 
   for (const w of (layout.wires || [])) {
@@ -1738,6 +1793,12 @@ const BENCH = {
   title: 'Digital signals',
   pageTitle: 'Sampling Bench',
   levels: ['foundation', 'intermediate', 'full'],
+  // the course sessions that send learners here, named in the colophon
+  sessions: {
+    foundation: ['Foundation session 4 (Waves, frequency and modulation)'],
+    intermediate: ['Intermediate session 4 (AC, reactance and phase)'],
+    full: ['Full session 10 (Sampling, Fourier, SDR and transceivers)']
+  },
   // there is no circuit on this page, so the generic words would be untrue
   standfirst: 'Move a control and watch what happens. Every waveform and spectrum is calculated live from samples of the signal, so nothing here is a drawing of an answer.',
   colophonNote: 'Every waveform and spectrum is calculated from samples of the signal, and every spectrum by a Fourier transform written for this bench.',
@@ -1773,7 +1834,7 @@ const BENCH = {
       'Foundation licence manual, digital signals and the converter',
       'Intermediate licence manual, software defined radio and data conversion',
       'Exam Secrets, digital signals at Foundation, Intermediate and Full',
-      'Syllabus 2019 per-level specifications, items 2F1 and 2F2'
+      'Syllabus 2024 v1.6b, items 2F1 and 2F2'
     ],
     keyMessages: [
       { at: '2F1', level: 'foundation',
@@ -1810,7 +1871,7 @@ const BENCH = {
       desc: 'The frequency of the tone arriving at the converter' },
     { id: 'fs', label: 'Sample rate', unit: 'Hz', range: [2000, 48000], start: 8000,
       desc: 'How many measurements the converter takes each second' },
-    { id: 'bits', label: 'Bit depth', unit: '', range: [2, 16], start: 8, integer: true,
+    { id: 'bits', label: 'Bit depth', unit: '', range: [2, 16], start: 8, integer: true, linear: true,
       desc: 'Binary digits per measurement. Also called resolution' }
   ],
 
@@ -1844,11 +1905,13 @@ const BENCH = {
   equations: {
     step: { given: false, name: 'Size of one step',
             eq: 'step = full scale / 2<sup>bits</sup>',
-            work: d => ['2 / 2<sup><b>' + d.bits + '</b></sup> = 2 / <b>' +
+            // full scale runs from -1 to +1, so the step as a fraction of it
+            // is half the step the quantiser uses on that range
+            work: d => ['full scale / 2<sup><b>' + d.bits + '</b></sup> = full scale / <b>' +
                         d.levels.toLocaleString('en-GB') + '</b> levels',
-                        F.trim(d.step, 4) + ' of full scale'] },
+                        F.trim(d.step / 2, 4) + ' of full scale'] },
     snr: { given: false, name: 'Best case signal to noise',
-           eq: 'SNR = 6.02n + 1.76 dB',
+           eq: 'SNR = 6.02n + 1.76 dB',
            work: d => ['6.02 &times; <b>' + d.bits + '</b> + 1.76',
                        F.trim(d.snr, 4) + ' dB'] },
     rule: { given: false, name: 'Choosing a sample rate',
@@ -1957,7 +2020,7 @@ const BENCH = {
       const bw = (W - pad * 2 - gap * (stages.length - 1)) / stages.length;
       const by = H / 2 - 34, bh = 46;
 
-      c.font = '600 12.5px "Saira Semi Condensed", sans-serif';
+      c.font = '600 14px "Saira Semi Condensed", sans-serif';
       c.textAlign = 'center';
       stages.forEach((s, i) => {
         const x = pad + i * (bw + gap);
@@ -1975,10 +2038,10 @@ const BENCH = {
         c.fillText(s.label, mid, by + bh / 2);
 
         c.fillStyle = t.faint;
-        c.font = '11px "Saira Semi Condensed", sans-serif';
+        c.font = '13px "Saira Semi Condensed", sans-serif';
         c.textBaseline = 'top';
-        wrapText(c, s.sub, mid, by + bh + 8, bw + gap - 4, 13);
-        c.font = '600 12.5px "Saira Semi Condensed", sans-serif';
+        wrapText(c, s.sub, mid, by + bh + 8, bw + gap - 4, 15);
+        c.font = '600 14px "Saira Semi Condensed", sans-serif';
 
         if (i < stages.length - 1) {
           const ax = x + bw + 2, ay = by + bh / 2;
@@ -1993,7 +2056,7 @@ const BENCH = {
 
       // what is travelling between the blocks: a wave, then numbers, then a wave
       c.fillStyle = t.soft;
-      c.font = '11px "IBM Plex Mono", monospace';
+      c.font = '13px "IBM Plex Mono", monospace';
       c.textBaseline = 'bottom';
       const midGap = i => pad + i * (bw + gap) + bw + gap / 2;
       c.fillText('~~~~', midGap(0), by - 6);
@@ -2087,7 +2150,7 @@ const BENCH = {
       const atDC = lines.some(x => x < 2 * sp.binWidth);
       const visible = lines.length - (atDC ? 1 : 0);
       const lineText = !atDC ? String(visible)
-        : visible ? visible + ', plus one at 0 Hz' : 'none: everything lands at 0 Hz';
+        : visible ? visible + ', plus one at 0 Hz' : 'none: everything lands at 0 Hz';
       const folded = parts.filter(q => q.folded);
       const names = xs => xs.length > 1
         ? xs.slice(0, -1).join(', ') + ' and ' + xs[xs.length - 1] : xs[0];
@@ -2238,12 +2301,12 @@ const BENCH = {
       },
       workLead: {
         intermediate: 'The bit depth sets the size of the smallest step the converter can record, and that step sets how much noise it adds.',
-        full: 'The first line says where the limit is. The second says where a tone above it will reappear.'
+        full: 'The first two lines give the rule for choosing a rate and the limit it sets. The last two say where a tone above the limit reappears, worked two ways.'
       },
       workNote: {
         foundation: 'No arithmetic at this level. What matters is the picture: the smooth line is the signal, the dots are the measurements.',
-        intermediate: 'Every extra bit halves the step and buys about 6 dB. Drag the bit depth down to 3 or 4 and the staircase becomes obvious.',
-        full: 'Note what the second line does not depend on: nothing about the signal itself survives. Once a tone has folded back there is no way to tell it from a real one at that frequency, which is why the filter has to come before the converter and not after it.'
+        intermediate: 'Every extra bit halves the step and buys about 6 dB. Drag the bit depth down to 3 or 4 and the staircase becomes obvious.',
+        full: 'Once a tone has folded back, nothing in the samples shows that it was ever higher: it is indistinguishable from a real tone at the lower frequency. That is why the filter has to come before the converter and not after it.'
       },
       explain: {
         foundation: [
@@ -2259,11 +2322,11 @@ const BENCH = {
           'There is a floor under the sample rate. It has to be more than twice the highest frequency in the signal, and twice that frequency is called the Nyquist rate: the minimum. Drag the sample rate down until it is less than twice the signal and the measurements stop describing it at all. They describe a slower wave that was never there.'
         ],
         full: [
-          'Turn the limit round and it becomes a design rule: sample at a little over twice the highest frequency you intend to capture. Note highest, not bandwidth. A signal running from 20 Hz to 14 kHz needs more than 28k samples a second, because what matters is the 14 kHz, not the roughly 14 kHz of width between the two.',
+          'Turn the limit round and it becomes a design rule: sample at a little over twice the highest frequency you intend to capture. Note highest, not bandwidth. A signal running from 10 kHz to 14 kHz is only 4 kHz wide, but it still needs more than 28k samples a second: what matters is the highest frequency, 14 kHz, not the width.',
           'Two similar names are worth keeping apart. The Nyquist frequency is half a given sample rate, and it is the line on the display. The Nyquist rate is the minimum sample rate for a given signal, twice its highest frequency. One is a property of the converter, the other of the signal.',
           'Push the signal past the Nyquist line and watch the spectrum. The tone does not disappear and it does not stay put: it folds back and appears somewhere below the line instead.',
-          'A 5 kHz tone sampled at 8 kHz comes back at 3 kHz. Nothing downstream can tell that apart from a real 3 kHz tone, because by then they are the same list of numbers.',
-          'There is a neater way to see where it lands. The tone reflects about the Nyquist line: it comes back as far below the line as it started above it. 5 kHz is 1 kHz above the 4 kHz line, so it returns 1 kHz below, at 3 kHz. Subtracting from the sample rate gives the same answer, but the reflection is the one that stays with you. Both work only while the tone is below the sample rate itself. Push it further and it folds more than once: take off whole sample rates first, which leaves exactly the same samples, then reflect what is left if it is still above the line. The working above does this whenever you go that far.',
+          'A 5 kHz tone sampled at 8 kHz comes back at 3 kHz. Nothing downstream can tell that apart from a real 3 kHz tone, because by then they are the same list of numbers.',
+          'There is a neater way to see where it lands. The tone reflects about the Nyquist line: it comes back as far below the line as it started above it. 5 kHz is 1 kHz above the 4 kHz line, so it returns 1 kHz below, at 3 kHz. Subtracting from the sample rate gives the same answer, but the reflection is the one that stays with you. Both work only while the tone is below the sample rate itself. Push it further and it folds more than once: take off whole sample rates first, which leaves exactly the same samples, then reflect what is left if it is still above the line. The working above does this whenever you go that far.',
           'This is why an anti-alias filter goes in front of the converter. Once the folding has happened it cannot be undone, so the only cure is to stop it arriving.',
           'In practice you sample comfortably faster than twice, not exactly twice. A real filter does not stop dead at its cut-off, it rolls off over a range, so a little of what lies above still gets through. Leaving headroom between the highest wanted frequency and the Nyquist line gives the filter room to do its work.'
         ]
@@ -2300,7 +2363,7 @@ const BENCH = {
       },
       formulas: { full: ['bins'] },
       workNote: {
-        foundation: 'The device that takes the measurements is an analogue to digital converter, an ADC. On its own it only produces numbers, so something with computing power has to follow it to turn those numbers back into sound.',
+        foundation: 'The device that takes the measurements is an analogue to digital converter, an ADC. On its own it only produces numbers, so something with computing power has to follow it to process them. A DAC then turns the result back into a voltage you can hear.',
         full: 'The display is a real transform, not a drawing. Every point on it was calculated from a block of 4096 samples of the signal, taken at the sample rate set above, with the fundamental at the Signal setting. The samples are not rounded here, so the bit depth plays no part. The spacing between points is for interest only: the exam asks what the transform does, not how finely it does it.'
       },
       explain: {
@@ -2330,13 +2393,13 @@ const BENCH = {
    */
   answers: {
     '2025-Full6015': {
-      why: 'The rule is twice the highest frequency present, not twice the bandwidth and not twice the lowest. The highest here is 14 kHz, so anything from 28k samples a second upwards will do, and 30k is the lowest offered that clears it.',
+      why: 'The rule is twice the highest frequency present, not twice the bandwidth and not twice the lowest. The highest here is 14 kHz, so the rate must be more than 28k samples a second, and 30k is the lowest offered that clears it.',
       working: ['the rate must be more than 2 &times; highest frequency',
-                '= 2 &times; 14 kHz',
+                '= 2 &times; 14 kHz',
                 '= 28k samples/s, so 30k is the lowest that works'],
       source: { eq: ['rule'], from: ['2F1'] },
       seed: { fsig: 14000, fs: 30000 },
-      seedNote: 'Set the bench to a 14 kHz tone sampled at 30k and watch it stay where it should. Drag the rate below 28k and it starts to fold.'
+      seedNote: 'Set the bench to a 14 kHz tone sampled at 30k and watch it stay where it should. Drag the rate below 28k and it starts to fold.'
     },
     '2025-Full6019': {
       why: 'Once a frequency above the limit has been sampled it has already folded down, and it now looks exactly like a real signal at the lower frequency. Nothing after the converter can separate them. The filter has to remove it before it is ever measured.',
@@ -2346,20 +2409,20 @@ const BENCH = {
     '2025-Full7395': {
       why: 'Aliasing is caused by frequencies arriving that are higher than half the sample rate. Option B has it backwards, and option D describes oversampling, which is the safe direction.',
       working: ['a tone folds when f &gt; sample rate / 2',
-                'to illustrate, with figures of our own (the question gives none): 12 kHz is above the 8 kHz limit of a 16k rate',
-                'so it returns at 16 kHz &minus; 12 kHz = 4 kHz',
+                'to illustrate (the question gives no figures): 12 kHz is above the 8 kHz limit of a 16k rate',
+                'so it returns at 16 kHz &minus; 12 kHz = 4 kHz',
                 'that is higher analogue frequencies arriving than the converter can accept'],
       source: { eq: ['nyq', 'alias'], from: ['2F1'] },
       seed: { fsig: 12000, fs: 16000 },
-      seedNote: 'The question has no figures; this is our own example. A 12 kHz tone sampled at 16k folds back to 4 kHz. Set the bench to it and read the spectrum.'
+      seedNote: 'The question has no figures; this is an illustration. A 12 kHz tone sampled at 16k folds back to 4 kHz. Set the bench to it and read the spectrum.'
     },
     '2025-Full7645': {
-      why: 'Sampling at 80M samples a second puts the folding point at 40 MHz, so anything still getting through above that comes back inside the wanted range. That rules out two of the four. Of the two left, the better one is whichever keeps the most spectrum while still being well down by 40 MHz, because a filter that closes too early throws away band you could have used.',
+      why: 'Sampling at 80M samples a second puts the folding point at 40 MHz, so anything still getting through above that comes back inside the wanted range. That rules out two of the four. Of the two left, the better one is whichever keeps the most spectrum while still being well down by 40 MHz, because a filter that closes too early throws away band you could have used.',
       source: { eq: ['nyq'], from: ['2F1'] },
-      working: ['folding point = 80M samples/s / 2 = 40 MHz',
-                'responses 3 and 4 are still at full output at 40 MHz, so both fold back',
-                'response 1 is well clear by 40 MHz but gives up everything above 20 MHz',
-                'response 2 is around 60 dB down by 40 MHz and still passes to 30 MHz']
+      working: ['folding point = 80M samples/s / 2 = 40 MHz',
+                'responses 3 and 4 are still at full output at 40 MHz, so both fold back',
+                'response 1 is well clear by 40 MHz but gives up everything above 20 MHz',
+                'response 2 is around 60 dB down by 40 MHz and still passes to 30 MHz']
     },
     '2025-Full7401': {
       why: 'The transform takes a block of samples and reports how much of each frequency was in them, which is what puts the signals in frequency order. Option A describes a transformer, option C a data demodulator and option D the quadrature mixing that produces I and Q.',
@@ -2369,7 +2432,7 @@ const BENCH = {
     '2025-Full7686': {
       source: { from: ['2F2'] },
       why: 'A spectrum shows how much of each frequency is present and says nothing about where in its cycle each one starts. Two waveforms can therefore look quite different and still give the same spectrum, which is why the question asks for a pair of plots rather than one.',
-      working: ['the two peaks sit at about 1.5 MHz and 4.5 MHz',
+      working: ['the two peaks sit at about 1.5 MHz and 4.5 MHz',
                 '4.5 / 1.5 = 3, so it is a fundamental and its third harmonic',
                 'so look for three cycles of the dotted trace to one of the dashed',
                 'plots 1 and 4 both show that, and differ only in where the harmonic starts']
@@ -2393,7 +2456,7 @@ const BENCH = {
       'Two ideas, then. Sampling is measuring a signal over and over at a steady rate, and an ADC is the part that does it. Everything a software radio does afterwards works on those numbers.'
     ],
     intermediate: [
-      'Sample rate and bit depth are separate controls solving separate problems. Rate decides how much of the shape you keep. Depth decides how finely each measurement is recorded, and every bit is worth about 6 dB.'
+      'Sample rate and bit depth are separate controls solving separate problems. Rate decides how much of the shape you keep. Depth decides how finely each measurement is recorded, and every bit is worth about 6 dB.'
     ],
     full: [
       'The Nyquist limit is not a guideline. Below it sampling loses nothing that matters; above it the converter reports a frequency that was never present, and no amount of processing afterwards can separate it from a real one.',
@@ -2432,6 +2495,9 @@ const QUESTIONS = [{"code": "2F1", "ref": "2025-Full6015", "q": "To digitize an 
   const $ = id => document.getElementById(id);
 
   const LEVEL_NAME = { foundation: 'Foundation', intermediate: 'Intermediate', full: 'Full' };
+  // 'A', 'A and B', 'A, B and C'
+  const listed = xs => xs.length < 2 ? xs.join('')
+    : xs.slice(0, -1).join(', ') + ' and ' + xs[xs.length - 1];
   const values = {};
   BENCH.controls.forEach(c => { values[c.id] = c.start; });
 
@@ -2505,6 +2571,13 @@ const QUESTIONS = [{"code": "2F1", "ref": "2025-Full6015", "q": "To digitize an 
   let phase = 0;
 
   const rail = $('rail');
+  const stepsOf = c => (c.integer && c.linear) ? Math.round(c.range[1] - c.range[0]) : 1000;
+  const sliderPos = (c, v) => Math.round(c.linear
+    ? stepsOf(c) * (v - c.range[0]) / (c.range[1] - c.range[0])
+    : logUnmap(v, c.range));
+  // every calculation on a whole-number control uses the whole number, so the
+  // value held and shown is that number too
+  const settle = (c, v) => c.integer ? Math.round(v) : round4(v);
   BENCH.controls.forEach(c => {
     const d = document.createElement('div');
     d.className = 'ctrl';
@@ -2515,20 +2588,22 @@ const QUESTIONS = [{"code": "2F1", "ref": "2025-Full6015", "q": "To digitize an 
       (c.desc ? '<p class="ctrl-desc">' + c.desc + '</p>' : '');
     rail.appendChild(d);
     const input = d.querySelector('input');
-    input.value = Math.round(c.linear
-      ? 1000 * (c.start - c.range[0]) / (c.range[1] - c.range[0])
-      : logUnmap(c.start, c.range));
+    // a whole-number linear control, such as bit depth, moves one unit a step
+    const steps = stepsOf(c);
+    input.max = String(steps);
+    input.value = sliderPos(c, c.start);
     const toValue = t => c.linear
-      ? c.range[0] + (c.range[1] - c.range[0]) * t / 1000
+      ? c.range[0] + (c.range[1] - c.range[0]) * t / steps
       : logMap(t, c.range);
     input.addEventListener('input', () => {
-      values[c.id] = round4(toValue(+input.value));
+      values[c.id] = settle(c, toValue(+input.value));
       renderAll();
     });
   });
 
-  // charge animation control, in the rail beside the component sliders
-  (function () {
+  // charge animation control, in the rail beside the component sliders; a
+  // bench with no circuit has no charge to move, so it gets no button
+  if (BENCH.circuitBased) (function () {
     const d = document.createElement('div');
     d.className = 'anim';
     d.innerHTML = '<span class="ctrl-name">Charge</span>' +
@@ -2566,7 +2641,7 @@ const QUESTIONS = [{"code": "2F1", "ref": "2025-Full6015", "q": "To digitize an 
     sec.innerHTML =
       '<div class="item-head">' +
         '<div class="item-code"><b>' + item.code + '</b>' +
-        '<span>' + item.levels.map(l => LEVEL_NAME[l]).join(' and ') + '</span></div>' +
+        '<span>' + listed(item.levels.map(l => LEVEL_NAME[l])) + '</span></div>' +
         '<h2 class="item-heading"></h2>' +
         '<p class="item-lead"></p>' +
         '<div class="presets"></div>' +
@@ -2779,9 +2854,16 @@ const QUESTIONS = [{"code": "2F1", "ref": "2025-Full6015", "q": "To digitize an 
   function finishItem(p, item, d) {
     const paras = (item.explain[level] || []).map(x => '<p>' + x + '</p>').join('');
     const keys = (item.formulas && (item.formulas[level] || item.formulas.all)) || [];
-    const wk = workingBlock(keys, Object.assign({ Rf: values.R * 100 }, d),
-                            item.workNote && item.workNote[level],
-                            item.workLead && item.workLead[level]);
+    // The device or view a panel toggle has chosen reaches the working as
+    // d.device, so a row can apply to one device and not another, and a lead
+    // or note can be a function of it.
+    const toggled = item.toggle && (!item.toggle.levels || item.toggle.levels.includes(level));
+    const wd = Object.assign({ Rf: values.R * 100,
+                               device: toggled ? p.topology : item.circuit }, d);
+    const say = x => typeof x === 'function' ? x(wd) : x;
+    const wk = workingBlock(keys, wd,
+                            item.workNote && say(item.workNote[level]),
+                            item.workLead && say(item.workLead[level]));
     // The working goes above the prose. Watching which term in the equation
     // moves is the lesson; the paragraphs are commentary on it.
     p.prose.innerHTML =
@@ -2891,13 +2973,9 @@ const QUESTIONS = [{"code": "2F1", "ref": "2025-Full6015", "q": "To digitize an 
     BENCH.controls.forEach(c => {
       if (!(c.id in seed)) return;
       const v = Math.min(c.range[1], Math.max(c.range[0], seed[c.id]));
-      values[c.id] = round4(v);
+      values[c.id] = settle(c, v);
       const input = $('s_' + c.id);
-      if (input) {
-        input.value = Math.round(c.linear
-          ? 1000 * (v - c.range[0]) / (c.range[1] - c.range[0])
-          : logUnmap(v, c.range));
-      }
+      if (input) input.value = sliderPos(c, v);
     });
     renderAll();
   }
@@ -2998,8 +3076,9 @@ const QUESTIONS = [{"code": "2F1", "ref": "2025-Full6015", "q": "To digitize an 
     $('levels').querySelectorAll('button').forEach((b, i) =>
       b.setAttribute('aria-pressed', String(BENCH.levels[i] === level)));
     const shown = BENCH.items.filter(i => i.levels.includes(level));
-    $('grpItems').textContent = 'RSGB ' + LEVEL_NAME[level] + ', ' +
-      shown.length + ' of ' + BENCH.items.length + ' items in this thread';
+    $('grpItems').textContent = 'RSGB ' + LEVEL_NAME[level] + ': ' +
+      shown.length + ' of the ' + BENCH.items.length + ' items in group ' + BENCH.group;
+    renderColophon();
     // One panel throwing used to take out every item after it, leaving a page
     // of blank frames with nothing to say what had happened. Contain it, and
     // make the failure visible where it happened.
@@ -3024,15 +3103,29 @@ const QUESTIONS = [{"code": "2F1", "ref": "2025-Full6015", "q": "To digitize an 
   // The default words describe a circuit bench. A bench with no circuit on it
   // says what its displays are computed from instead.
   if (BENCH.standfirst) $('standfirst').textContent = BENCH.standfirst;
-  $('colophon').innerHTML =
-    '<span class="home"><a href="../index.html">All the Bench Test pages</a>' +
-    ' &middot; built by Ian Henry, G0LFT, ' +
-    '<a href="https://g0lft.org/">g0lft.org</a></span>' +
-    (BENCH.colophonNote ||
-     'Every curve is solved by a general complex nodal analysis engine, verified against ' +
-     'closed form results. Circuit symbols follow the RSGB specification.') + ' ' +
-    'Item wording is our own. Questions are held by the RSGB and used under the terms ' +
-    'published with the bank. ' + BENCH.bank.note;
+  /*
+   * The way back to the course. Each bench lists the sessions that send
+   * learners to it, by level, so a learner who arrived from a deck can find
+   * the session again; at Full it also points to the formula sheet.
+   */
+  const EX309 = 'https://rsgb.services/public/exams/exam-forms/260218_EX309_Full_2026_v1.pdf';
+  function renderColophon() {
+    const used = (BENCH.sessions && BENCH.sessions[level]) || [];
+    const course = used.length
+      ? '<span class="home">Used in the course at <a href="https://course.g0lft.org">course.g0lft.org</a>: ' +
+        listed(used) + '.' +
+        (level === 'full' ? ' Formula sheet: <a href="' + EX309 + '">EX309</a>.' : '') + '</span>'
+      : '';
+    $('colophon').innerHTML =
+      '<span class="home"><a href="../index.html">All the Bench Test pages</a>' +
+      ' &middot; built by Ian Henry, G0LFT, ' +
+      '<a href="https://g0lft.org/">g0lft.org</a></span>' + course +
+      (BENCH.colophonNote ||
+       'Every curve is solved by a general complex nodal analysis engine, verified against ' +
+       'closed form results. Circuit symbols follow the RSGB specification.') + ' ' +
+      'Item descriptions are original wording. Questions are held by the RSGB and used under the terms ' +
+      'published with the bank. ' + BENCH.bank.note;
+  }
 
   // Panels are built here, so at load time the browser cannot resolve a
   // #item-... fragment and any jump lands under the sticky rail. Do it once

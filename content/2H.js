@@ -54,6 +54,12 @@ const BENCH = {
   title: 'Tuned circuits and resonance',
   pageTitle: 'Tuned Circuits Bench',
   levels: ['intermediate', 'full'],
+  // the course sessions that send learners here, named in the colophon
+  sessions: {
+    intermediate: ['Intermediate session 5 (Tuned circuits and filters)'],
+    full: ['Full session 6 (AC at Full: reactance, impedance and transformers)',
+           'Full session 7 (Tuned circuits, Q, crystals and temperature)']
+  },
   circuitBased: true,
 
   /** Every circuit this bench draws, for the layout checker. */
@@ -96,7 +102,7 @@ const BENCH = {
   },
 
   labels: (p, d, v) => ({
-    RS: '10 kΩ',
+    RS: '10 kΩ',
     R1: window.Fmt.eng(usesBigR(p) ? v.R * 100 : d.R, 'Ω', 3),
     L1: window.Fmt.eng(d.L, 'H', 3),
     C1: window.Fmt.eng(d.C, 'F', 3),
@@ -114,7 +120,7 @@ const BENCH = {
     read: [
       'Intermediate licence manual, tuned circuits',
       'Exam Secrets, technical basics at Foundation, Intermediate and Full',
-      'Syllabus 2019 per-level specifications, items 2H1 to 2H5'
+      'Syllabus 2024 v1.6b, items 2H1 to 2H5'
     ],
     keyMessages: [
       { at: '2H1', level: 'intermediate',
@@ -164,7 +170,7 @@ const BENCH = {
       layout: {
         w: 260, h: 220,
         elements: [
-          { name: 'V1', type: 'V', at: [30, 100], rot: 90, label: '1 V' },
+          { name: 'V1', type: 'V', at: [30, 100], rot: 90, label: '1 V' },
           { name: 'R1', type: 'R', at: [90, 70], label: 'R' },
           { name: 'L1', type: 'L', at: [150, 70], label: 'L' },
           { name: 'C1', type: 'C', at: [210, 100], rot: 90, label: 'C' }
@@ -176,13 +182,13 @@ const BENCH = {
     }),
 
     parallel: (v) => ({
-      netlist: `V1 in 0 1\nRS in t 10k\nR1 t m ${v.R}\nL1 m 0 ${v.L}\nC1 t 0 ${v.C}`,
+      netlist: `V1 in 0 1\nRS in t 10k\nR1 t m ${v.R}\nL1 m 0 ${v.L}\nC1 t 0 ${v.C}`,
       probe: { kind: 'node', of: 't' },
       z: { mode: 'tank', v: 't', i: 'RS' },
       layout: {
         w: 260, h: 220,
         elements: [
-          { name: 'V1', type: 'V', at: [30, 100], rot: 90, label: '1 V' },
+          { name: 'V1', type: 'V', at: [30, 100], rot: 90, label: '1 V' },
           { name: 'RS', type: 'R', at: [90, 70], label: 'source' },
           { name: 'R1', type: 'R', at: [160, 100], rot: 90, label: 'R loss', labelAt: 'left' },
           { name: 'L1', type: 'L', at: [160, 160], rot: 90, label: 'L', labelAt: 'left' },
@@ -215,17 +221,18 @@ C1 b 0 ${v.C}
       layout: {
         w: 275, h: 200,
         elements: [
-          { name: 'V1', type: 'V', at: [20, 120], rot: 90, label: '1 V' },
+          { name: 'V1', type: 'V', at: [20, 120], rot: 90, label: '1 V' },
           { name: 'RS', type: 'R', at: [60, 60], label: 'source' },
           { name: 'R1', type: 'R', at: [140, 60], label: 'R' },
           { name: 'L1', type: 'L', at: [200, 60], label: 'L' },
           { name: 'C1', type: 'C', at: [260, 90], rot: 90, label: 'C', labelAt: 'left' },
-          { name: 'C0', type: 'C', at: [110, 105], rot: 90, label: 'holder C₀' }
+          // low enough that its label sits below the value of C, not beside it
+          { name: 'C0', type: 'C', at: [110, 120], rot: 90, label: 'holder C₀' }
         ],
         wires: [[20, 90, 20, 60, 'RS'], [20, 60, 30, 60, 'RS'], [90, 60, 110, 60, 'RS'],
                 [230, 60, 260, 60, 'L1'], [260, 120, 260, 150, 'C1'],
                 [260, 150, 110, 150, 'C1'],
-                [110, 60, 110, 75, 'C0'], [110, 135, 110, 150, 'C0'],
+                [110, 60, 110, 90, 'C0'],
                 [110, 150, 20, 150, 'RS']],
         grounds: [[65, 150]]
       }
@@ -237,7 +244,7 @@ C1 b 0 ${v.C}
       layout: {
         w: 260, h: 220,
         elements: [
-          { name: 'V1', type: 'V', at: [30, 100], rot: 90, label: '1 V' },
+          { name: 'V1', type: 'V', at: [30, 100], rot: 90, label: '1 V' },
           { name: 'R1', type: 'R', at: [90, 70], label: 'R' },
           { name: 'C1', type: 'C', at: [180, 100], rot: 90, label: 'C' }
         ],
@@ -254,7 +261,7 @@ C1 b 0 ${v.C}
       layout: {
         w: 260, h: 220,
         elements: [
-          { name: 'V1', type: 'V', at: [30, 100], rot: 90, label: '1 V' },
+          { name: 'V1', type: 'V', at: [30, 100], rot: 90, label: '1 V' },
           { name: 'C1', type: 'C', at: [90, 70], label: 'C' },
           { name: 'R1', type: 'R', at: [180, 100], rot: 90, label: 'R' }
         ],
@@ -266,12 +273,12 @@ C1 b 0 ${v.C}
     }),
 
     bandpass: (v) => ({
-      netlist: `V1 in 0 1\nL1 in m ${v.L}\nC1 m out ${v.C}\nR1 out 0 ${v.R}`,
+      netlist: `V1 in 0 1\nL1 in m ${v.L}\nC1 m out ${v.C}\nR1 out 0 ${v.R}`,
       probe: { kind: 'node', of: 'out' },
       layout: {
         w: 260, h: 220,
         elements: [
-          { name: 'V1', type: 'V', at: [30, 100], rot: 90, label: '1 V' },
+          { name: 'V1', type: 'V', at: [30, 100], rot: 90, label: '1 V' },
           { name: 'L1', type: 'L', at: [90, 70], label: 'L' },
           { name: 'C1', type: 'C', at: [150, 70], label: 'C' },
           { name: 'R1', type: 'R', at: [180, 100], rot: 90, label: 'R' }
@@ -284,12 +291,12 @@ C1 b 0 ${v.C}
     }),
 
     notch: (v) => ({
-      netlist: `V1 in 0 1\nR1 in out ${v.R}\nL1 out m ${v.L}\nC1 m 0 ${v.C}`,
+      netlist: `V1 in 0 1\nR1 in out ${v.R}\nL1 out m ${v.L}\nC1 m 0 ${v.C}`,
       probe: { kind: 'node', of: 'out' },
       layout: {
         w: 260, h: 220,
         elements: [
-          { name: 'V1', type: 'V', at: [30, 130], rot: 90, label: '1 V' },
+          { name: 'V1', type: 'V', at: [30, 130], rot: 90, label: '1 V' },
           { name: 'R1', type: 'R', at: [90, 70], label: 'R' },
           { name: 'L1', type: 'L', at: [180, 100], rot: 90, label: 'L' },
           { name: 'C1', type: 'C', at: [180, 160], rot: 90, label: 'C' }
@@ -315,49 +322,49 @@ C1 b 0 ${v.C}
   equations: {
     XL: { given: true, tag: { intermediate: 'given' },
           name: 'Reactance of the inductor', eq: 'X<sub>L</sub> = 2&pi;fL',
-          work: d => ['2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b> &times; <b>' + eng(d.L, 'H', 3) + '</b>',
+          work: d => ['2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b> &times; <b>' + eng(d.L, 'H', 4) + '</b>',
                       eng(2 * Math.PI * d.f0 * d.L, 'Ω', 4)] },
     XC: { given: true, tag: { intermediate: 'given' },
           name: 'Reactance of the capacitor', eq: 'X<sub>C</sub> = 1 / 2&pi;fC',
-          work: d => ['1 / (2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b> &times; <b>' + eng(d.C, 'F', 3) + '</b>)',
+          work: d => ['1 / (2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b> &times; <b>' + eng(d.C, 'F', 4) + '</b>)',
                       eng(1 / (2 * Math.PI * d.f0 * d.C), 'Ω', 4)] },
     f0: { given: true, name: 'Resonant frequency', eq: 'f<sub>0</sub> = 1 / 2&pi;<span class="rad">&radic;</span>(LC)',
-          work: d => ['1 / 2&pi;<span class="rad">&radic;</span>(<b>' + eng(d.L, 'H', 3) + '</b> &times; <b>' + eng(d.C, 'F', 3) + '</b>)',
+          work: d => ['1 / 2&pi;<span class="rad">&radic;</span>(<b>' + eng(d.L, 'H', 4) + '</b> &times; <b>' + eng(d.C, 'F', 4) + '</b>)',
                       eng(d.f0, 'Hz', 5)] },
     Lfor: { given: false, name: 'Rearranged for L', eq: 'L = 1 / ((2&pi;f<sub>0</sub>)&sup2; &times; C)',
-          work: d => ['1 / ((2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b>)&sup2; &times; <b>' + eng(d.C, 'F', 3) + '</b>)',
+          work: d => ['1 / ((2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b>)&sup2; &times; <b>' + eng(d.C, 'F', 4) + '</b>)',
                       eng(1 / (Math.pow(2 * Math.PI * d.f0, 2) * d.C), 'H', 4)] },
     Cfor: { given: false, name: 'Rearranged for C', eq: 'C = 1 / ((2&pi;f<sub>0</sub>)&sup2; &times; L)',
-          work: d => ['1 / ((2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b>)&sup2; &times; <b>' + eng(d.L, 'H', 3) + '</b>)',
+          work: d => ['1 / ((2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b>)&sup2; &times; <b>' + eng(d.L, 'H', 4) + '</b>)',
                       eng(1 / (Math.pow(2 * Math.PI * d.f0, 2) * d.L), 'F', 4)] },
     Q: { given: true, tag: { intermediate: 'given' },
           name: 'Q factor', eq: 'Q = f<sub>C</sub> / (f<sub>U</sub> &minus; f<sub>L</sub>)',
           work: d => ['<b>' + eng(d.f0, 'Hz', d.sig) + '</b> / (<b>' + eng(d.fHi, 'Hz', d.sig) + '</b> &minus; <b>' + eng(d.fLo, 'Hz', d.sig) + '</b>)',
                       trim(d.Q, 4)] },
     QL: { given: true, name: 'Q from the coil', eq: 'Q = 2&pi;fL / R',
-          work: d => ['2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b> &times; <b>' + eng(d.L, 'H', 3) + '</b> / <b>' + eng(d.R, 'Ω', 4) + '</b>',
+          work: d => ['2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b> &times; <b>' + eng(d.L, 'H', 4) + '</b> / <b>' + eng(d.R, 'Ω', 4) + '</b>',
                       trim(2 * Math.PI * d.f0 * d.L / d.R, 4)] },
     QC: { given: true, name: 'Q from the capacitor', eq: 'Q = 1 / 2&pi;fCR',
-          work: d => ['1 / (2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b> &times; <b>' + eng(d.C, 'F', 3) + '</b> &times; <b>' + eng(d.R, 'Ω', 4) + '</b>)',
+          work: d => ['1 / (2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b> &times; <b>' + eng(d.C, 'F', 4) + '</b> &times; <b>' + eng(d.R, 'Ω', 4) + '</b>)',
                       trim(1 / (2 * Math.PI * d.f0 * d.C * d.R), 4)] },
     Il: { given: false, name: 'Circulating current in a parallel circuit, when Q is high',
           eq: 'I<sub>circ</sub> &asymp; Q &times; I<sub>supply</sub>',
           work: d => ['<b>' + trim(d.Q, 4) + '</b> &times; the current fed in',
                       'about ' + trim(d.Q, 4) + ' times whatever you supply'] },
     Vl: { given: false, name: 'Voltage across the inductor in a series circuit', eq: 'V<sub>L</sub> = Q &times; V<sub>s</sub>',
-          work: d => ['<b>' + trim(d.Q, 4) + '</b> &times; <b>1 V</b>', eng(d.Q, 'V', 4)] },
+          work: d => ['<b>' + trim(d.Q, 4) + '</b> &times; <b>1 V</b>', eng(d.Q, 'V', 4)] },
     Zs: { given: true, name: 'Impedance of the series circuit',
           eq: 'Z = <span class="rad">&radic;</span>(R&sup2; + X&sup2;), with X = X<sub>L</sub> &minus; X<sub>C</sub>',
           work: d => ['in the series arm at f<sub>0</sub>, X<sub>L</sub> &minus; X<sub>C</sub> = 0, so <span class="rad">&radic;</span>((<b>' + eng(d.R, 'Ω', 4) + '</b>)&sup2; + 0)',
                       eng(d.R, 'Ω', 4)] },
     Rd: { given: true, name: 'Dynamic resistance, when Q is high', eq: 'R<sub>D</sub> = L / CR',
-          work: d => ['<b>' + eng(d.L, 'H', 3) + '</b> / (<b>' + eng(d.C, 'F', 3) + '</b> &times; <b>' + eng(d.R, 'Ω', 4) + '</b>)',
+          work: d => ['<b>' + eng(d.L, 'H', 4) + '</b> / (<b>' + eng(d.C, 'F', 4) + '</b> &times; <b>' + eng(d.R, 'Ω', 4) + '</b>)',
                       eng(d.L / (d.C * d.R), 'Ω', 4)] },
     QRd: { given: true, name: 'Q from the dynamic resistance', eq: 'Q = 2&pi;fCR<sub>D</sub>',
-          work: d => ['2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b> &times; <b>' + eng(d.C, 'F', 3) + '</b> &times; <b>' + eng(d.L / (d.C * d.R), 'Ω', 4) + '</b>',
+          work: d => ['2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b> &times; <b>' + eng(d.C, 'F', 4) + '</b> &times; <b>' + eng(d.L / (d.C * d.R), 'Ω', 4) + '</b>',
                       trim(2 * Math.PI * d.f0 * d.L / d.R, 4)] },
     fcr: { given: false, name: 'Cut-off of a CR filter', eq: 'f = 1 / 2&pi;RC',
-          work: d => ['1 / (2&pi; &times; <b>' + eng(d.Rf, 'Ω', 3) + '</b> &times; <b>' + eng(d.C, 'F', 3) + '</b>)',
+          work: d => ['1 / (2&pi; &times; <b>' + eng(d.Rf, 'Ω', 3) + '</b> &times; <b>' + eng(d.C, 'F', 4) + '</b>)',
                       eng(1 / (2 * Math.PI * d.Rf * d.C), 'Hz', 5)] },
     fL: { given: false, name: 'Half power points', eq: 'f<sub>L</sub>, f<sub>U</sub> where the current is 0.707 of its peak',
           work: d => ['bandwidth = <b>' + eng(d.fHi, 'Hz', d.sig) + '</b> &minus; <b>' + eng(d.fLo, 'Hz', d.sig) + '</b>',
@@ -766,7 +773,7 @@ C1 b 0 ${v.C}
         ],
         full: [
           'A quartz crystal is a tuned circuit that happens to be made of rock. Its equivalent circuit, drawn here, is a series L, C and R, with another capacitance across the lot from the holder and its electrodes.',
-          'So it has two resonances close together. At the series one its impedance dips to about R. At the parallel one just above, it peaks. Read both off the curve, then drag R up and watch the two merge as the loss rises.',
+          'So it has two resonances close together. At the series one its impedance dips to about R. At the parallel one just above, it peaks. Read both off the curve, then drag R up and watch the dip and the peak both flatten as the loss rises.',
           'Crystals are ground for one or the other. Put a series crystal in a circuit expecting parallel operation and it will not sit on its marked frequency.'
         ]
       },
@@ -803,8 +810,8 @@ C1 b 0 ${v.C}
       code: '2H4',
       levels: ['intermediate', 'full'],
       introduces: {
-        intermediate: ['bandwidth', 'Q', 'selectivity'],
-        full: ['half power point', 'skin effect']
+        intermediate: ['bandwidth', 'Q', 'selectivity', 'skin effect'],
+        full: ['half power point']
       },
       panel: 'resonance',
       circuit: 'series',
@@ -828,7 +835,7 @@ C1 b 0 ${v.C}
       },
       workNote: {
         intermediate: 'At this level Q only needs to indicate selectivity: higher Q, a narrower band for its frequency. Drag R and watch the two half power frequencies move apart while the centre stays exactly where it was.',
-        full: 'All three forms of Q are printed in the booklet, and they agree, which is a useful check. R is not the only thing that sets Q. Hold the resonant frequency fixed and make L larger and C smaller in step, and Q rises too, because the bandwidth works out at R / 2&pi;L. What R does alone is change the sharpness without moving the centre. The two magnification rules below are not printed, so learn them.'
+        full: 'All three forms of Q are printed in the booklet, and they agree, which is a useful check. R is not the only thing that sets Q. Hold the resonant frequency fixed and make L larger and C smaller in step, and Q rises too, because the bandwidth works out at R / 2&pi;L. What R does alone is change the sharpness without moving the centre. The two magnification rules above are not printed, so learn them.'
       },
       explain: {
         intermediate: [
@@ -913,21 +920,21 @@ C1 b 0 ${v.C}
     '2025-Full129': {
       why: 'A trap is a tuned circuit, so it has to resonate on the frequency you want it to reject. You know f and L, so rearrange the resonance formula for C.',
       working: ['C = 1 / ((2&pi;f)&sup2; &times; L)',
-                '= 1 / ((2&pi; &times; 14 MHz)&sup2; &times; 2 &micro;H)',
-                '= 64.6 pF, so 64 pF is the nearest offered'],
+                '= 1 / ((2&pi; &times; 14 MHz)&sup2; &times; 2 &micro;H)',
+                '= 64.6 pF, so 64 pF is the nearest offered'],
       source: { eq: ['Cfor'], from: ['2H1'] },
       seed: { L: 2e-6, C: 64e-12 },
-      seedNote: 'Set the bench to 2 &micro;H and 64 pF and read the resonant frequency.'
+      seedNote: 'Set the bench to 2 &micro;H and 64 pF and read the resonant frequency.'
     },
     '2025-Full130': {
-      why: 'Frequency falls as capacitance rises, so the lowest frequency comes from the largest capacitance in the range. Use 50 pF, not 5 pF.',
+      why: 'Frequency falls as capacitance rises, so the lowest frequency comes from the largest capacitance in the range. Use 50 pF, not 5 pF.',
       working: ['f = 1 / 2&pi;&radic;(LC)',
-                '= 1 / 2&pi;&radic;(5 &micro;H &times; 50 pF)',
-                '= 10.1 MHz'],
+                '= 1 / 2&pi;&radic;(5 &micro;H &times; 50 pF)',
+                '= 10.1 MHz'],
       source: { eq: ['f0'], from: ['2H1'],
                 note: 'The largest capacitance gives the lowest frequency.' },
       seed: { L: 5e-6, C: 50e-12 },
-      seedNote: 'Set the bench to 5 &micro;H and 50 pF, then drag C down to 5 pF to see the other end of the range.'
+      seedNote: 'Set the bench to 5 &micro;H and 50 pF, then drag C down to 5 pF to see the other end of the range.'
     },
     '2025-Full132': {
       why: 'Resonance depends on the product of L and C, and the product is under a square root on the bottom of the fraction, so making either one larger brings the frequency down. The other three options all decrease something, and decreasing either L or C sends the frequency up instead.',
@@ -950,8 +957,8 @@ C1 b 0 ${v.C}
     '2025-Full134': {
       why: 'The curve is marked with everything needed: where it is centred, and how wide it is between the two points where the response has fallen to 0.707 of the peak. Q is the first divided by the second, so both figures have to be in the same units before dividing.',
       working: ['Q = f<sub>C</sub> / (f<sub>U</sub> &minus; f<sub>L</sub>)',
-                'the curve is centred on 10 MHz and is 200 kHz wide at 0.707 of the peak',
-                '= 10 MHz / 200 kHz = 10,000 kHz / 200 kHz',
+                'the curve is centred on 10 MHz and is 200 kHz wide at 0.707 of the peak',
+                '= 10 MHz / 200 kHz = 10,000 kHz / 200 kHz',
                 '= 50'],
       source: { eq: ['Q'], from: ['2H4'] },
       seed: { R: 6.283, L: 14.14e-6, C: 141.4e-12 },
@@ -966,10 +973,10 @@ C1 b 0 ${v.C}
       why: 'In a parallel tuned circuit the circulating current is about Q times the current supplied, which is why the question asks for an approximate value. Multiply, do not divide.',
       working: ['circulating current &asymp; Q &times; supply current',
                 '= 80 &times; 100 &micro;A',
-                '= 8 mA'],
+                '= 8 mA'],
       source: { eq: ['Il'], from: ['2H4', '2H2'] },
       seed: { R: 3.927, L: 5e-6, C: 50.66e-12 },
-      seedNote: 'Set the bench to a Q of 80 resonating at 10 MHz, which is the circuit this question describes.'
+      seedNote: 'Set the bench to a Q of 80 resonating at 10 MHz, which is the circuit this question describes.'
     },
     '2025-Full138': {
       source: { eq: ['Rd'], from: ['2H5'] },

@@ -17,17 +17,22 @@ const trim = (x, sig) => String(Number(x.toPrecision(sig || 4)));
 /** Round to 4 s.f. so the displayed value, the formula and the netlist agree exactly. */
 const round4 = v => parseFloat(v.toPrecision(4));
 
-/** 0.0001414 -> "141.4 uF". Pass a unit, get a unit. */
+const NBSP = String.fromCharCode(160);   // no-break space
+
+/**
+ * 0.0001414 -> "141.4 µF". Pass a unit, get a unit. The number is joined to
+ * its unit with a no-break space, so the two never split across a line.
+ */
 function eng(x, unit, sig) {
   sig = sig || 4;
   unit = unit || '';
   if (!isFinite(x)) return '—';
-  if (x === 0) return '0 ' + unit;
+  if (x === 0) return '0' + NBSP + unit;
   const sign = x < 0 ? '-' : '', a = Math.abs(x);
   for (const [mul, pre] of SI_PREFIXES) {
-    if (a >= mul) return sign + trim(a / mul, sig) + ' ' + pre + unit;
+    if (a >= mul) return sign + trim(a / mul, sig) + NBSP + pre + unit;
   }
-  return sign + trim(a / 1e-12, sig) + ' p' + unit;
+  return sign + trim(a / 1e-12, sig) + NBSP + 'p' + unit;
 }
 
 /** Same value with a bare SI suffix, the way you would type it into a netlist. */

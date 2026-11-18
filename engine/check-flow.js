@@ -51,7 +51,7 @@ function checkLayout(entry, MNA) {
   };
 
   for (const el of (layout.elements || [])) {
-    if (el.type === 'V' || el.type === 'Q') continue;   // sources and devices
+    if (el.type === 'V' || el.type === 'B' || el.type === 'Q') continue;   // sources and devices
     resolve(`${el.name}`, el.flow === undefined ? el.name : el.flow);
   }
   for (const w of (layout.wires || [])) {

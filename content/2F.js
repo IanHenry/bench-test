@@ -39,6 +39,12 @@ const BENCH = {
   title: 'Digital signals',
   pageTitle: 'Sampling Bench',
   levels: ['foundation', 'intermediate', 'full'],
+  // the course sessions that send learners here, named in the colophon
+  sessions: {
+    foundation: ['Foundation session 4 (Waves, frequency and modulation)'],
+    intermediate: ['Intermediate session 4 (AC, reactance and phase)'],
+    full: ['Full session 10 (Sampling, Fourier, SDR and transceivers)']
+  },
   // there is no circuit on this page, so the generic words would be untrue
   standfirst: 'Move a control and watch what happens. Every waveform and spectrum is calculated live from samples of the signal, so nothing here is a drawing of an answer.',
   colophonNote: 'Every waveform and spectrum is calculated from samples of the signal, and every spectrum by a Fourier transform written for this bench.',
@@ -74,7 +80,7 @@ const BENCH = {
       'Foundation licence manual, digital signals and the converter',
       'Intermediate licence manual, software defined radio and data conversion',
       'Exam Secrets, digital signals at Foundation, Intermediate and Full',
-      'Syllabus 2019 per-level specifications, items 2F1 and 2F2'
+      'Syllabus 2024 v1.6b, items 2F1 and 2F2'
     ],
     keyMessages: [
       { at: '2F1', level: 'foundation',
@@ -111,7 +117,7 @@ const BENCH = {
       desc: 'The frequency of the tone arriving at the converter' },
     { id: 'fs', label: 'Sample rate', unit: 'Hz', range: [2000, 48000], start: 8000,
       desc: 'How many measurements the converter takes each second' },
-    { id: 'bits', label: 'Bit depth', unit: '', range: [2, 16], start: 8, integer: true,
+    { id: 'bits', label: 'Bit depth', unit: '', range: [2, 16], start: 8, integer: true, linear: true,
       desc: 'Binary digits per measurement. Also called resolution' }
   ],
 
@@ -145,11 +151,13 @@ const BENCH = {
   equations: {
     step: { given: false, name: 'Size of one step',
             eq: 'step = full scale / 2<sup>bits</sup>',
-            work: d => ['2 / 2<sup><b>' + d.bits + '</b></sup> = 2 / <b>' +
+            // full scale runs from -1 to +1, so the step as a fraction of it
+            // is half the step the quantiser uses on that range
+            work: d => ['full scale / 2<sup><b>' + d.bits + '</b></sup> = full scale / <b>' +
                         d.levels.toLocaleString('en-GB') + '</b> levels',
-                        F.trim(d.step, 4) + ' of full scale'] },
+                        F.trim(d.step / 2, 4) + ' of full scale'] },
     snr: { given: false, name: 'Best case signal to noise',
-           eq: 'SNR = 6.02n + 1.76 dB',
+           eq: 'SNR = 6.02n + 1.76 dB',
            work: d => ['6.02 &times; <b>' + d.bits + '</b> + 1.76',
                        F.trim(d.snr, 4) + ' dB'] },
     rule: { given: false, name: 'Choosing a sample rate',
@@ -258,7 +266,7 @@ const BENCH = {
       const bw = (W - pad * 2 - gap * (stages.length - 1)) / stages.length;
       const by = H / 2 - 34, bh = 46;
 
-      c.font = '600 12.5px "Saira Semi Condensed", sans-serif';
+      c.font = '600 14px "Saira Semi Condensed", sans-serif';
       c.textAlign = 'center';
       stages.forEach((s, i) => {
         const x = pad + i * (bw + gap);
@@ -276,10 +284,10 @@ const BENCH = {
         c.fillText(s.label, mid, by + bh / 2);
 
         c.fillStyle = t.faint;
-        c.font = '11px "Saira Semi Condensed", sans-serif';
+        c.font = '13px "Saira Semi Condensed", sans-serif';
         c.textBaseline = 'top';
-        wrapText(c, s.sub, mid, by + bh + 8, bw + gap - 4, 13);
-        c.font = '600 12.5px "Saira Semi Condensed", sans-serif';
+        wrapText(c, s.sub, mid, by + bh + 8, bw + gap - 4, 15);
+        c.font = '600 14px "Saira Semi Condensed", sans-serif';
 
         if (i < stages.length - 1) {
           const ax = x + bw + 2, ay = by + bh / 2;
@@ -294,7 +302,7 @@ const BENCH = {
 
       // what is travelling between the blocks: a wave, then numbers, then a wave
       c.fillStyle = t.soft;
-      c.font = '11px "IBM Plex Mono", monospace';
+      c.font = '13px "IBM Plex Mono", monospace';
       c.textBaseline = 'bottom';
       const midGap = i => pad + i * (bw + gap) + bw + gap / 2;
       c.fillText('~~~~', midGap(0), by - 6);
@@ -388,7 +396,7 @@ const BENCH = {
       const atDC = lines.some(x => x < 2 * sp.binWidth);
       const visible = lines.length - (atDC ? 1 : 0);
       const lineText = !atDC ? String(visible)
-        : visible ? visible + ', plus one at 0 Hz' : 'none: everything lands at 0 Hz';
+        : visible ? visible + ', plus one at 0 Hz' : 'none: everything lands at 0 Hz';
       const folded = parts.filter(q => q.folded);
       const names = xs => xs.length > 1
         ? xs.slice(0, -1).join(', ') + ' and ' + xs[xs.length - 1] : xs[0];
@@ -539,12 +547,12 @@ const BENCH = {
       },
       workLead: {
         intermediate: 'The bit depth sets the size of the smallest step the converter can record, and that step sets how much noise it adds.',
-        full: 'The first line says where the limit is. The second says where a tone above it will reappear.'
+        full: 'The first two lines give the rule for choosing a rate and the limit it sets. The last two say where a tone above the limit reappears, worked two ways.'
       },
       workNote: {
         foundation: 'No arithmetic at this level. What matters is the picture: the smooth line is the signal, the dots are the measurements.',
-        intermediate: 'Every extra bit halves the step and buys about 6 dB. Drag the bit depth down to 3 or 4 and the staircase becomes obvious.',
-        full: 'Note what the second line does not depend on: nothing about the signal itself survives. Once a tone has folded back there is no way to tell it from a real one at that frequency, which is why the filter has to come before the converter and not after it.'
+        intermediate: 'Every extra bit halves the step and buys about 6 dB. Drag the bit depth down to 3 or 4 and the staircase becomes obvious.',
+        full: 'Once a tone has folded back, nothing in the samples shows that it was ever higher: it is indistinguishable from a real tone at the lower frequency. That is why the filter has to come before the converter and not after it.'
       },
       explain: {
         foundation: [
@@ -560,11 +568,11 @@ const BENCH = {
           'There is a floor under the sample rate. It has to be more than twice the highest frequency in the signal, and twice that frequency is called the Nyquist rate: the minimum. Drag the sample rate down until it is less than twice the signal and the measurements stop describing it at all. They describe a slower wave that was never there.'
         ],
         full: [
-          'Turn the limit round and it becomes a design rule: sample at a little over twice the highest frequency you intend to capture. Note highest, not bandwidth. A signal running from 20 Hz to 14 kHz needs more than 28k samples a second, because what matters is the 14 kHz, not the roughly 14 kHz of width between the two.',
+          'Turn the limit round and it becomes a design rule: sample at a little over twice the highest frequency you intend to capture. Note highest, not bandwidth. A signal running from 10 kHz to 14 kHz is only 4 kHz wide, but it still needs more than 28k samples a second: what matters is the highest frequency, 14 kHz, not the width.',
           'Two similar names are worth keeping apart. The Nyquist frequency is half a given sample rate, and it is the line on the display. The Nyquist rate is the minimum sample rate for a given signal, twice its highest frequency. One is a property of the converter, the other of the signal.',
           'Push the signal past the Nyquist line and watch the spectrum. The tone does not disappear and it does not stay put: it folds back and appears somewhere below the line instead.',
-          'A 5 kHz tone sampled at 8 kHz comes back at 3 kHz. Nothing downstream can tell that apart from a real 3 kHz tone, because by then they are the same list of numbers.',
-          'There is a neater way to see where it lands. The tone reflects about the Nyquist line: it comes back as far below the line as it started above it. 5 kHz is 1 kHz above the 4 kHz line, so it returns 1 kHz below, at 3 kHz. Subtracting from the sample rate gives the same answer, but the reflection is the one that stays with you. Both work only while the tone is below the sample rate itself. Push it further and it folds more than once: take off whole sample rates first, which leaves exactly the same samples, then reflect what is left if it is still above the line. The working above does this whenever you go that far.',
+          'A 5 kHz tone sampled at 8 kHz comes back at 3 kHz. Nothing downstream can tell that apart from a real 3 kHz tone, because by then they are the same list of numbers.',
+          'There is a neater way to see where it lands. The tone reflects about the Nyquist line: it comes back as far below the line as it started above it. 5 kHz is 1 kHz above the 4 kHz line, so it returns 1 kHz below, at 3 kHz. Subtracting from the sample rate gives the same answer, but the reflection is the one that stays with you. Both work only while the tone is below the sample rate itself. Push it further and it folds more than once: take off whole sample rates first, which leaves exactly the same samples, then reflect what is left if it is still above the line. The working above does this whenever you go that far.',
           'This is why an anti-alias filter goes in front of the converter. Once the folding has happened it cannot be undone, so the only cure is to stop it arriving.',
           'In practice you sample comfortably faster than twice, not exactly twice. A real filter does not stop dead at its cut-off, it rolls off over a range, so a little of what lies above still gets through. Leaving headroom between the highest wanted frequency and the Nyquist line gives the filter room to do its work.'
         ]
@@ -601,7 +609,7 @@ const BENCH = {
       },
       formulas: { full: ['bins'] },
       workNote: {
-        foundation: 'The device that takes the measurements is an analogue to digital converter, an ADC. On its own it only produces numbers, so something with computing power has to follow it to turn those numbers back into sound.',
+        foundation: 'The device that takes the measurements is an analogue to digital converter, an ADC. On its own it only produces numbers, so something with computing power has to follow it to process them. A DAC then turns the result back into a voltage you can hear.',
         full: 'The display is a real transform, not a drawing. Every point on it was calculated from a block of 4096 samples of the signal, taken at the sample rate set above, with the fundamental at the Signal setting. The samples are not rounded here, so the bit depth plays no part. The spacing between points is for interest only: the exam asks what the transform does, not how finely it does it.'
       },
       explain: {
@@ -631,13 +639,13 @@ const BENCH = {
    */
   answers: {
     '2025-Full6015': {
-      why: 'The rule is twice the highest frequency present, not twice the bandwidth and not twice the lowest. The highest here is 14 kHz, so anything from 28k samples a second upwards will do, and 30k is the lowest offered that clears it.',
+      why: 'The rule is twice the highest frequency present, not twice the bandwidth and not twice the lowest. The highest here is 14 kHz, so the rate must be more than 28k samples a second, and 30k is the lowest offered that clears it.',
       working: ['the rate must be more than 2 &times; highest frequency',
-                '= 2 &times; 14 kHz',
+                '= 2 &times; 14 kHz',
                 '= 28k samples/s, so 30k is the lowest that works'],
       source: { eq: ['rule'], from: ['2F1'] },
       seed: { fsig: 14000, fs: 30000 },
-      seedNote: 'Set the bench to a 14 kHz tone sampled at 30k and watch it stay where it should. Drag the rate below 28k and it starts to fold.'
+      seedNote: 'Set the bench to a 14 kHz tone sampled at 30k and watch it stay where it should. Drag the rate below 28k and it starts to fold.'
     },
     '2025-Full6019': {
       why: 'Once a frequency above the limit has been sampled it has already folded down, and it now looks exactly like a real signal at the lower frequency. Nothing after the converter can separate them. The filter has to remove it before it is ever measured.',
@@ -647,20 +655,20 @@ const BENCH = {
     '2025-Full7395': {
       why: 'Aliasing is caused by frequencies arriving that are higher than half the sample rate. Option B has it backwards, and option D describes oversampling, which is the safe direction.',
       working: ['a tone folds when f &gt; sample rate / 2',
-                'to illustrate, with figures of our own (the question gives none): 12 kHz is above the 8 kHz limit of a 16k rate',
-                'so it returns at 16 kHz &minus; 12 kHz = 4 kHz',
+                'to illustrate (the question gives no figures): 12 kHz is above the 8 kHz limit of a 16k rate',
+                'so it returns at 16 kHz &minus; 12 kHz = 4 kHz',
                 'that is higher analogue frequencies arriving than the converter can accept'],
       source: { eq: ['nyq', 'alias'], from: ['2F1'] },
       seed: { fsig: 12000, fs: 16000 },
-      seedNote: 'The question has no figures; this is our own example. A 12 kHz tone sampled at 16k folds back to 4 kHz. Set the bench to it and read the spectrum.'
+      seedNote: 'The question has no figures; this is an illustration. A 12 kHz tone sampled at 16k folds back to 4 kHz. Set the bench to it and read the spectrum.'
     },
     '2025-Full7645': {
-      why: 'Sampling at 80M samples a second puts the folding point at 40 MHz, so anything still getting through above that comes back inside the wanted range. That rules out two of the four. Of the two left, the better one is whichever keeps the most spectrum while still being well down by 40 MHz, because a filter that closes too early throws away band you could have used.',
+      why: 'Sampling at 80M samples a second puts the folding point at 40 MHz, so anything still getting through above that comes back inside the wanted range. That rules out two of the four. Of the two left, the better one is whichever keeps the most spectrum while still being well down by 40 MHz, because a filter that closes too early throws away band you could have used.',
       source: { eq: ['nyq'], from: ['2F1'] },
-      working: ['folding point = 80M samples/s / 2 = 40 MHz',
-                'responses 3 and 4 are still at full output at 40 MHz, so both fold back',
-                'response 1 is well clear by 40 MHz but gives up everything above 20 MHz',
-                'response 2 is around 60 dB down by 40 MHz and still passes to 30 MHz']
+      working: ['folding point = 80M samples/s / 2 = 40 MHz',
+                'responses 3 and 4 are still at full output at 40 MHz, so both fold back',
+                'response 1 is well clear by 40 MHz but gives up everything above 20 MHz',
+                'response 2 is around 60 dB down by 40 MHz and still passes to 30 MHz']
     },
     '2025-Full7401': {
       why: 'The transform takes a block of samples and reports how much of each frequency was in them, which is what puts the signals in frequency order. Option A describes a transformer, option C a data demodulator and option D the quadrature mixing that produces I and Q.',
@@ -670,7 +678,7 @@ const BENCH = {
     '2025-Full7686': {
       source: { from: ['2F2'] },
       why: 'A spectrum shows how much of each frequency is present and says nothing about where in its cycle each one starts. Two waveforms can therefore look quite different and still give the same spectrum, which is why the question asks for a pair of plots rather than one.',
-      working: ['the two peaks sit at about 1.5 MHz and 4.5 MHz',
+      working: ['the two peaks sit at about 1.5 MHz and 4.5 MHz',
                 '4.5 / 1.5 = 3, so it is a fundamental and its third harmonic',
                 'so look for three cycles of the dotted trace to one of the dashed',
                 'plots 1 and 4 both show that, and differ only in where the harmonic starts']
@@ -694,7 +702,7 @@ const BENCH = {
       'Two ideas, then. Sampling is measuring a signal over and over at a steady rate, and an ADC is the part that does it. Everything a software radio does afterwards works on those numbers.'
     ],
     intermediate: [
-      'Sample rate and bit depth are separate controls solving separate problems. Rate decides how much of the shape you keep. Depth decides how finely each measurement is recorded, and every bit is worth about 6 dB.'
+      'Sample rate and bit depth are separate controls solving separate problems. Rate decides how much of the shape you keep. Depth decides how finely each measurement is recorded, and every bit is worth about 6 dB.'
     ],
     full: [
       'The Nyquist limit is not a guideline. Below it sampling loses nothing that matters; above it the converter reports a frequency that was never present, and no amount of processing afterwards can separate it from a real one.',

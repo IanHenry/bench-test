@@ -50,6 +50,12 @@ const FET_IDSS = 8e-3, FET_VP = -3;
 const DG_IDSS = 10e-3, DG_VP = -2;
 const DG_RG = 1e6;            // gate 1 returned to ground through this
 
+// The 2I3 device toggle reaches the working as d.device. Anywhere it is not
+// set, the stage is the NPN the controls describe.
+function bipolar(d) {
+  return !d.device || d.device === 'npn' || d.device === 'pnp';
+}
+
 function fetPoint(v) {
   return DC.fetDividerBias(v.vcc || VCC, v.r1, v.r2, v.rc, v.re, FET_IDSS, FET_VP);
 }
@@ -110,7 +116,7 @@ const DEVICE = {
     ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-10, 0); ctx.lineTo(-10, 9); ctx.lineTo(1, 9); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(1, -9); ctx.lineTo(-14, -9); ctx.lineTo(-14, -40); ctx.stroke();
     // labels clear of every lead: G1 below its lead, G2 left of its own
-    ctx.font = '11px sans-serif'; ctx.fillStyle = ctx.strokeStyle;
+    ctx.font = '13px sans-serif'; ctx.fillStyle = ctx.strokeStyle;
     ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
     ctx.fillText('G1', -14, 15); ctx.fillText('G2', -18, -26);
   }
@@ -140,7 +146,7 @@ if (typeof window !== 'undefined' && window.Schematic && window.Schematic.draw &
       ctx.restore();
       if (el.label) {
         ctx.fillStyle = t.ink || '#111';
-        ctx.font = '11px ' + (t.font || 'sans-serif');
+        ctx.font = '13px ' + (t.font || 'sans-serif');
         ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
         ctx.fillText(el.label, el.at[0] + 26, el.at[1]);
       }
@@ -515,7 +521,7 @@ function classNetlist(kind, d) {
     const top = kind === 'AB' ? 'a' : 'm', bot = kind === 'AB' ? 'n' : 'm';
     return 'V1 in 0 1\nRIN in m 50' +
       '\nRB1 0 ' + top + ' ' + F.sci(PP_RB) +
-      (kind === 'AB' ? '\nRD1 a m ' + PP_RD + '\nRD2 m n ' + PP_RD : '') +
+      (kind === 'AB' ? '\nRD1 a m ' + PP_RD + '\nRD2 m n ' + PP_RD : '') +
       '\nRB2 ' + bot + ' 0 ' + F.sci(PP_RB) +
       '\nRP1 ' + top + ' o ' + rp + '\nG1 0 o ' + top + ' o ' + F.sci(gm) +
       '\nRP2 o ' + bot + ' ' + rp + '\nG2 o 0 o ' + bot + ' ' + F.sci(gm) +
@@ -613,7 +619,7 @@ function classLayout(kind) {
  * frequency is where it comes back in phase.
  *
  * Amplitude. The transistor's current is an exponential of the voltage
- * between its base and its emitter, so a swing there of more than the 26 mV
+ * between its base and its emitter, so a swing there of more than the 26 mV
  * thermal voltage no longer comes out in proportion. The standing current is
  * held by RE, so as the swing grows the current becomes a pulse on the peaks
  * and stops altogether on the troughs, and the part of it at the oscillating
@@ -861,11 +867,12 @@ function varicapLayout(c) {
   return {
     w: 280, h: 200,
     elements: [
-      { name: 'V1', type: 'V', at: [30, 100], rot: 90, label: 'control' },
+      { name: 'V1', type: 'B', at: [30, 100], rot: 90, label: 'control' },
       { name: 'R1', type: 'R', at: [90, 70], label: 'R' },
-      { name: 'L1', type: 'L', at: [170, 100], rot: 90, label: 'L' },
-      { name: 'D1', type: 'DV', at: [240, 100], rot: 90, label: 'varicap',
-        labelAt: 'left', flow: 'C1' }
+      { name: 'L1', type: 'L', at: [170, 100], rot: 90, label: 'L', labelAt: 'left' },
+      // cathode up to the control voltage: the varicap is reverse biased
+      { name: 'D1', type: 'DV', at: [240, 100], rot: 270, label: 'varicap',
+        labelAt: 'left', flow: 'C1', flowReversed: true }
     ],
     wires: [[30, 70, 60, 70, 'R1'], [120, 70, 170, 70, 'L1'],
             [170, 70, 240, 70, 'C1'], [240, 130, 170, 130, 'C1'],
@@ -878,9 +885,11 @@ function diodeLayout(zener) {
   return {
     w: 250, h: 200,
     elements: [
-      { name: 'V1', type: 'V', at: [30, 100], rot: 90, label: 'supply' },
+      { name: 'V1', type: 'B', at: [30, 100], rot: 90, label: 'supply' },
       { name: 'RC', type: 'R', at: [110, 70], label: 'R' },
-      { name: 'D1', type: zener ? 'DZ' : 'D', at: [190, 100], rot: 90,
+      // the plain diode points down, forward biased; the Zener points up,
+      // cathode to the positive side, because it is used reverse biased
+      { name: 'D1', type: zener ? 'DZ' : 'D', at: [190, 100], rot: zener ? 270 : 90,
         label: zener ? 'Zener' : 'D' }
     ],
     wires: [[30, 70, 80, 70, 'RC'], [140, 70, 190, 70, 'RC'],
@@ -895,6 +904,13 @@ const BENCH = {
   title: 'Semiconductor devices',
   pageTitle: 'Semiconductor Bench',
   levels: ['intermediate', 'full'],
+  // the course sessions that send learners here, named in the colophon
+  sessions: {
+    intermediate: ['Intermediate session 6 (Semiconductors)'],
+    full: ['Full session 8 (Semiconductors: Zener, bias, amplifiers, classes and oscillators)',
+           'Full session 12 (Transmitters 2: making the frequency)',
+           'Full session 13 (Transmitters 3: power amplifiers and a clean signal)']
+  },
   circuitBased: true,
 
   /** Every circuit this bench draws, for the layout checker. */
@@ -937,7 +953,7 @@ const BENCH = {
   intro: {
     intermediate: [
       'A diode lets current one way. A transistor lets a small current control a large one. Almost everything else in a radio is built out of those two facts.',
-      'The controls along the top are the parts of one circuit, drawn beside every panel below so you can always see what they refer to. R1 and R2 divide the supply down to set the base voltage, RE turns that into a current, RC turns the current back into an output voltage, and beta is the transistor itself. On the first panel only R matters, because a diode has no base to bias.',
+      'The controls along the top are the parts of one circuit, drawn beside every panel below so you can always see what they refer to. R1 and R2 divide the supply down to set the base voltage, RE turns that into a current, RC turns the current back into an output voltage, and beta is the transistor itself. On the first panel only the supply and R matter, because a diode has no base to bias.',
       'Move them and watch the operating point travel, because where a device sits before the signal arrives decides what it does to the signal when it turns up.'
     ],
     full: [
@@ -957,11 +973,11 @@ const BENCH = {
       'Foundation licence manual, semiconductors',
       'Intermediate licence manual, transistors in circuits',
       'Exam Secrets, transistors and amplifiers at Foundation, Intermediate and Full',
-      'Syllabus 2019 per-level specifications, items 2I1 to 2I6'
+      'Syllabus 2024 v1.6b, items 2I1 to 2I6'
     ],
     keyMessages: [
       { at: '2I1', level: 'intermediate',
-        point: 'a junction conducts one way once the barrier is overcome, at about 0.6 V' },
+        point: 'a junction conducts one way once the barrier is overcome, at about 0.6 V' },
       { at: '2I1', level: 'intermediate',
         point: 'the drop across a conducting diode must be subtracted before Ohm law on the resistor' },
       { at: '2I1', level: 'full',
@@ -999,7 +1015,7 @@ const BENCH = {
 
   controls: [
     { id: 'vcc', label: 'Supply', unit: 'V', range: [5, 24], start: 12, linear: true,
-      desc: 'The rail the stage runs from. Worked designs often use 10 V' },
+      desc: 'The rail the stage runs from. Worked designs often use 10 V' },
     { id: 'r1', label: 'R1', unit: 'Ω', range: [10e3, 470e3], start: 47e3,
       desc: 'Upper bias resistor, from the supply to the base' },
     { id: 'r2', label: 'R2', unit: 'Ω', range: [1e3, 100e3], start: 7.5e3,
@@ -1058,16 +1074,21 @@ const BENCH = {
                work: d => ['<b>' + d.vcc + ' V</b> &times; <b>' + FI.eng(d.r2, 'Ω', 3) +
                            '</b> / (<b>' + FI.eng(d.r1, 'Ω', 3) + '</b> + <b>' +
                            FI.eng(d.r2, 'Ω', 3) + '</b>)',
-                           FI.trim(d.vth, 3) + ' V at the base, if the divider is stiff'] },
+                           FI.trim(d.vth, 3) + ({
+                             pnp: ' V: how far the base sits below the rail, if the divider is stiff',
+                             jfet: ' V at the gate, exactly, because the gate draws no current',
+                             dualgate: ' V on gate 2, exactly, because the gate draws no current'
+                           }[d.device] || ' V at the base, if the divider is stiff')] },
     emitter: { given: false, name: 'What the emitter resistor sets',
+               applies: d => bipolar(d),
                eq: 'I<sub>E</sub> = (V<sub>B</sub> &minus; 0.6) / R<sub>E</sub>',
-               work: d => ['(<b>' + FI.trim(d.vth, 3) + ' V</b> &minus; 0.6 V) / <b>' +
+               work: d => ['(<b>' + FI.trim(d.vth, 3) + ' V</b> &minus; 0.6 V) / <b>' +
                            FI.eng(d.re, 'Ω', 3) + '</b>',
                            'about ' + FI.eng(Math.max(0, d.vth - 0.6) / d.re, 'A', 3) +
                            ' (the base current pulls it to ' + FI.eng(d.ic + d.ib, 'A', 3) + ')'] },
     // The booklet prints P = IV and V = IR. The Zener sums are those two
     // applied, so they are marked given, and they use the voltage the
-    // readouts show: the rated 5.1 V plus what the slope resistance adds.
+    // readouts show: the rated 5.1 V plus what the slope resistance adds.
     // Neither applies until the Zener conducts, so until then the rows are
     // left out and the readouts say why.
     zpower: { given: true, name: 'Power the Zener has to get rid of',
@@ -1089,6 +1110,7 @@ const BENCH = {
                } },
     // printed on both the Intermediate and the Full formula sheets
     beta: { given: true, tag: { intermediate: 'given' }, name: 'Current gain', eq: 'I<sub>C</sub> = &beta; &times; I<sub>B</sub>',
+            applies: d => bipolar(d),
             work: d => d.saturated
               ? ['<b>' + FI.trim(d.beta, 3) + '</b> &times; <b>' + FI.eng(d.ib, 'A', 3) + '</b> would be ' +
                  FI.eng(d.beta * d.ib, 'A', 3),
@@ -1096,13 +1118,14 @@ const BENCH = {
               : ['<b>' + FI.trim(d.beta, 3) + '</b> &times; <b>' + FI.eng(d.ib, 'A', 3) + '</b>',
                  FI.eng(d.icq, 'A', 3)] },
     vgs:  { given: false, name: 'Gate to source voltage of the FET',
+            applies: d => d.device === 'jfet',
             eq: 'V<sub>GS</sub> = V<sub>G</sub> &minus; V<sub>S</sub>',
             work: d => ['<b>' + FI.trim(d.fet.vg, 3) + ' V</b> &minus; <b>' + FI.trim(d.fet.vs, 3) + ' V</b>',
                         FI.trim(d.fet.vgs, 3) + ' V' + (d.fet.vgs < 0
                           ? ', the gate below the source, as a depletion FET needs'
                           : ', the gate above the source: too far for a JFET')] },
     theta: { given: false, name: 'How much of the cycle it conducts for',
-             eq: '&theta; = 360&deg; for A, 180&deg; for B, less for C',
+             eq: '&theta; = 360&deg; for A, between 180&deg; and 360&deg; for AB, 180&deg; for B, under 180&deg; for C',
              work: d => d.saturated
                ? ['at this bias', 'none of these: the transistor is saturated, a closed switch']
                : (d.cls === 'off'
@@ -1113,9 +1136,12 @@ const BENCH = {
             eq: '&eta;<sub>max</sub> = RF power out / DC power in, at full swing',
             work: d => d.saturated
               ? ['saturated', 'no figure: nothing is being amplified']
+              : d.cls === 'off'
+              ? ['the drive never reaches turn on', 'none: no current flows']
               : ['from the shape of the current pulse, with the collector swinging the whole supply',
                  'at best ' + FI.trim(d.eff * 100, 3) + '%'] },
     diss: { given: true, name: 'What the transistor has to get rid of',
+            applies: d => bipolar(d),
             eq: 'P = IV, here P = V<sub>CE</sub> &times; I<sub>C</sub>',
             work: d => ['<b>' + FI.trim(d.vceq, 3) + ' V</b> &times; <b>' + FI.eng(d.icq, 'A', 3) + '</b>',
                         FI.eng(d.vceq * d.icq, 'W', 3)] },
@@ -1315,7 +1341,7 @@ const BENCH = {
       const gate2Limits = g.id < 0.97 * idHigh;
       p.readouts.innerHTML = ro([
         ['Gate 2, from R1 and R2', trim(vg2, 3) + ' V'],
-        ['Gate 1', '0 V, returned to ground through RG'],
+        ['Gate 1', '0 V, returned to ground through RG'],
         ['Source', trim(g.vs, 3) + ' V, so gate 1 is ' + trim(g.vg1s, 3) + ' V on it'],
         ['Drain current', eng(g.id, 'A', 3)],
         ['Gain from gate 1', trim(100 * gmHere / Math.max(1e-12, gmFull), 3) +
@@ -1358,7 +1384,7 @@ const BENCH = {
       const vout = vin * cfg.av;
       // How far the output can actually swing before it runs into the supply
       // at one end or saturation at the other. A small signal model does not
-      // know about either, so it will cheerfully report 39 V from a 12 V rail.
+      // know about either, so it will cheerfully report 39 V from a 12 V rail.
       const limit = p.topology === 'cc'
         ? Math.max(0.05, Math.min(d.ve, d.vcc - d.ve))
         : Math.max(0.05, Math.min(Math.max(0, d.vce - 0.2), d.vcc - d.vce));
@@ -1434,7 +1460,7 @@ const BENCH = {
         p.readouts.innerHTML = ro([
           ['State', d.saturated
             ? 'saturated: the bias has turned it hard on, a closed switch'
-            : 'cut off: the base is below the 0.6 V it needs, an open switch', true],
+            : 'cut off: the base is below the 0.6 V it needs, an open switch', true],
           ['Voltage gain', 'none: the signal does not get through'],
           ['Current gain', 'none'],
           ['To amplify', d.saturated ? 'lower the base: raise R1 or lower R2, or raise RE'
@@ -1476,9 +1502,13 @@ const BENCH = {
       const zener = level === 'full' ? 5.1 : null;
       const pts = [];
       const vLo = zener ? -7 : -1, vHi = 0.9;
+      // Past the knee the Zener is drawn with the same 5 Ω slope the
+      // operating point uses, so the dot sits on the curve it is drawn on.
+      const current = v => zener && v < -zener ? -(-v - zener) / ZENER_SLOPE
+                                                : DC.diodeCurrent(v, {});
       for (let i = 0; i <= 500; i++) {
         const v = vLo + (vHi - vLo) * i / 500;
-        const i_ = DC.diodeCurrent(v, zener ? { zener: zener } : {});
+        const i_ = current(v);
         pts.push({ x: v, y: Math.max(-0.03, Math.min(0.03, i_)) });
       }
       // where it really sits when fed from the supply through R
@@ -1487,7 +1517,7 @@ const BENCH = {
                        : diodeOperating(d.vcc, d.rc, {});
       const sits = zener ? -op.vd : op.vd;
       const fc = p.cursor === null ? sits : vLo + (vHi - vLo) * p.cursor;
-      const ic = DC.diodeCurrent(fc, zener ? { zener: zener } : {});
+      const ic = current(fc);
       const spec = {
         xRange: [vLo, vHi], xFmt: v => trim(v, 2) + ' V', tokens: t,
         left: { min: -0.03, max: 0.03, fmt: y => eng(y, 'A', 2) },
@@ -1502,13 +1532,13 @@ const BENCH = {
         p.schemNote.textContent = zener
           ? (op.i > 0
             ? 'R here is the RC slider. It sets the current through the Zener, ' +
-              'and the Zener holds close to its rated 5.1 V: the little it rises ' +
-              'with more current is its slope resistance, 5 Ω here.'
-            : 'R here is the RC slider. The supply is below 5.1 V, so the Zener ' +
+              'and the Zener holds close to its rated 5.1 V: the little it rises ' +
+              'with more current is its slope resistance, 5 Ω here.'
+            : 'R here is the RC slider. The supply is below 5.1 V, so the Zener ' +
               'is not conducting and the whole supply sits across it.')
-          : 'R here is the RC slider. It is the only control that changes ' +
-            'anything on this panel: it sets the current, and the diode then ' +
-            'takes whatever voltage goes with it.';
+          : 'R here is the RC slider. With the supply, it is all that changes ' +
+            'anything on this panel: together they set the current, and the ' +
+            'diode takes whatever voltage goes with it.';
       }
       p.readouts.innerHTML = ro(zener ? [
         ['Supply', trim(d.vcc, 3) + ' V'],
@@ -1516,17 +1546,17 @@ const BENCH = {
         [op.i > 0 ? 'Held across the Zener' : 'Across the Zener, not conducting', trim(op.vd, 3) + ' V', true],
         ['Current through both', eng(op.i, 'A', 3)],
         ['Power in the Zener', eng(op.p, 'W', 3) +
-          (op.p > 0.4 ? ', more than a 400 mW diode will take' : ', within a 400 mW diode'),
+          (op.p > 0.4 ? ', more than a 400 mW diode will take' : ', within a 400 mW diode'),
          op.p > 0.4],
         ['At the cursor', trim(fc, 3) + ' V, ' +
-          eng(Math.max(-0.03, Math.min(0.03, ic)), 'A', 2)]
+          eng(Math.max(-0.03, Math.min(0.03, ic)), 'A', 3)]
       ] : [
         ['Supply', trim(d.vcc, 3) + ' V'],
         ['Across the resistor', trim(op.vr, 3) + ' V'],
         ['Across the diode', trim(op.vd, 3) + ' V'],
         ['Current through both', eng(op.i, 'A', 3), true],
         ['At the cursor', trim(fc, 3) + ' V, ' +
-          eng(Math.max(-0.03, Math.min(0.03, ic)), 'A', 2)]
+          eng(Math.max(-0.03, Math.min(0.03, ic)), 'A', 3)]
       ]);
       return { layout: diodeLayout(zener) };
     },
@@ -1557,19 +1587,19 @@ const BENCH = {
       const capMax = varicapC(vLo) * 1e12;
       const fMax = varicapF(vHi) / 1e6;
       Plot.draw(p.graph, Object.assign({
-        band: [0, 0.5],
+        band: [0, 0.46], hideX: true,
         left: { min: 0, max: capMax * 1.1, fmt: y => trim(y, 3) + ' pF' },
         traces: [{ pts: cap, colour: t.trace, axis: 'left', width: 2.2 }]
       }, common));
       Plot.draw(p.graph, Object.assign({
-        band: [0.5, 1], append: true,
+        band: [0.54, 1], append: true,
         left: { min: 0, max: fMax * 1.1, fmt: y => trim(y, 3) + ' MHz' },
-        traces: [{ pts: freq, colour: t.trace2 || t.marker, axis: 'left', width: 2.2 }]
+        traces: [{ pts: freq, colour: t.phase, axis: 'left', width: 2.2 }]
       }, common));
 
       p.legend.innerHTML =
         swatch(t.trace, 'Capacitance of the diode') +
-        swatch(t.trace2 || t.trace, 'What it tunes a 4.7 uH coil to') +
+        swatch(t.phase, 'What it tunes a 4.7&nbsp;µH coil to') +
         swatch(t.marker, 'The control voltage, drag it');
       if (p.schemNote) {
         p.schemNote.textContent = 'R is large enough to feed the control ' +
@@ -1690,7 +1720,10 @@ const BENCH = {
       const N = 1024;
       // headroom and drive are both in volts, so the pulse comes out in volts
       const wave = DC.collectorWave(d.headroom, d.drive, N);
-      const peak = Math.max(1e-6, d.headroom + d.drive);
+      // Cut off, the pulse is nothing at all, so scale to the base voltage
+      // instead: it then shows plainly that the drive never reaches turn on.
+      const peak = d.cls === 'off' ? Math.max(1e-6, Math.abs(d.headroom) + d.drive)
+                                   : Math.max(1e-6, d.headroom + d.drive);
       const pts = [], drivePts = [];
       for (let i = 0; i < N * 2; i++) {
         pts.push({ x: i / N, y: d.saturated ? 1 : wave[i % N] / peak });
@@ -1736,7 +1769,8 @@ const BENCH = {
       ] : [
         ['Conducts for', trim(d.thetaDeg, 4) + '°'],
         ['Which is class', d.cls === 'off' ? 'none: the drive never reaches turn on' : d.cls, true],
-        ['Efficiency at best', trim(d.eff * 100, 3) + '%, with the output swinging the full supply'],
+        ['Efficiency at best', d.cls === 'off' ? 'none: no current flows'
+          : trim(d.eff * 100, 3) + '%, with the output swinging the full supply'],
         ['Typical circuit, drawn', circuitName],
         ['Needs a tuned load?', d.cls === 'off' ? 'nothing to load: no current flows'
           : d.cls === 'C' ? 'yes, essential'
@@ -1745,9 +1779,9 @@ const BENCH = {
       ]);
       if (p.schemNote) {
         p.schemNote.textContent = {
-          A: 'RE is left unbypassed: the current then follows the base above 0.6 V in a straight line.',
+          A: 'RE is left unbypassed: the current then follows the base above 0.6 V in a straight line.',
           AB: 'An NPN on top for the positive half, a PNP below for the negative. The diodes hold each base a little past turn on, so the handover is smooth.',
-          B: 'An NPN on top for the positive half, a PNP below for the negative. Bases joined: each waits for 0.6 V of its own, which leaves a dead band at the crossover.',
+          B: 'An NPN on top for the positive half, a PNP below for the negative. Bases joined: each waits for 0.6 V of its own, which leaves a dead band at the crossover.',
           C: 'The tuned circuit rings at the fundamental and ignores the harmonics.'
         }[kind];
       }
@@ -1793,7 +1827,7 @@ const BENCH = {
       });
 
       // and the reason: the loop gain against the size of the swing, on a
-      // logarithmic scale of swing from 1 mV to 10 V at the base
+      // logarithmic scale of swing from 1 mV to 10 V at the base
       const lx0 = -3, lx1 = 1;
       const gainPts = [], unity = [];
       for (let i = 0; i <= 160; i++) {
@@ -1820,7 +1854,7 @@ const BENCH = {
           : growing ? 'growing, the loop makes more than it loses'
             : (o.Tss > 1 ? 'shrinking back towards where it settles'
                          : 'dying away, the loop cannot replace what is lost'))) +
-        swatch(t.phase, 'Loop gain against the swing at the base, 1 mV to 10 V') +
+        swatch(t.phase, 'Loop gain against the swing at the base, 1 mV to 10 V') +
         swatch(t.faint, 'A loop gain of one') +
         (o.settle > 0 ? swatch(t.marker, 'Where it settles') : '') +
         '<span>upper: the swing, cycle by cycle &nbsp; lower: why it grows or shrinks</span>';
@@ -1873,13 +1907,13 @@ const BENCH = {
       },
       formulas: { intermediate: [], full: ['zseries', 'zpower'] },
       workNote: {
-        intermediate: 'No formula here. What matters is the shape of the curve: nothing much happens until about 0.6 V, and then the current climbs very steeply indeed. Drag the cursor across it.',
+        intermediate: 'No formula here. What matters is the shape of the curve: nothing much happens until about 0.6 V, and then the current climbs very steeply indeed. Drag the cursor across it.',
         full: 'Watch the left hand side of the curve. Nothing flows until the applied voltage passes the rated figure, and then current rises almost vertically while the voltage across the diode barely moves. That is what makes it useful as a reference.'
       },
       explain: {
         intermediate: [
           'A junction between two kinds of silicon has a region either side of it swept clear of free charge, called the depletion layer. It acts as a barrier.',
-          'Apply a voltage the right way round and the barrier shrinks until, at about 0.6 V for silicon, current flows freely. That is forward bias. Apply it the other way and the barrier grows, and almost nothing gets through.',
+          'Apply a voltage the right way round and the barrier shrinks until, at about 0.6 V for silicon, current flows freely. That is forward bias. Apply it the other way and the barrier grows, and almost nothing gets through.',
           'That is the whole of rectification: a device that passes one half of an alternating waveform and blocks the other.'
         ],
         full: [
@@ -1917,11 +1951,18 @@ const BENCH = {
                   full: ['divider', 'emitter', 'beta', 'diss', 'vgs'] },
       workLead: {
         intermediate: 'One relationship: the current gain.',
-        full: 'The divider, the current it sets, and what the device has to dissipate while it sits there. The last row is the FET on the same divider.'
+        // the rows follow the device chosen above, and so do these words
+        full: d => ({
+          jfet: 'The divider sets the gate, and the source resistor then sets how far the source sits above it.',
+          dualgate: 'One row: the divider that holds gate 2. What that voltage does to the current is on the curve.'
+        }[d.device] || 'The divider, the current it sets, and what the device has to dissipate while it sits there.')
       },
       workNote: {
         intermediate: 'Beta is simply the collector current divided by the base current. How R1 and R2 set the operating point is shown on the curve; working it out is not needed at this level.',
-        full: 'Note the dissipation figure. It is largest when the collector sits near the middle of the line, which is where a stage has to sit if it is to reproduce a signal faithfully. That is the reason such a stage runs hot even with no signal going through it.'
+        full: d => ({
+          jfet: 'Note the sign. A depletion FET conducts with its gate at the source voltage, so it is biased with the gate below the source, and the source resistor is what puts it there.',
+          dualgate: 'Gate 2 draws no current, so the divider gives exactly its unloaded voltage. Lower it and the drain current, and the gain with it, falls.'
+        }[d.device] || 'Note the dissipation figure. It is largest when the collector sits near the middle of the line, which is where a stage has to sit if it is to reproduce a signal faithfully. That is the reason such a stage runs hot even with no signal going through it.')
       },
       explain: {
         intermediate: [
@@ -1934,7 +1975,7 @@ const BENCH = {
         full: [
           'For a signal to swing both ways without running out of room, the operating point wants to sit on the straight part with space either side of it. That is what the exam means by biasing the collector midway between the supply and zero.',
           'Change R1 or R2 and watch the marked point travel along the curve. Push it too far up and it runs into the flat top, where more base current buys no more collector current and the top of the waveform is shaved off. Take it too far down and the bottom of the waveform is cut off instead.',
-          'Push the base far enough and the stage saturates: the collector has fallen as far as it can, to about 0.2 V above the emitter, and the collector current is whatever the supply and the two resistors allow. Beta stops describing it. Look at the base current against the collector current in that state and the ratio has fallen well below beta.',
+          'Push the base far enough and the stage saturates: the collector has fallen as far as it can, to about 0.2 V above the emitter, and the collector current is whatever the supply and the two resistors allow. Beta stops describing it. Look at the base current against the collector current in that state and the ratio has fallen well below beta.',
           'A PNP transistor is biased the same way with every polarity turned round. Pick PNP above: the emitter resistor now goes to the positive rail and the load to ground, and the divider sets the base a fixed fraction of the supply below the rail. Measured down from the rail, every figure is the NPN’s. Its emitter arrow points in, and conventional current flows in at the emitter and out of the collector.',
           'A FET is controlled by the voltage on its gate rather than by a current, and the gate draws essentially none. Pick FET above: this is the common source stage the exam draws, with the divider on the gate and a resistor in the source. Because nothing flows into the gate, the divider gives exactly its unloaded voltage however large R1 and R2 are.',
           'An n channel depletion FET conducts with its gate at the source voltage, and taking the gate more negative than the source pinches the channel down until, at the pinch off voltage, no drain current flows at all. So it is biased with the gate below the source. The source resistor arranges that: drain current lifts the source, and the current settles where the device curve meets the line the resistor imposes. Lower the gate and the drain current falls.',
@@ -1951,11 +1992,11 @@ const BENCH = {
       // across the load, put a volt or so on the emitter, and run the divider
       // at about ten times the base current so that variation in gain between
       // devices does not move the bias. With these values the bench, which
-      // does not assume the divider is stiff, gives 1.04 mA, 4.9 V across
+      // does not assume the divider is stiff, gives 1.04 mA, 4.9 V across
       // the 4.7 k load and a volt on the emitter.
       presets: [{
         levels: ['full'],
-        label: 'A worked design: 10 V, about 1 mA',
+        label: 'A worked design: 10 V, about 1 mA',
         note: 'about half the rail across the load, a volt on the emitter, and the divider at about ten times the base current',
         values: { vcc: 10, r1: 82e3, r2: 18e3, rc: 4700, re: 1000, beta: 100, drive: 0.01 }
       }],
@@ -2003,7 +2044,7 @@ const BENCH = {
           'Now switch to the classes view, because the second half of this item is a different question about the same transistor: not how it is wired, but where it is biased.',
           'Now lower the base voltage step by step, by raising R1 or lowering R2, and watch the readouts and the circuit beside them. With the base well up the device conducts for the whole 360 degrees: that is class A, faithful and at best 50% efficient, because it draws the same current whether a signal is present or not. The typical class A circuit is the single stage with a resistor for its load.',
           'Class A is therefore the one least likely to produce harmonics of the input, because every part of the waveform is amplified alike. That is what the exam means by lowest distortion.',
-          'Keep going and it starts switching off for part of the cycle. Somewhere below halfway you are in class AB, the usual compromise for SSB. At cut off exactly, with the base held right at the point of conduction, it conducts for 180 degrees, which is class B and tops out at 78.5%. One device then only reproduces half the waveform, so the typical circuit is two devices in push pull, an NPN for the positive half and a PNP for the negative. Join their bases and each waits for its own 0.6 V, which leaves a dead band, crossover distortion, where neither conducts. The class AB circuit adds two diodes between the bases to hold each device just on, so the handover is smooth.',
+          'Keep going and it starts switching off for part of the cycle. Somewhere below halfway you are in class AB, the usual compromise for SSB. At cut off exactly, with the base held right at the point of conduction, it conducts for 180 degrees, which is class B and tops out at 78.5%. One device then only reproduces half the waveform, so the typical circuit is two devices in push pull, an NPN for the positive half and a PNP for the negative. Join their bases and each waits for its own 0.6 V, which leaves a dead band, crossover distortion, where neither conducts. The class AB circuit adds two diodes between the bases to hold each device just on, so the handover is smooth.',
           'Below that is class C. Take the bias low enough and there is no collector current at all until a signal arrives, so it draws nothing when idle. It relies on a strong drive to turn it on, and its output depends heavily on that drive: more drive widens and heightens every pulse. It is thoroughly non-linear.',
           'The spectrum shows what that costs: the output is full of harmonics. A tuned circuit in the collector rings at the fundamental and ignores the rest, which is the only reason class C is usable at all, and it is what the typical class C circuit shows in place of the load resistor. It follows that class C suits modes carrying no information in their amplitude, which means CW and FM. Anything relying on amplitude, AM and SSB above all, needs a linear stage. Many data modes change level at each symbol and need linearity too.'
         ]
@@ -2038,7 +2079,7 @@ const BENCH = {
           'Two conditions, both necessary. The gain round the whole loop must be at least unity, meaning the amplifier makes up everything the feedback network throws away. And the phase round the whole loop must come back to zero, so the returning signal reinforces rather than cancels.',
           'This is a Colpitts oscillator, the one the exam draws, with the transistor as an emitter follower. A follower\u2019s voltage gain is always a little under one, so the voltage gain has to come from somewhere else: from the tuned circuit. Its two capacitors in series act as a step up transformer. The emitter drives the tap between them, and the top of the coil, which feeds the base, swings (CA + CB) / CA times as far, twice here. The loss is the energy the coil\u2019s resistance and the bias resistors take out of the tank each cycle; the transistor replaces it by supplying current, beta + 1 times what its base draws.',
           'So the loop gain is the follower\u2019s gain times what the tap gives back, and it has to reach one. Starve the transistor of current, with a low supply and a large RE, and its gain falls until the loop is short of one: the trace dies away and it will never start. That is what the questions mean by the losses exceeding the gain.',
-          'The amplitude looks after itself. A small swing sees the full gain and grows. As it grows the transistor starts cutting off on the troughs, less of the fundamental comes out, and the loop gain falls. It settles where the loop gain is exactly one, marked on the lower plot. With the controls as they start that is about 2 V at the base, above the top of the Drive control, so across Drive’s range the loop gain hardly moves: the transistor is still working in proportion. Take the stage closer to the edge, with less supply or a larger RE, and the settling point comes down into range. Then wind Drive up past it and the loop gain drops below one and the swing shrinks back; wind it down and it grows again.',
+          'The amplitude looks after itself. A small swing sees the full gain and grows. As it grows the transistor starts cutting off on the troughs, less of the fundamental comes out, and the loop gain falls. It settles where the loop gain is exactly one, marked on the lower plot. With the controls as they start that is about 2 V at the base, above the top of the Drive control, so across Drive’s range the loop gain hardly moves: the transistor is still working in proportion. Take the stage closer to the edge, with less supply or a larger RE, and the settling point comes down into range. Then wind Drive up past it and the loop gain drops below one and the swing shrinks back; wind it down and it grows again.',
           'The neatest way to hold the phase condition is this: either both stages shift by nothing, or both shift by 180 degrees. A common emitter stage inverts, so its feedback network must invert as well to bring the total back to zero. An emitter follower does not invert, so its network must not either.'
         ]
       }
@@ -2077,7 +2118,7 @@ const BENCH = {
       explain: {
         intermediate: [
           'Everything so far has been a single device. An integrated circuit puts many of them on one piece of silicon and packages the result as a component in its own right.',
-          'You buy a function rather than a device: an amplifier, a voltage regulator, a mixer, a whole receiver. What is inside is someone else\\u2019s problem.',
+          'You buy a function rather than a device: an amplifier, a voltage regulator, a mixer, a whole receiver. What is inside is someone else’s problem.',
           'That is why a modern radio has so few visible parts. Most of what used to be a board of transistors is now inside a package with a dozen legs.'
         ]
       }
@@ -2105,10 +2146,10 @@ const BENCH = {
     },
     '2025-Full3983': {
       why: 'This is a zener holding a supply steady, with a load across it. The zener fixes the voltage, so work out what the series resistor delivers and what the load takes, and the diode carries whatever is left. Forgetting the load gives the current in the series resistor instead, which is one of the wrong answers.',
-      working: ['the zener holds the output at 3.6 V',
-                'through the series 1 k&Omega;: (12 V &minus; 3.6 V) / 1 k&Omega; = 8.4 mA',
-                'through the 1 k&Omega; load: 3.6 V / 1 k&Omega; = 3.6 mA',
-                'the diode takes the difference: 8.4 mA &minus; 3.6 mA = 4.8 mA'],
+      working: ['the zener holds the output at 3.6 V',
+                'through the series 1 k&Omega;: (12 V &minus; 3.6 V) / 1 k&Omega; = 8.4 mA',
+                'through the 1 k&Omega; load: 3.6 V / 1 k&Omega; = 3.6 mA',
+                'the diode takes the difference: 8.4 mA &minus; 3.6 mA = 4.8 mA'],
       source: { from: ['2I1'] }
     },
     '2025-Full319': {
@@ -2121,25 +2162,25 @@ const BENCH = {
     },
     '2025-Full3585': {
       why: 'A depletion mode n channel FET conducts with no bias at all, and is turned down by taking the gate below the source. Biasing one as an amplifier therefore puts the gate below the source, and the diagram marks the source voltage. No resistor values are given, so the answer is settled by which option sits below it.',
-      working: ['the diagram marks the source at 4.5 V',
+      working: ['the diagram marks the source at 4.5 V',
                 'an n channel depletion FET is biased with the gate below its source',
-                'of the options only 3.2 V is below 4.5 V',
-                'which puts V<sub>GS</sub> at 3.2 V &minus; 4.5 V = &minus;1.3 V'],
+                'of the options only 3.2 V is below 4.5 V',
+                'which puts V<sub>GS</sub> at 3.2 V &minus; 4.5 V = &minus;1.3 V'],
       source: { eq: ['vgs'], from: ['2I3'] },
-      // figures chosen to land on the diagram's 18 V rail, 4.5 V source and
-      // 14 V drain; the question gives no resistor values
+      // figures chosen to land on the diagram's 18 V rail, 4.5 V source and
+      // 14 V drain; the question gives no resistor values
       seed: { vcc: 18, r1: 101.8e3, r2: 22e3, rc: 1556, re: 1751, beta: 200, drive: 0.01 },
-      seedNote: 'Pick FET above the 2I3 panel, then set the bench: it puts the source at 4.5 V and the drain at 14 V on an 18 V rail, as the diagram does, and the gate comes out near 3.2 V.'
+      seedNote: 'Pick FET above the 2I3 panel, then set the bench: it puts the source at 4.5 V and the drain at 14 V on an 18 V rail, as the diagram does, and the gate comes out near 3.2 V.'
     },
     '2025-Full679': {
-      why: 'The diagram gives the emitter voltage, and the base has to sit about 0.6 V above it. R1 and R2 divide the supply down to that, so what the answer really turns on is the ratio of the two resistors rather than any one value.',
-      working: ['base = emitter + 0.6 V = 1.5 V + 0.6 V = 2.1 V',
-                'the divider gives base = supply &times; R2 / (R1 + R2), and the diagram&rsquo;s supply is 10 V',
-                'so R1 = R2 &times; (10 V &minus; 2.1 V) / 2.1 V = 22 k&Omega; &times; 7.9 / 2.1 = 82.8 k&Omega;',
+      why: 'The diagram gives the emitter voltage, and the base has to sit about 0.6 V above it. R1 and R2 divide the supply down to that, so what the answer really turns on is the ratio of the two resistors rather than any one value.',
+      working: ['base = emitter + 0.6 V = 1.5 V + 0.6 V = 2.1 V',
+                'the divider gives base = supply &times; R2 / (R1 + R2), and the diagram&rsquo;s supply is 10 V',
+                'so R1 = R2 &times; (10 V &minus; 2.1 V) / 2.1 V = 22 k&Omega; &times; 7.9 / 2.1 = 82.8 k&Omega;',
                 'the nearest of the four options is 78 k&Omega;'],
       source: { eq: ['divider', 'emitter'], from: ['2I3'] },
       seed: { vcc: 10, r1: 78e3, r2: 22e3, rc: 3900, re: 1200, beta: 200, drive: 0.01 },
-      seedNote: 'The bench is set to this divider on the diagram&rsquo;s 10 V rail. With 78 k the divider alone gives 2.2 V; the base current pulls the base down a little, and the emitter lands at the 1.5 V the diagram marks. The diagram gives no collector or emitter resistor values; those chosen here put the collector near mid rail.'
+      seedNote: 'The bench is set to this divider on the diagram&rsquo;s 10 V rail. With 78 k the divider alone gives 2.2 V; the base current pulls the base down a little, and the emitter lands at the 1.5 V the diagram marks. The diagram gives no collector or emitter resistor values; those chosen here put the collector near mid rail.'
     },
     '2025-Full321': {
       why: 'Common emitter. The collector resistor turns a large collector current change into a large voltage change, so the gain is well above one, and the collector moves the opposite way to the base, so the output is inverted.',
@@ -2171,7 +2212,7 @@ const BENCH = {
                 'which is class B, at best 78.5% efficient'],
       source: { eq: ['theta'], from: ['2I4'] },
       seed: { vcc: 12, r1: 190e3, r2: 10e3, rc: 2200, re: 1000, beta: 200, drive: 0.3 },
-      seedNote: 'The divider puts the base at exactly 0.6 V, the cut off point. In the Classes A to C view the device conducts for 180\u00b0, only while the signal is positive: class B.'
+      seedNote: 'The divider puts the base at exactly 0.6 V, the cut off point. In the Classes A to C view the device conducts for 180\u00b0, only while the signal is positive: class B.'
     },
     '2025-Full3404': {
       why: 'Class C conducts for so little of the cycle that what comes out is a series of pulses rather than a waveform, so a tuned load is needed to ring at the fundamental and put the sine wave back. Its supply current is lower rather than higher, because it draws nothing at all until a signal arrives. Its distortion is worse rather than better. And push pull, where each device takes half the waveform, is a class B arrangement rather than a class C one.',
@@ -2193,7 +2234,7 @@ const BENCH = {
       why: 'Same condition stated again: the amplifier has to make up slightly more than the feedback network throws away. Slightly, because far more than that drives the stage into clipping and the output distorts.',
       source: { from: ['2I5'] },
       seed: { vcc: 8, r1: 47e3, r2: 7.5e3, rc: 4700, re: 4700, beta: 200, drive: 0.01 },
-      seedNote: 'This runs the oscillator with only a little gain to spare: about 1.5 round the loop for a tiny swing, and it settles at about 0.3 V at the base. Move Drive either side of that and watch the loop gain cross one, the swing growing below it and shrinking back above it.'
+      seedNote: 'This runs the oscillator with only a little gain to spare: about 1.5 round the loop for a tiny swing, and it settles at about 0.3 V at the base. Move Drive either side of that and watch the loop gain cross one, the swing growing below it and shrinking back above it.'
     },
     '2025-Full7764': {
       why: 'Two conditions have to hold together. Enough gain to cover the losses, and the returning signal in phase with what is already at the input. Either one alone is not enough.',
@@ -2203,7 +2244,7 @@ const BENCH = {
       why: 'If the feedback network loses more than the amplifier can replace, each trip round the loop is smaller than the last and the oscillation dies out. It will not start at all.',
       source: { from: ['2I5'] },
       seed: { vcc: 5, r1: 47e3, r2: 7.5e3, rc: 4700, re: 4700, beta: 200, drive: 0.01 },
-      seedNote: 'Compare the follower gain with the least it needs on the oscillator panel. Here it falls short, the loop gain is under one, and the trace decays. Put RE back to 1 k and the supply to 12 V and it builds.'
+      seedNote: 'Compare the follower gain with the least it needs on the oscillator panel. Here it falls short, the loop gain is under one, and the trace decays. Put RE back to 1 k and the supply to 12 V and it builds.'
     },
     '2025-Full7766': {
       why: 'An emitter follower does not invert, so the signal arrives back at the input already in phase. The feedback network therefore has to add nothing. A common emitter stage inverts, and its network has to supply the other 180 degrees.',

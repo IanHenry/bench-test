@@ -21,6 +21,8 @@ from pathlib import Path
 ROOT = Path(__file__).parent
 ENGINE = ['format.js', 'mna.js', 'dsp.js', 'dc.js', 'plot.js', 'schematic.js', 'flow.js']
 TEMPLATE = ROOT / 'template' / 'bench.html'
+SITEBAR = ROOT / 'template' / 'site-bar.html'   # shared g0lft.org header and footer
+
 OUT = ROOT / 'benches'
 
 
@@ -425,6 +427,8 @@ def build(group):
     title = m.group(1)
     html = TEMPLATE.read_text(encoding='utf-8')
     html = html.replace('{{TITLE}}', title)
+    head, foot = SITEBAR.read_text(encoding='utf-8').replace('{{ROOT}}', '../').split('<!--/HEADER-->')
+    html = html.replace('{{SITEHEAD}}', head.strip()).replace('{{SITEFOOT}}', foot.strip())
     html = html.replace('{{ENGINE}}', engine)
     html = html.replace('{{CONTENT}}', content)
     html = html.replace('{{QUESTIONS}}',
@@ -454,12 +458,25 @@ def write_index():
         print('overview.html -> index.html')
 
 
+
+def refresh_static():
+    """Put the shared header and footer into the landing and overview pages (between their markers)."""
+    head, foot = SITEBAR.read_text(encoding='utf-8').replace('{{ROOT}}', '').split('<!--/HEADER-->')
+    for name in ('index.html', 'overview.html'):
+        p = ROOT / name
+        s = p.read_text(encoding='utf-8')
+        s = re.sub(r'<!--SITEHEAD-->.*?<!--/SITEHEAD-->', lambda _: '<!--SITEHEAD-->' + head.strip() + '<!--/SITEHEAD-->', s, flags=re.S)
+        s = re.sub(r'<!--SITEFOOT-->.*?<!--/SITEFOOT-->', lambda _: '<!--SITEFOOT-->' + foot.strip() + '<!--/SITEFOOT-->', s, flags=re.S)
+        p.write_text(s, encoding='utf-8')
+
+
 def main():
+    refresh_static()   # overview.html first: write_index() builds index.html from it
     write_index()
     groups = sys.argv[1:] or [p.stem for p in (ROOT / 'content').glob('*.js')]
     ok = all(build(g) for g in groups)
     sys.exit(0 if ok else 1)
 
-
 if __name__ == '__main__':
     main()
+

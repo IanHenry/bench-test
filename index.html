@@ -1,11 +1,10 @@
 <title>Bench Test</title>
 <meta name="robots" content="noindex, nofollow">
-<!-- Kept out of search while this is a work in progress being reviewed.
-     Delete this line when you want it found. -->
+<!-- Kept out of search for now. Delete the robots line when it should be found. -->
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,600;1,400&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 
 <style>
   :root {
@@ -51,7 +50,7 @@
 
   body {
     margin: 0; background: var(--paper); color: var(--ink);
-    font-family: "Source Sans 3", system-ui, -apple-system, sans-serif;
+    font-family: Inter, system-ui, -apple-system, sans-serif;
     font-size: 17.5px; line-height: 1.62;
     -webkit-font-smoothing: antialiased;
   }
@@ -68,24 +67,24 @@
     color: var(--accent); margin: 0 0 14px;
   }
   h1 {
-    font-family: Spectral, Georgia, serif; font-weight: 600;
+    font-family: Montserrat, Inter, sans-serif; font-weight: 600;
     font-size: clamp(38px, 6vw, 60px); line-height: 1.04;
     letter-spacing: -.02em; margin: 0 0 18px; text-wrap: balance;
   }
   .standfirst {
-    font-family: Spectral, Georgia, serif;
+    font-family: Montserrat, Inter, sans-serif;
     font-size: clamp(19px, 2.3vw, 22px); line-height: 1.48;
     color: var(--muted); margin: 0; max-width: 56ch;
   }
 
   section { margin: 0 0 52px; }
   h2 {
-    font-family: Spectral, Georgia, serif; font-weight: 600;
+    font-family: Montserrat, Inter, sans-serif; font-weight: 600;
     font-size: clamp(23px, 3vw, 30px); line-height: 1.2;
     margin: 0 0 16px; text-wrap: balance;
   }
   h3 {
-    font-family: "Source Sans 3", sans-serif; font-weight: 600;
+    font-family: Inter, sans-serif; font-weight: 600;
     font-size: 14.5px; letter-spacing: .05em; text-transform: uppercase;
     color: var(--muted); margin: 32px 0 12px;
     padding-bottom: 6px; border-bottom: 1px solid var(--rule-soft);
@@ -95,7 +94,7 @@
   strong { font-weight: 600; }
 
   .lead-in {
-    font-family: Spectral, Georgia, serif; font-size: 19.5px;
+    font-family: Montserrat, Inter, sans-serif; font-size: 19.5px;
     line-height: 1.55;
   }
 
@@ -107,7 +106,7 @@
   }
   .card h4 {
     margin: 0 0 4px; font-size: 17px; font-weight: 600;
-    font-family: "Source Sans 3", sans-serif;
+    font-family: Inter, sans-serif;
   }
   .card .code {
     font-family: "IBM Plex Mono", ui-monospace, monospace;
@@ -142,10 +141,31 @@
   @media (max-width: 640px) { body { font-size: 16.5px; } header { padding-top: 38px; } }
 </style>
 
+<!--SITEHEAD--><!-- Shared g0lft.org header and footer. Keep in step with the header on course.g0lft.org. -->
+<style>
+  .g0-bar { background:#fff; border-bottom:1px solid #E1E4E8; position:sticky; top:0; z-index:20; }
+  .g0-bar .in { display:flex; align-items:center; gap:18px; max-width:1240px; margin:0 auto; padding:8px 16px; }
+  .g0-bar img { height:44px; width:auto; display:block; flex:none; }
+  .g0-bar nav { display:flex; gap:2px; min-width:0; overflow-x:auto; scrollbar-width:none; white-space:nowrap; }
+  .g0-bar nav::-webkit-scrollbar { display:none; }
+  .g0-bar nav a { color:#545556; padding:8px 9px; font:400 16px/1.4 Inter,"Segoe UI",system-ui,sans-serif;
+                  border-radius:6px; text-decoration:none; }
+  .g0-bar nav a:hover, .g0-bar nav a.on { color:#1F4DB6; }
+  .g0-foot { border-top:1px solid var(--rule,#E1E4E8); text-align:center; padding:24px 16px 32px;
+             font:400 15px/1.6 Inter,"Segoe UI",system-ui,sans-serif; color:var(--ink-soft,var(--muted,#444)); }
+  .g0-foot p { margin:6px auto; max-width:900px; }
+  .g0-foot a { color:#1F6AE1; }
+</style>
+<div class="g0-bar" role="banner"><div class="in">
+  <a href="https://g0lft.org" aria-label="G0LFT home"><img src="images/g0lft-logo.png" alt="G0LFT"></a>
+  <nav aria-label="Site">
+    <a href="https://g0lft.org/index.html">Home</a><a href="https://g0lft.org/projects.html">Projects</a><a class="on" aria-current="page" href="https://g0lft.org/apps.html">Apps</a><a href="https://course.g0lft.org">Training</a><a href="https://g0lft.org/blog.html">Blog</a><a href="https://g0lft.org/thinking.html">Thinking</a><a href="https://g0lft.org/guides.html">Guides</a><a href="https://g0lft.org/notebook.html">Notebook</a><a href="https://g0lft.org/talks.html">Talks &amp; Publications</a><a href="https://g0lft.org/about.html">About</a>
+  </nav>
+</div></div><!--/SITEHEAD-->
 <div class="wrap">
 
 <header>
-  <p class="eyebrow">Amateur radio training &middot; work in progress</p>
+  <p class="eyebrow">Amateur radio training</p>
   <h1>Bench Test</h1>
   <p class="standfirst">Interactive pages for the technical part of the amateur
     radio syllabus. The circuits are solved in the browser as you change
@@ -165,7 +185,8 @@
     and work offline once loaded.</p>
 
   <p>They are meant to sit alongside a course and the books, for the reader who
-    wants to see a circuit respond before the idea settles.</p>
+    wants to see a circuit respond before the idea settles. They are used with
+    the course at <a href="https://course.g0lft.org">course.g0lft.org</a>.</p>
 </section>
 
 <section>
@@ -202,13 +223,7 @@
 <section class="col">
   <h2>Still to come</h2>
   <ul>
-    <li>This is a first attempt at three of the technical groups, and the
-      worked answers are still being corrected as they are read back against
-      the question papers. The per&nbsp;level item lists for the remaining
-      groups are ready; the pages are not.</li>
-    <li>The oscillator panel is the newest part. It now draws the Colpitts with
-      its capacitive tap and solves the gain round the loop, which falls below
-      one, and the oscillation dies, when the transistor is starved of current.</li>
+    <li>Pages for the remaining technical groups of the syllabus.</li>
     <li>Questions at Foundation and Intermediate, once the RSGB publishes those
       banks. Full level questions are in place with worked answers.</li>
     <li>Audio, once the visual side is settled.</li>
@@ -216,18 +231,8 @@
 </section>
 
 <section class="col">
-  <h2>Feedback</h2>
-  <p>Any reaction is welcome, and these in particular:</p>
-  <ul>
-    <li>Anything technically wrong, or explained in a way that would mislead
-      someone learning it. That is the most useful of all, and the written
-      explanations are where the mistakes have been so far.</li>
-    <li>Is the pitch right at each level, and does switching level change enough
-      to be worth having?</li>
-    <li>Does showing the working with the numbers substituted help, or is the
-      formula on its own enough?</li>
-    <li>Does the moving charge in the schematic teach anything?</li>
-  </ul>
+  <h2>Corrections</h2>
+  <p>Corrections are welcome: <a href="mailto:ian@g0lft.org">ian@g0lft.org</a></p>
   <p>It is free, it will stay free, and it is not commercial in any form.</p>
 </section>
 
@@ -240,5 +245,10 @@
     terms the RSGB publishes with its question bank, with the option order left
     as supplied. Syllabus item codes are used as factual references.</p>
 </footer>
+<!--SITEFOOT--><div class="g0-foot" role="contentinfo">
+  <p>Bench Test goes with the free <a href="https://course.g0lft.org">amateur radio training course</a> and the <a href="https://g0lft.org/apps/signal-explorer/index.html">Signal Explorer</a>. Corrections and feedback: <a href="mailto:ian@g0lft.org">ian@g0lft.org</a>.</p>
+  <p>© 2026 Dr Ian Henry, G0LFT. Independent of the RSGB and Ofcom; the RSGB publishes the syllabus and the exams.</p>
+  <p><a href="https://g0lft.org/privacy.html">Privacy Policy</a> | <a href="https://g0lft.org/about.html">About</a> | <a href="https://g0lft.org/contact.html">Contact</a> | <a href="https://www.qrz.com/db/G0LFT">QRZ</a> | <a href="https://www.youtube.com/@G0LFT-AmateurRadio">YouTube</a></p>
+</div><!--/SITEFOOT-->
 
 </div>

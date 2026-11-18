@@ -48,7 +48,7 @@ engine/       the simulation and drawing engines, no dependencies
   plot.js        the plotting engine: bands, dual axes, cursors, labels
   schematic.js   circuit symbols and wiring
   flow.js        animated charge along wires and through components
-  test-*.js      73 assertions across mna, dsp and dc
+  test-*.js      104 assertions across mna, dsp and dc
   check-*.js     the two circuit checkers, described below
 content/      one file per bench, plus descriptions.json
 template/     bench.html, the generic page all benches are built into
@@ -167,8 +167,10 @@ displays were broken for most of one session.
 
 ## Where it stands
 
-Three benches built: **2F** sampling and conversion, **2H** tuned circuits and
-filters, **2I** semiconductors.
+Three benches are live at https://bench.g0lft.org: **2F** sampling and
+conversion, **2H** tuned circuits and filters, **2I** semiconductors. Each
+links back to the course sessions that use it, at course.g0lft.org. The engine
+tests carry 104 assertions. The Colpitts oscillator is drawn and solved.
 
 `overview.html` is the outward facing description, for sending to someone whose
 opinion is wanted. `notes/` holds internal working records, including the
@@ -179,19 +181,18 @@ to put on a public page.
 
 Outstanding, in rough order of value:
 
-1. **The Colpitts schematic.** The oscillator panel draws the correct
-   configuration and states the right physics, but the tuned circuit and the
-   capacitive tap are described rather than drawn. Needs a layout with the
-   tank, the divider and one no-connect crossing, and a netlist that solves an
-   oscillator honestly: it has no input source, so driving it to animate the
-   charge needs thought rather than a convenient fudge.
-2. **Two-tone intermodulation at 3F2.** Needs only the existing DSP engine.
-3. **The remaining syllabus groups.** 126 items, 221 level entries in
+1. **Two-tone intermodulation at 3F2.** Needs only the existing DSP engine.
+2. **The remaining syllabus groups.** 126 items, 221 level entries in
    `content/descriptions.json`; three groups are covered.
-4. **Audio.** Deferred deliberately. The DSP engine must emit a plain sample
+3. **Audio.** Deferred deliberately. The DSP engine must emit a plain sample
    buffer with playback as a thin adapter; nothing visual may depend on an
    AudioContext.
+4. **Beta above 400.** The beta control tops out at 400; worth widening.
 
-Not yet done and needed before any public launch: this is **not a git
-repository**, there is no index page tying the benches together, and nothing
-is deployed.
+### Deployment
+
+Only `index.html`, `benches/` and `CNAME` belong on the public site.
+`.github/workflows/pages.yml` stages exactly those and publishes them. It
+takes effect once the repository's Pages source is set to GitHub Actions;
+until then Pages serves the whole repository root, this README, `build.py`,
+`content/` and `bank/questions.csv` included.

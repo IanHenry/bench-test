@@ -172,6 +172,25 @@ const SYMBOL = {
     ctx.stroke();
     lead(ctx, -SPAN / 2, -r);
     lead(ctx, r, SPAN / 2);
+  },
+
+  /*
+   * DC source, drawn as a cell: the long plate is positive and sits at the
+   * start of the axis, so at rot 90 the positive end is at the top.
+   */
+  B(ctx) {
+    const gap = 3.5;
+    ctx.beginPath();
+    ctx.moveTo(-gap, -12); ctx.lineTo(-gap, 12);
+    ctx.stroke();
+    const w = ctx.lineWidth;
+    ctx.lineWidth = w * 2;
+    ctx.beginPath();
+    ctx.moveTo(gap, -6); ctx.lineTo(gap, 6);
+    ctx.stroke();
+    ctx.lineWidth = w;
+    lead(ctx, -SPAN / 2, -gap);
+    lead(ctx, gap, SPAN / 2);
   }
 };
 
@@ -268,7 +287,7 @@ function draw(canvas, layout, opts) {
     ctx.arc(term.at[0], term.at[1], 3, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = t.soft || '#666';
-    ctx.font = '600 10.5px ' + (t.font || 'sans-serif');
+    ctx.font = '600 13px ' + (t.font || 'sans-serif');
     ctx.textAlign = term.align || 'left';
     ctx.textBaseline = 'middle';
     ctx.fillText(term.label, term.at[0] + (term.align === 'right' ? -8 : 8), term.at[1]);
@@ -290,16 +309,16 @@ function draw(canvas, layout, opts) {
       const vertical = (el.rot || 0) % 180 !== 0;
       const leftOf = el.labelAt === 'left';
       ctx.fillStyle = hot ? colour : (t.ink || '#111');
-      ctx.font = (hot ? '600 ' : '') + '11px ' + (t.font || 'sans-serif');
+      ctx.font = (hot ? '600 ' : '') + '13px ' + (t.font || 'sans-serif');
       ctx.textAlign = vertical ? (leftOf ? 'right' : 'left') : 'center';
       ctx.textBaseline = vertical ? 'middle' : 'bottom';
       const lx = el.at[0] + (vertical ? (leftOf ? -20 : 20) : 0);
-      const ly = el.at[1] + (vertical ? 0 : -18);
+      const ly = el.at[1] + (vertical ? 0 : -22);   // clear of the body, with a value under it
       ctx.fillText(label, lx, ly);
       if (value) {
         ctx.fillStyle = hot ? colour : (t.soft || '#666');
-        ctx.font = '10.5px ' + (t.mono || 'monospace');
-        ctx.fillText(value, lx, ly + (vertical ? 13 : 12));
+        ctx.font = '13px ' + (t.mono || 'monospace');
+        ctx.fillText(value, lx, ly + (vertical ? 15 : 14));
       }
     }
   }
