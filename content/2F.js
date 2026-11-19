@@ -12,14 +12,46 @@
 const DSP = window.DSP;
 const F = window.Fmt;
 
-/** One block of samples, plus the smooth signal they were taken from. */
+/** One block of samples of the tone, unrounded: the Full panel is about rate, not depth. */
 function capture(v, n) {
   const fs = v.fs, f = v.fsig;
   const N = n || 2048;
-  const raw = DSP.sampleSine(f, fs, N);
-  return { raw: raw, quant: DSP.quantise(raw, Math.round(v.bits)), fs: fs, f: f, N: N };
+  return { raw: DSP.sampleSine(f, fs, N), fs: fs, f: f, N: N };
 }
 
+
+/*
+ * Colours. Every signal on this page is a voltage, so every trace is the
+ * course's voltage blue. Where two voltages share a plot, the copy the
+ * converter holds is a paler, wider band of the same blue behind the real
+ * signal, not a new hue. Samples, the Nyquist line and the marks are neutral.
+ * The digital stages of the chain hold numbers, not a quantity, so they are
+ * drawn in ink.
+ */
+
+/** A see-through version of a #rrggbb colour; anything else is returned as is. */
+function tint(colour, alpha) {
+  const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(String(colour).trim());
+  if (!m) return colour;
+  return 'rgba(' + parseInt(m[1], 16) + ',' + parseInt(m[2], 16) + ',' +
+    parseInt(m[3], 16) + ',' + alpha + ')';
+}
+
+/** True when the panels are dark, read from the six digit --surface. */
+function isDark(t) {
+  const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(String(t.surface).trim());
+  return !!m && (parseInt(m[1], 16) + parseInt(m[2], 16) + parseInt(m[3], 16)) < 3 * 128;
+}
+
+/** Legend keys the plain bar cannot show: a dot, a dashed line, a wide band. */
+const key = {
+  dot: (c, label) => '<span><i style="width:8px;height:8px;border-radius:50%;background:' + c +
+    '"></i><span class="sw-l">' + label + '</span></span>',
+  dashed: (c, label) => '<span><i style="height:2px;border-radius:0;background:repeating-linear-gradient(90deg,' +
+    c + ' 0 3px,transparent 3px 6px)"></i><span class="sw-l">' + label + '</span></span>',
+  band: (c, label) => '<span><i style="height:6px;background:' + c +
+    '"></i><span class="sw-l">' + label + '</span></span>'
+};
 
 /** Wrap a caption to the width of its block. */
 function wrapText(c, text, cx, y, maxW, lh) {
@@ -57,7 +89,7 @@ const BENCH = {
   intro: {
     foundation: [
       'A radio signal in the air changes smoothly. A computer cannot hold a smooth thing, only a list of numbers, so before the signal can be processed it has to be measured over and over again and written down.',
-      'That is all sampling is. Move the controls and watch what the measurements look like compared with the signal they came from.'
+      'Measuring a signal over and over like this is called sampling. Move the controls and watch what the measurements look like compared with the signal they came from.'
     ],
     intermediate: [
       'Sampling turns a smooth signal into a list of numbers. Two things decide how good that list is: how often you measure, and how finely you can write each measurement down.',
@@ -65,7 +97,7 @@ const BENCH = {
     ],
     full: [
       'Sampling is straightforward until the signal contains something above half the sample rate. Then the converter reports a frequency that was never there, and nothing downstream can tell the difference.',
-      'That is the whole reason an anti-alias filter exists, and it is easier to believe once you have seen it happen. Push the signal frequency past the Nyquist line and watch where the tone comes back.'
+      'An anti-alias filter is there to stop that, and the need for one is easier to believe once you have seen it happen. Push the signal frequency past the Nyquist line and watch where the tone comes back.'
     ]
   },
 
@@ -84,7 +116,7 @@ const BENCH = {
     ],
     keyMessages: [
       { at: '2F1', level: 'foundation',
-        point: 'analogue changes smoothly, digital is a stream of separate measurements' },
+        point: 'analogue changes continually in amplitude, frequency or both; digital is a stream of separate measurements' },
       { at: '2F1', level: 'foundation',
         point: 'faster measuring follows the shape more closely' },
       { at: '2F1', level: 'intermediate',
@@ -96,7 +128,7 @@ const BENCH = {
       { at: '2F1', level: 'intermediate',
         point: 'sample faster than twice the highest frequency: twice it is the Nyquist rate, the minimum' },
       { at: '2F1', level: 'full',
-        point: 'sample at a little over twice the highest frequency present, not twice the bandwidth' },
+        point: 'sample at more than twice the highest frequency present, not twice the bandwidth' },
       { at: '2F1', level: 'full',
         point: 'a tone above the limit reflects back below it and cannot afterwards be told apart' },
       { at: '2F1', level: 'full',
@@ -135,6 +167,8 @@ const BENCH = {
       // taking them away; above the sample rate the simple rule needs this
       wraps: Math.floor(v.fsig / v.fs),
       rem: v.fsig - Math.floor(v.fsig / v.fs) * v.fs,
+      // what is left lands exactly on the line, as 12 kHz does at 8 kHz
+      remOnLine: Math.abs(v.fsig - Math.floor(v.fsig / v.fs) * v.fs - nyquist) < 1e-9 * v.fs,
       step: DSP.quantStep(bits),
       levels: Math.pow(2, bits),
       snr: DSP.idealSNR(bits),
@@ -162,54 +196,49 @@ const BENCH = {
                        F.trim(d.snr, 4) + ' dB'] },
     rule: { given: false, name: 'Choosing a sample rate',
             eq: 'rate &gt; 2 &times; highest frequency present',
-            work: d => ['for a signal reaching <b>' + F.eng(d.fsig, 'Hz', 4) + '</b>',
+            work: d => ['2 &times; <b>' + F.eng(d.fsig, 'Hz', 4) + '</b>',
                         'more than ' + F.eng(2 * d.fsig, 'Hz', 4)] },
     nyq: { given: false, name: 'The Nyquist limit',
            eq: 'f<sub>N</sub> = sample rate / 2',
            work: d => ['<b>' + F.eng(d.fs, 'Hz', 4) + '</b> / 2', F.eng(d.nyquist, 'Hz', 4)] },
+    // These two rows are arithmetic only. Whether a tone moves at all, and
+    // why, is said in words in the note under the working, so no prose sits
+    // after an equals sign.
     reflect: { given: false, name: 'The alias as a reflection',
                eq: 'as far below f<sub>N</sub> as the tone is above it',
+               applies: d => d.aliased,
                work: d => {
+                 const N = F.eng(d.nyquist, 'Hz', 4), out = F.eng(d.alias, 'Hz', 4);
                  const f = '<b>' + F.eng(d.fsig, 'Hz', 4) + '</b>';
-                 if (d.onLine) return [f + ' sits exactly on the line, so it does not move',
-                   'but two samples a cycle is not enough: the rate must be more than twice'];
-                 if (!d.aliased) return [f + ' is below the line already', 'nothing to reflect'];
-                 if (d.wraps === 0) return [f + ' is ' +
-                   F.eng(d.fsig - d.nyquist, 'Hz', 4) + ' above the line',
-                   'so it returns the same distance below, at ' + F.eng(d.alias, 'Hz', 4)];
+                 const r = '<b>' + F.eng(d.fs, 'Hz', 4) + '</b>';
+                 if (d.wraps === 0) return [N + ' &minus; (' + f + ' &minus; ' + N + ')', out];
                  // beyond the sample rate it folds more than once; taking off
                  // whole sample rates leaves the same samples, so do that first
-                 const r = '<b>' + F.eng(d.fs, 'Hz', 4) + '</b>';
-                 const head = f + ' is past the sample rate itself, so take off whole sample rates first: ' +
-                   f + ' &minus; ' + d.wraps + ' &times; ' + r + ' = ' + F.eng(d.rem, 'Hz', 4);
-                 return d.rem > d.nyquist
-                   ? [head + ', which is ' + F.eng(d.rem - d.nyquist, 'Hz', 4) + ' above the line',
-                      'so it returns the same distance below, at ' + F.eng(d.alias, 'Hz', 4)]
-                   : [head + ', which is below the line', 'so that is where it appears: ' + F.eng(d.alias, 'Hz', 4)];
+                 const less = f + ' &minus; ' + (d.wraps > 1 ? d.wraps + ' &times; ' : '') + r;
+                 return d.rem > d.nyquist && !d.remOnLine
+                   ? [N + ' &minus; ((' + less + ') &minus; ' + N + ')', out]
+                   : [less, out];
                } },
     alias: { given: false, name: 'Where a tone above the limit comes back',
              eq: 'f<sub>alias</sub> = sample rate &minus; f, for f between f<sub>N</sub> and the sample rate',
+             // past the sample rate, once whole sample rates are off, what is
+             // left may already be below the line; then there is nothing to
+             // subtract it from and the row above has the answer
+             applies: d => d.aliased && (d.wraps === 0 || (d.rem > d.nyquist && !d.remOnLine)),
              work: d => {
                const f = '<b>' + F.eng(d.fsig, 'Hz', 4) + '</b>', r = '<b>' + F.eng(d.fs, 'Hz', 4) + '</b>';
-               if (d.onLine) return [f + ' is on the limit, not below it, and is not captured properly',
-                                     F.eng(d.alias, 'Hz', 4)];
-               if (!d.aliased) return [f + ' is below the limit, so it stays put', F.eng(d.alias, 'Hz', 4)];
                if (d.wraps === 0) return [r + ' &minus; ' + f, F.eng(d.alias, 'Hz', 4)];
-               // past the sample rate the rule only applies once whole sample
-               // rates have been taken off
-               const rem = F.eng(d.rem, 'Hz', 4);
-               return d.rem > d.nyquist
-                 ? ['not in range as it stands: ' + f + ' &minus; ' + d.wraps + ' &times; ' + r + ' = ' + rem +
-                    ' first, then ' + r + ' &minus; ' + rem, F.eng(d.alias, 'Hz', 4)]
-                 : ['not in range as it stands: ' + f + ' &minus; ' + d.wraps + ' &times; ' + r + ' = ' + rem +
-                    ', already below the limit', F.eng(d.alias, 'Hz', 4)];
+               return [r + ' &minus; (' + f + ' &minus; ' + (d.wraps > 1 ? d.wraps + ' &times; ' : '') + r + ')',
+                       F.eng(d.alias, 'Hz', 4)];
              } },
     // FFT resolution is not in the Full syllabus, which asks only what a
     // Fourier transform does
     bins: { given: false, tag: { full: 'interest' }, name: 'What the transform gives you',
             eq: 'spacing = sample rate / number of samples',
+            // below 1 Hz, "488 mHz" reads too easily as megahertz
             work: d => ['<b>' + F.eng(d.fs, 'Hz', 4) + '</b> / <b>4096</b> samples',
-                        F.eng(d.fs / 4096, 'Hz', 3) + ' per point'] }
+                        (d.fs / 4096 < 1 ? F.trim(d.fs / 4096, 3) + '\u00a0Hz' : F.eng(d.fs / 4096, 'Hz', 3)) +
+                        ' per point'] }
   },
 
 
@@ -218,7 +247,7 @@ const BENCH = {
    * uses it, and the build fails if prose uses one before then.
    */
   terms: {
-    'analogue': 'A signal that varies smoothly, taking any value in between, the way a voice or a radio wave does.',
+    'analogue': 'A signal that changes continually in size (amplitude), frequency or both, taking any value in between, as a voice or a radio wave does.',
     'digital': 'A signal stored as a list of separate numbers rather than a smooth curve.',
     'sample': 'One measurement of a signal, taken at a particular instant.',
     'sample rate': 'How many measurements are taken each second.',
@@ -241,9 +270,8 @@ const BENCH = {
   panels: {
     /*
      * The signal path, drawn as the blocks it passes through. Smooth on the
-     * way in, numbers in the middle, smooth again on the way out. None of the
-     * controls apply here, and the caption says so rather than leaving the
-     * reader wondering which slider does nothing.
+     * way in, numbers in the middle, smooth again on the way out. No control
+     * applies here, so the item lists none and no slider sits above it.
      */
     chain(ctx) {
       const { p, t, ro } = ctx;
@@ -256,23 +284,28 @@ const BENCH = {
       c.clearRect(0, 0, W, H);
 
       const stages = [
-        { label: 'Aerial', sub: 'a smooth signal', kind: 'wave' },
-        { label: 'ADC', sub: 'measures it, over and over', kind: 'box' },
-        { label: 'Software', sub: 'does the work, on numbers', kind: 'box' },
-        { label: 'DAC', sub: 'turns numbers back into a voltage', kind: 'box' },
-        { label: 'Speaker', sub: 'a smooth signal again', kind: 'wave' }
+        { label: 'Aerial', sub: 'smooth', kind: 'wave' },
+        { label: 'ADC', sub: 'measures', kind: 'box' },
+        { label: 'Software', sub: 'works on numbers', kind: 'box' },
+        { label: 'DAC', sub: 'back to a voltage', kind: 'box' },
+        { label: 'Speaker', sub: 'smooth again', kind: 'wave' }
       ];
-      const pad = 14, gap = 16;
+      // on a phone the blocks take the room the margins gave up, so the
+      // longest name, Software, keeps clear of its box
+      const pad = W < 600 ? 6 : 14, gap = W < 600 ? 14 : 16;
       const bw = (W - pad * 2 - gap * (stages.length - 1)) / stages.length;
       const by = H / 2 - 34, bh = 46;
 
-      c.font = '600 14px "Saira Semi Condensed", sans-serif';
+      // nothing on the canvas under 15 px, the house minimum
+      const labelFont = '600 15px "Saira Semi Condensed", sans-serif';
+      const capFont = '15px "Saira Semi Condensed", sans-serif';
+      c.font = labelFont;
       c.textAlign = 'center';
       stages.forEach((s, i) => {
         const x = pad + i * (bw + gap);
         const mid = x + bw / 2;
         const digital = i >= 1 && i <= 3;
-        c.strokeStyle = digital ? t.trace : t.phase;
+        c.strokeStyle = digital ? t.ink : t.v;
         c.fillStyle = t.surface;
         c.lineWidth = digital ? 2 : 1.5;
         c.beginPath();
@@ -284,10 +317,10 @@ const BENCH = {
         c.fillText(s.label, mid, by + bh / 2);
 
         c.fillStyle = t.faint;
-        c.font = '13px "Saira Semi Condensed", sans-serif';
+        c.font = capFont;
         c.textBaseline = 'top';
-        wrapText(c, s.sub, mid, by + bh + 8, bw + gap - 4, 15);
-        c.font = '600 14px "Saira Semi Condensed", sans-serif';
+        wrapText(c, s.sub, mid, by + bh + 8, bw + gap - 4, 18);
+        c.font = labelFont;
 
         if (i < stages.length - 1) {
           const ax = x + bw + 2, ay = by + bh / 2;
@@ -302,20 +335,19 @@ const BENCH = {
 
       // what is travelling between the blocks: a wave, then numbers, then a wave
       c.fillStyle = t.soft;
-      c.font = '13px "IBM Plex Mono", monospace';
+      c.font = '15px "IBM Plex Mono", monospace';
       c.textBaseline = 'bottom';
       const midGap = i => pad + i * (bw + gap) + bw + gap / 2;
       c.fillText('~~~~', midGap(0), by - 6);
       c.fillText('4 7 6 3', midGap(2), by - 6);
       c.fillText('~~~~', midGap(3), by - 6);
 
-      p.legend.innerHTML = ctx.swatch(t.phase, 'Smooth, analogue') +
-        ctx.swatch(t.trace, 'Numbers, digital');
+      p.legend.innerHTML = ctx.swatch(t.v, 'Smooth, analogue: a voltage') +
+        ctx.swatch(t.ink, 'Numbers, digital');
       p.readouts.innerHTML = ro([
         ['In at this end', 'a smooth signal'],
         ['In the middle', 'a stream of numbers'],
-        ['Out at that end', 'a smooth signal'],
-        ['Controls above', 'apply to the panel before this one']
+        ['Out at that end', 'a smooth signal']
       ]);
       return {};
     },
@@ -337,8 +369,8 @@ const BENCH = {
       }[p.topology] || [1, 0, 0];
 
       // The converter's own settings: the tone on the Signal control, sampled
-      // at the Sample rate control. The samples are not rounded here, so the
-      // bit depth plays no part and only the harmonics show on the spectrum.
+      // at the Sample rate control. The samples are not rounded, so only the
+      // harmonics show on the spectrum.
       const f = d.fsig, fs = d.fs, N = 4096;
       const total = mix[0] + mix[1] + mix[2];
       const at = tt => {
@@ -355,22 +387,26 @@ const BENCH = {
       const span = 2 / f, pts = [], dots = [];
       for (let i = 0; i <= 600; i++) pts.push({ x: span * i / 600, y: at(span * i / 600) });
       for (let k = 0; k / fs <= span; k++) dots.push({ x: k / fs, y: sig[k] });
+      // the left pane is narrow, so time is counted in cycles of the signal:
+      // five short labels that never collide, at any frequency
       const tspec = {
-        xRange: [0, span], xFmt: x => eng(x, 's', 2), tokens: t,
-        left: { min: -1.15, max: 1.15, fmt: y => trim(y, 2) },
-        traces: [{ pts: pts, colour: t.trace, axis: 'left', width: 2 }],
+        xRange: [0, span], xFmt: x => trim(x * f, 2), tokens: t,
+        left: { min: -1.2, max: 1.2, fmt: y => trim(y, 2) },
+        traces: [{ pts: pts, colour: t.v, axis: 'left', width: 2 }],
         cursor: null
       };
       if (p.schem) {
         Plot.draw(p.schem, tspec);
-        drawDots(p.schem, tspec, dots, t.marker);
+        drawDots(p.schem, tspec, dots, t.mark);
       }
-      if (p.schemNote) p.schemNote.textContent = 'the signal against time, and the samples taken of it';
+      if (p.schemNote) p.schemNote.textContent = 'time, in cycles of the signal';
 
       // frequency domain, in the right pane, from those samples
-      const sp = DSP.spectrum(sig, fs, { floor: -80 });
+      // a floor of -100 dB and a top of +20 puts the five ticks on round
+      // figures: +20, -10, -40, -70, -100
+      const sp = DSP.spectrum(sig, fs, { floor: -100 });
       const fpts = [];
-      for (let i = 1; i < sp.bins; i++) fpts.push({ x: sp.freq[i], y: sp.db[i] + 80 });
+      for (let i = 1; i < sp.bins; i++) fpts.push({ x: sp.freq[i], y: sp.db[i] + 100 });
 
       // where each part of the signal lands once sampled: a harmonic above
       // half the sample rate folds back exactly as a single tone does
@@ -381,14 +417,14 @@ const BENCH = {
       });
       Plot.draw(p.graph, {
         xRange: [0, fs / 2], xFmt: x => eng(x, 'Hz', 3), tokens: t,
-        left: { max: 85, fmt: y => Math.round(y - 80) + ' dB' },
-        traces: [{ pts: fpts, colour: t.phase, fill: t.fill, axis: 'left', width: 1.5 }],
-        marks: parts.map(q => ({ x: q.at, colour: t.marker })),
+        left: { max: 120, fmt: y => Math.round(y - 100) + ' dB' },
+        traces: [{ pts: fpts, colour: t.v, fill: t.vFill, axis: 'left', width: 1.5 }],
+        marks: parts.map(q => ({ x: q.at, colour: t.mark })),
         cursor: null
       });
-      p.legend.innerHTML = swatch(t.trace, 'Against time') +
-        swatch(t.phase, 'Against frequency, up to half the sample rate') +
-        swatch(t.marker, 'Samples, and where each part lands');
+      p.legend.innerHTML = swatch(t.v, 'The signal, in time and in frequency') +
+        key.dot(t.mark, 'Samples') +
+        key.dashed(t.mark, 'Where each part lands');
 
       // lines closer together than the transform can separate count as one
       const lines = [];
@@ -425,35 +461,39 @@ const BENCH = {
         smooth.push({ x: tt, y: Math.sin(2 * Math.PI * d.fsig * tt) });
       }
       const nS = Math.max(2, Math.floor(span * d.fs));
+      const raw = DSP.sampleSine(d.fsig, d.fs, nS + 1);
+      // the same rounding as the converter model: exactly 2^bits levels
+      const held = level === 'foundation' ? raw : DSP.quantise(raw, d.bits);
       for (let k = 0; k <= nS; k++) {
         const tt = k / d.fs;
-        const raw = Math.sin(2 * Math.PI * d.fsig * tt);
-        const q = level === 'foundation' ? raw
-          : Math.max(-1, Math.min(1, Math.round(raw / d.step) * d.step));
+        const q = held[k];
         dots.push({ x: tt, y: q });
         stair.push({ x: tt, y: q });
         stair.push({ x: Math.min(span, (k + 1) / d.fs), y: q });
       }
 
-      const traces = [{ pts: smooth, colour: t.phase, axis: 'left', width: 1.6 }];
+      // the held copy is wider and paler, and drawn first, so the real signal
+      // still shows where the two coincide
+      const band = tint(t.v, isDark(t) ? 0.5 : 0.38);
+      const traces = [];
       if (level !== 'foundation') {
-        traces.push({ pts: stair, colour: t.trace, axis: 'left', width: 2.2 });
+        traces.push({ pts: stair, colour: band, axis: 'left', width: 5 });
       }
-      traces.push({ pts: dots, colour: t.marker, axis: 'left', width: 0, dots: true });
+      traces.push({ pts: smooth, colour: t.v, axis: 'left', width: 1.6 });
 
       const spec = {
-        xRange: [0, span], xFmt: x => eng(x, 's', 2), tokens: t,
-        left: { min: -1.25, max: 1.25, fmt: y => trim(y, 2) },
-        traces: traces.filter(tr => tr.width !== 0),
+        xRange: [0, span], xFmt: x => eng(x, 's', 3), tokens: t,
+        left: { min: -1.2, max: 1.2, fmt: y => trim(y, 2) },
+        traces: traces,
         cursor: null
       };
       Plot.draw(p.graph, spec);
       // the measurements sit on top, drawn as marks rather than joined up
-      drawDots(p.graph, spec, dots, t.marker);
+      drawDots(p.graph, spec, dots, t.mark);
 
-      p.legend.innerHTML = swatch(t.phase, 'The real signal') +
-        (level === 'foundation' ? '' : swatch(t.trace, 'What the converter holds')) +
-        swatch(t.marker, 'Each measurement');
+      p.legend.innerHTML = swatch(t.v, 'The real signal') +
+        (level === 'foundation' ? '' : key.band(band, 'What the converter holds')) +
+        key.dot(t.mark, 'Each measurement');
 
       const rows = [
         ['Signal', eng(d.fsig, 'Hz', 4)],
@@ -461,11 +501,9 @@ const BENCH = {
         ['Samples per cycle', trim(d.fs / d.fsig, 3)]
       ];
       if (level === 'foundation') {
-        // exactly two samples a cycle is the boundary, not a comfortable pass:
-        // land on the zero crossings and you record nothing at all
-        const per = d.fs / d.fsig;
-        rows.push(['Enough?', per > 2.05 ? 'yes' : (per >= 2 ? 'only just' : 'too few'),
-                   per < 2.05]);
+        // how fast is fast enough is the Intermediate rule, so Foundation is
+        // only told how far apart the measurements are
+        rows.push(['Time between measurements', eng(1 / d.fs, 's', 3)]);
       } else {
         rows.push(['Levels available', d.levels.toLocaleString('en-GB')]);
         if (level === 'intermediate') {
@@ -483,22 +521,24 @@ const BENCH = {
       const { eng, trim } = Fmt;
 
       const cap = capture(values, 4096);
-      const sp = DSP.spectrum(level === 'foundation' ? cap.raw : cap.quant, d.fs, { floor: -110 });
+      // unrounded samples: bit depth is not on the Full syllabus, and rounding
+      // would add spurs this panel does not explain
+      const sp = DSP.spectrum(cap.raw, d.fs, { floor: -100 });
       const pts = [];
-      for (let i = 1; i < sp.bins; i++) pts.push({ x: sp.freq[i], y: sp.db[i] + 110 });
+      for (let i = 1; i < sp.bins; i++) pts.push({ x: sp.freq[i], y: sp.db[i] + 100 });
 
-      const marks = [{ x: d.nyquist, colour: t.marker }];
+      const marks = [{ x: d.nyquist, colour: t.mark }];
       Plot.draw(p.graph, {
         xRange: [0, d.fs / 2], xFmt: x => eng(x, 'Hz', 3), tokens: t,
-        left: { max: 115, fmt: y => Math.round(y - 110) + ' dB' },
-        traces: [{ pts: pts, colour: t.trace, fill: t.fill, axis: 'left', width: 1.4 }],
+        left: { max: 120, fmt: y => Math.round(y - 100) + ' dB' },
+        traces: [{ pts: pts, colour: t.v, fill: t.vFill, axis: 'left', width: 1.4 }],
         marks: marks,
-        cursor: { x: d.alias, colour: t.phase,
+        cursor: { x: d.alias, colour: t.mark,
                   label: (d.aliased ? 'alias at ' : 'tone at ') + eng(d.alias, 'Hz', 4) }
       });
-      p.legend.innerHTML = swatch(t.trace, 'What the converter reports') +
-        swatch(t.phase, d.aliased ? 'Where the tone came back' : 'The tone') +
-        swatch(t.marker, 'Nyquist, half the sample rate');
+      p.legend.innerHTML = swatch(t.v, 'What the converter reports') +
+        swatch(t.mark, d.aliased ? 'Where the tone came back' : 'The tone') +
+        key.dashed(t.mark, 'Nyquist, half the sample rate');
 
       // the fourth figure is the verdict, or the room left for the filter
       const last = d.onLine ? ['Verdict', 'on the line: not enough', true]
@@ -507,7 +547,7 @@ const BENCH = {
       p.readouts.innerHTML = ro([
         ['Tone put in', eng(d.fsig, 'Hz', 4)],
         ['Nyquist limit', eng(d.nyquist, 'Hz', 4)],
-        ['Comes back at', eng(d.alias, 'Hz', 4), d.aliased],
+        ['Appears at', eng(d.alias, 'Hz', 4), d.aliased],
         last
       ]);
       return {};
@@ -525,6 +565,9 @@ const BENCH = {
         full: ['Nyquist', 'Nyquist rate', 'aliasing', 'anti-alias filter', 'spectrum']
       },
       panel: { foundation: 'sampling', intermediate: 'sampling', full: 'spectrum' },
+      // bit depth is Intermediate only: it does nothing on the Foundation
+      // panel, and the Full syllabus does not ask about it
+      controls: { foundation: ['fsig', 'fs'], intermediate: ['fsig', 'fs', 'bits'], full: ['fsig', 'fs'] },
       noSchematic: true,
       heading: {
         foundation: 'Measuring a signal over and over',
@@ -534,7 +577,7 @@ const BENCH = {
       lead: {
         foundation: 'Start by watching the measurements being taken.',
         intermediate: 'Two controls decide how close the copy is. Change one at a time.',
-        full: 'Everything is fine until the signal goes above half the sample rate. Then it stops being fine in a way that cannot be undone.'
+        full: 'Keep the signal below half the sample rate and it is recorded correctly. Push it above and the error cannot be undone.'
       },
       headline: {
         foundation: 'An analogue signal changes smoothly. A digital one is a stream of samples.',
@@ -547,28 +590,56 @@ const BENCH = {
       },
       workLead: {
         intermediate: 'The bit depth sets the size of the smallest step the converter can record, and that step sets how much noise it adds.',
-        full: 'The first two lines give the rule for choosing a rate and the limit it sets. The last two say where a tone above the limit reappears, worked two ways.'
+        // the rows for a tone above the limit appear only when there is one
+        full: d => !d.aliased
+          ? 'The two lines give the rule for choosing a rate and the limit it sets. Push the tone above the limit and more lines appear, working out where it reappears.'
+          : (d.wraps === 0 || (d.rem > d.nyquist && !d.remOnLine))
+            ? 'The first two lines give the rule for choosing a rate and the limit it sets. The last two say where a tone above the limit reappears, worked two ways.'
+            : 'The first two lines give the rule for choosing a rate and the limit it sets. The last says where a tone above the limit reappears.'
       },
       workNote: {
         foundation: 'No arithmetic at this level. What matters is the picture: the smooth line is the signal, the dots are the measurements.',
         intermediate: 'Every extra bit halves the step and buys about 6 dB. Drag the bit depth down to 3 or 4 and the staircase becomes obvious.',
-        full: 'Once a tone has folded back, nothing in the samples shows that it was ever higher: it is indistinguishable from a real tone at the lower frequency. That is why the filter has to come before the converter and not after it.'
+        // where this tone lands, in words, then the point that holds for all
+        full: d => {
+          const e = x => F.eng(x, 'Hz', 4);
+          const f = e(d.fsig), N = e(d.nyquist), a = e(d.alias);
+          let here;
+          if (d.onLine) {
+            here = f + ' sits exactly on the ' + N + ' line, so it does not move. But two samples a cycle is not enough: the rate must be more than twice the signal.';
+          } else if (!d.aliased) {
+            here = f + ' is below the ' + N + ' line already, so it is recorded where it is and there is nothing to reflect.';
+          } else if (d.wraps === 0) {
+            here = f + ' is ' + e(d.fsig - d.nyquist) + ' above the ' + N + ' line, so it comes back the same distance below, at ' + a + '.';
+          } else {
+            const count = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'][d.wraps] || String(d.wraps);
+            const off = f + ' is past the ' + e(d.fs) + ' sample rate itself, so take off ' + count +
+              (d.wraps > 1 ? ' whole sample rates' : ' whole sample rate') +
+              ' first, which leaves exactly the same samples: ' + e(d.rem) + ', ';
+            here = d.remOnLine
+              ? off + 'which lands exactly on the line. It shows at ' + a + ', but two samples a cycle does not capture it properly.'
+              : d.rem > d.nyquist
+                ? off + 'which is ' + e(d.rem - d.nyquist) + ' above the line, so it comes back the same distance below, at ' + a + '.'
+                : off + 'which is below the line, so that is where it appears.';
+          }
+          return here + ' Once a tone has folded back, nothing in the samples shows that it was ever higher: it is indistinguishable from a real tone at the lower frequency. So the filter has to come before the converter, not after it.';
+        }
       },
       explain: {
         foundation: [
           'The smooth line is the signal arriving at the radio. The dots are the moments when the converter measures it and writes the answer down.',
           'Speed the measurements up and the dots crowd together, so the list of numbers describes the signal more closely. Slow them down and the dots grow far apart, and you start to lose the shape between them.',
-          'That is the whole idea. An analogue signal is smooth and continuous. A digital one is a list of measurements taken at a steady rate, sometimes called a number stream.'
+          'An analogue signal changes continually, in size, frequency or both. A digital one is a list of measurements taken at a steady rate, sometimes called a number stream.'
         ],
         intermediate: [
-          'The orange staircase is what the converter actually holds. It can only store one of a fixed set of levels, so each measurement is rounded to the nearest one and the difference is thrown away.',
-          'Drag the bit depth down and the steps get coarse. That rounding error is quantisation error, and it is a form of distortion: what comes out is not quite the shape that went in. On a spectrum it shows as an added noise floor, and you will meet both words for it.',
+          'The pale blue staircase is what the converter actually holds. It can only store one of a fixed set of levels, so each measurement is rounded to the nearest one and the difference is thrown away.',
+          'Drag the bit depth down and the steps get coarse. That rounding error is quantisation error, and it is a form of distortion: what comes out is not quite the shape that went in. On a spectrum it shows as an added noise floor.',
           'Now drag the sample rate. More samples a second follows the shape more closely. The two controls improve different things, which is why a converter is specified by both. Pushing either one up costs money, and it costs processing as well: more samples a second, with more digits in each, is more arithmetic for whatever has to handle the result. A real design settles on enough of each rather than the most of either.',
           'Bit depth also goes by the name resolution, and you will meet both words. They mean the same thing: how finely each measurement can be recorded.',
-          'There is a floor under the sample rate. It has to be more than twice the highest frequency in the signal, and twice that frequency is called the Nyquist rate: the minimum. Drag the sample rate down until it is less than twice the signal and the measurements stop describing it at all. They describe a slower wave that was never there.'
+          'There is a floor under the sample rate. It has to be more than twice the highest frequency in the signal, and twice that frequency is called the Nyquist rate: the minimum. Drag the sample rate down until it is less than twice the signal, and the measurements stop following its shape.'
         ],
         full: [
-          'Turn the limit round and it becomes a design rule: sample at a little over twice the highest frequency you intend to capture. Note highest, not bandwidth. A signal running from 10 kHz to 14 kHz is only 4 kHz wide, but it still needs more than 28k samples a second: what matters is the highest frequency, 14 kHz, not the width.',
+          'To choose a sample rate, take the highest frequency you want to capture and sample at more than twice it. It is the highest frequency that counts, not the bandwidth: a signal from 10 kHz to 14 kHz is only 4 kHz wide, but still needs more than 28,000 samples a second.',
           'Two similar names are worth keeping apart. The Nyquist frequency is half a given sample rate, and it is the line on the display. The Nyquist rate is the minimum sample rate for a given signal, twice its highest frequency. One is a property of the converter, the other of the signal.',
           'Push the signal past the Nyquist line and watch the spectrum. The tone does not disappear and it does not stay put: it folds back and appears somewhere below the line instead.',
           'A 5 kHz tone sampled at 8 kHz comes back at 3 kHz. Nothing downstream can tell that apart from a real 3 kHz tone, because by then they are the same list of numbers.',
@@ -583,7 +654,7 @@ const BENCH = {
       code: '2F2',
       levels: ['foundation', 'full'],
       toggle: {
-        label: 'Signal',
+        label: 'Harmonics',
         levels: ['full'],
         options: [['fundamental', 'Sine alone'], ['second', 'Plus 2nd'],
                   ['third', 'Plus 3rd'], ['both', 'Plus both']]
@@ -593,6 +664,9 @@ const BENCH = {
         full: ['Fourier transform', 'time domain', 'frequency domain', 'harmonic']
       },
       panel: { foundation: 'chain', full: 'composite' },
+      // no control changes the Foundation chain; bit depth plays no part in
+      // the transform, whose samples are not rounded
+      controls: { full: ['fsig', 'fs'] },
       noSchematic: { foundation: true },
       circuit: 'fundamental',
       heading: {
@@ -609,13 +683,13 @@ const BENCH = {
       },
       formulas: { full: ['bins'] },
       workNote: {
-        foundation: 'The device that takes the measurements is an analogue to digital converter, an ADC. On its own it only produces numbers, so something with computing power has to follow it to process them. A DAC then turns the result back into a voltage you can hear.',
-        full: 'The display is a real transform, not a drawing. Every point on it was calculated from a block of 4096 samples of the signal, taken at the sample rate set above, with the fundamental at the Signal setting. The samples are not rounded here, so the bit depth plays no part. The spacing between points is for interest only: the exam asks what the transform does, not how finely it does it.'
+        foundation: 'No arithmetic at this level. Learn the two names: ADC, analogue to digital converter; DAC, digital to analogue converter.',
+        full: 'The display is a real transform, not a drawing. Every point on it was calculated from a block of 4096 samples of the signal, taken at the sample rate set above, with the fundamental at the Signal setting. The spacing between points is for interest only: the exam asks what the transform does, not how finely it does it.'
       },
       explain: {
         foundation: [
           'Follow the path across the panel. A smooth signal arrives from the aerial. The analogue to digital converter, almost always shortened to ADC, measures it over and over and hands on a stream of numbers. That is the doorway between the aerial and the software.',
-          'An ADC on its own does nothing useful. It produces a stream of numbers, and something with computing power has to follow it to do the filtering, demodulating and everything else a receiver needs.',
+          'An ADC only produces numbers. Something with computing power has to follow it to do the filtering, demodulating and everything else a receiver needs.',
           'At the far end the process runs backwards. A digital to analogue converter, a DAC, turns the numbers back into a smoothly changing voltage you can feed to a loudspeaker. Between the two, the signal spends its whole life as numbers.',
           'There are two reasons for going to all this trouble. Anything done in software can be changed by updating the software, which is not true of a circuit built from parts. And numbers survive noise: if you know the signal can only be one of a set of values, you can still tell which one it was meant to be even when it arrives untidy.',
           'That is what makes a software defined radio different. The work that used to be done by tuned circuits and detectors is done by arithmetic instead.'
@@ -625,7 +699,7 @@ const BENCH = {
           'A pure sine wave is a single line on the frequency display. Anything that is not a pure sine has more lines, and if the extra ones sit at whole multiples of the first they are called harmonics. A sine with a harmonic added still repeats at the lower of the two frequencies, but the shape is no longer a clean sine, which is how you spot it in the time domain.',
           'The Fourier transform is the arithmetic that gets you from one to the other. Give it a block of samples taken over time and it returns how much of each frequency was in them.',
           'The two displays above are one signal. Add a harmonic and watch both change together: a new line appears on the right, and the shape on the left stops being a clean sine while still repeating at the same rate.',
-          'That is how you tell them apart by eye. The repetition rate follows the fundamental, so the wave still repeats at the lower frequency, but the shape is no longer a plain sine. It is also what the waterfall on an SDR is doing, over and over, many times a second.',
+          'The waterfall on an SDR is this transform, repeated many times a second.',
           'The transform can only report what is in the samples, so the rule from the section before still applies. Raise the signal or lower the sample rate until a harmonic passes half the sample rate, and its line folds back below the edge of the display and no longer sits at its whole multiple of the fundamental.'
         ]
       }
@@ -657,7 +731,7 @@ const BENCH = {
       working: ['a tone folds when f &gt; sample rate / 2',
                 'to illustrate (the question gives no figures): 12 kHz is above the 8 kHz limit of a 16k rate',
                 'so it returns at 16 kHz &minus; 12 kHz = 4 kHz',
-                'that is higher analogue frequencies arriving than the converter can accept'],
+                'so aliasing is caused by analogue frequencies higher than the converter is designed to accept'],
       source: { eq: ['nyq', 'alias'], from: ['2F1'] },
       seed: { fsig: 12000, fs: 16000 },
       seedNote: 'The question has no figures; this is an illustration. A 12 kHz tone sampled at 16k folds back to 4 kHz. Set the bench to it and read the spectrum.'
@@ -699,14 +773,13 @@ const BENCH = {
 
   outro: {
     foundation: [
-      'Two ideas, then. Sampling is measuring a signal over and over at a steady rate, and an ADC is the part that does it. Everything a software radio does afterwards works on those numbers.'
+      'Sampling is measuring a signal over and over at a steady rate, and an ADC is the part that does it. Everything a software radio does afterwards works on those numbers.'
     ],
     intermediate: [
       'Sample rate and bit depth are separate controls solving separate problems. Rate decides how much of the shape you keep. Depth decides how finely each measurement is recorded, and every bit is worth about 6 dB.'
     ],
     full: [
-      'The Nyquist limit is not a guideline. Below it sampling loses nothing that matters; above it the converter reports a frequency that was never present, and no amount of processing afterwards can separate it from a real one.',
-      'That is the whole argument for the anti-alias filter, and it is why it belongs in front of the converter rather than anywhere else in the chain.'
+      'Below the Nyquist limit, sampling keeps every frequency where it was. Above it, the converter reports a frequency that was never there, and nothing afterwards can separate it from a real one. So the anti-alias filter goes in front of the converter.'
     ]
   }
 };

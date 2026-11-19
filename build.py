@@ -9,6 +9,11 @@ reaches all of them on the next build.
 
     python build.py            build every bench in content/
     python build.py 2H         build just that one
+
+A page is named by its content file, content/<page>.js, and by default it
+covers the one syllabus group of the same name. A page that covers several
+groups says so with BENCH.groups, e.g. groups: ['2A', '2B', '2C'], and its
+questions, coverage and checks then take in all of them.
 """
 import base64
 import csv
@@ -96,9 +101,54 @@ def check_items(content, codes, desc, syllabus):
     return warnings
 
 
-def questions_for(group):
+def groups_of(content, page):
     """
-    Pull this group's questions out of the published bank.
+    The syllabus groups a page covers: BENCH.groups when the content file
+    declares it, otherwise the one group the file is named after.
+    """
+    m = re.search(r"\n  groups: \[([^\]]*)\]", content)
+    found = re.findall(r"'(\w+)'", m.group(1)) if m else []
+    return found or [page]
+
+
+def check_groups(codes, groups, syllabus):
+    """
+    Every item on a page belongs to one of its groups, and every item in
+    those groups is on the page. A page that spans several groups is where
+    an item gets left out without anyone noticing, so it is checked.
+    """
+    warnings = []
+    prefixes = tuple(groups)
+    for code in codes:
+        if not code.startswith(prefixes):
+            warnings.append("%s is not in this page's groups (%s)"
+                            % (code, ', '.join(groups)))
+    for code in sorted(syllabus):
+        if code.startswith(prefixes) and code not in codes:
+            warnings.append('%s is in group %s but not on this page'
+                            % (code, next(g for g in groups if code.startswith(g))))
+    return warnings
+
+
+def check_item_controls(content):
+    """An item that shows its own sliders may only list controls that exist."""
+    warnings = []
+    ids = set(re.findall(r"\{ id: '(\w+)'", content))
+    for code, block in item_blocks(content).items():
+        m = re.search(r"\n      controls: (\[[^\]]*\]|\{[^\n]*\}|\{.*?\n      \})", block, re.S)
+        if not m:
+            continue
+        # drop the level keys of a per-level list, keep the control names
+        for c in re.findall(r"'(\w+)'", m.group(1)):
+            if c not in ids:
+                warnings.append('%s lists control "%s", which the page does not define'
+                                % (code, c))
+    return warnings
+
+
+def questions_for(groups):
+    """
+    Pull the questions for these groups out of the published bank.
 
     They ship verbatim: text, all four options, the marked answer and any
     image, exactly as supplied. The terms permit redistribution in unadapted
@@ -111,11 +161,14 @@ def questions_for(group):
     if not csv_path.exists():
         return [], 'no bank/questions.csv, questions omitted'
 
+    if isinstance(groups, str):
+        groups = [groups]
+    prefixes = tuple(groups)
     out, missing = [], []
     with csv_path.open(encoding='utf-8-sig', newline='') as fh:
         for row in csv.DictReader(fh):
             code = row['TagsToSyllabus'].strip()
-            if not code.startswith(group):
+            if not code.startswith(prefixes):
                 continue
             image = None
             name = row['ImageFileName'].strip()
@@ -275,13 +328,14 @@ def check_terms(content, codes):
     return warnings
 
 
-def check_layouts(group):
+def check_layouts(page):
     """
     Run the layout checker. A schematic with a dangling lead looks almost
     right, which is worse than looking wrong, and it is not something to be
-    caught by eye.
+    caught by eye. It runs on the content file, which holds every layout the
+    page draws, whichever groups they belong to.
     """
-    src = ROOT / 'content' / (group + '.js')
+    src = ROOT / 'content' / (page + '.js')
     problems = []
     # check-layouts proves the circuit is joined up; check-flow proves it is
     # alive. A leg drawn with nothing moving in it reads as a broken circuit
@@ -398,10 +452,10 @@ def check_parity(content, questions):
     return warnings
 
 
-def build(group):
-    content_path = ROOT / 'content' / (group + '.js')
+def build(page):
+    content_path = ROOT / 'content' / (page + '.js')
     if not content_path.exists():
-        raise SystemExit('no content file for %s' % group)
+        raise SystemExit('no content file for %s' % page)
 
     engine = '\n'.join(wrap(n, (ROOT / 'engine' / n).read_text(encoding='utf-8'))
                        for n in ENGINE)
@@ -413,15 +467,18 @@ def build(group):
     syllabus = {r['code']: r['levels'] for r in
                 json.loads((ROOT / 'syllabus' / 'levels.json').read_text(encoding='utf-8'))}
     codes = re.findall(r"code: '([0-9A-Z]+)'", content)
+    groups = groups_of(content, page)
     warnings = check_items(content, codes, desc, syllabus)
+    warnings += check_groups(codes, groups, syllabus)
+    warnings += check_item_controls(content)
 
-    questions, qnote = questions_for(group)
+    questions, qnote = questions_for(groups)
     if qnote:
         warnings.append(qnote)
     warnings += check_answers(content, questions)
     warnings += check_terms(content, codes)
     warnings += check_parity(content, questions)
-    warnings += check_layouts(group)
+    warnings += check_layouts(page)
 
     m = re.search(r"pageTitle: '([^']+)'", content) or re.search(r"title: '([^']+)'", content)
     title = m.group(1)
@@ -435,11 +492,12 @@ def build(group):
                         'const QUESTIONS = ' + json.dumps(questions, ensure_ascii=False) + ';')
 
     OUT.mkdir(exist_ok=True)
-    out = OUT / (group + '.html')
+    out = OUT / (page + '.html')
     out.write_text(html, encoding='utf-8')
 
-    print('%s -> %s  (%d kB, %d items, %d questions)'
-          % (group, out.relative_to(ROOT), len(html) // 1024, len(codes), len(questions)))
+    print('%s -> %s  (%d kB, %d items, %d questions%s)'
+          % (page, out.relative_to(ROOT), len(html) // 1024, len(codes), len(questions),
+             '' if groups == [page] else ', groups ' + ' '.join(groups)))
     for w in warnings:
         print('   warning: %s' % w)
     return not warnings
@@ -473,8 +531,8 @@ def refresh_static():
 def main():
     refresh_static()   # overview.html first: write_index() builds index.html from it
     write_index()
-    groups = sys.argv[1:] or [p.stem for p in (ROOT / 'content').glob('*.js')]
-    ok = all(build(g) for g in groups)
+    pages = sys.argv[1:] or [p.stem for p in (ROOT / 'content').glob('*.js')]
+    ok = all([build(g) for g in pages])
     sys.exit(0 if ok else 1)
 
 if __name__ == '__main__':

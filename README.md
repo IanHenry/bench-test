@@ -46,10 +46,11 @@ engine/       the simulation and drawing engines, no dependencies
   dc.js          diode and operating point maths, conduction angle, classes
   format.js      engineering notation and rounding
   plot.js        the plotting engine: bands, dual axes, cursors, labels
-  schematic.js   circuit symbols and wiring
-  flow.js        animated charge along wires and through components
-  test-*.js      104 assertions across mna, dsp and dc
+  schematic.js   circuit symbols and wiring, and where each terminal lands
+  flow.js        animated charge: AC slosh, DC drift, and time series
+  test-*.js      149 assertions across mna, dsp, dc and flow
   check-*.js     the two circuit checkers, described below
+  fixtures/      layouts using the newer symbols and modes, for the tests
 content/      one file per bench, plus descriptions.json
 template/     bench.html, the generic page all benches are built into
 syllabus/     per-level syllabus parsing and the authoritative item lists
@@ -66,7 +67,8 @@ python build.py
 Tests and checkers separately:
 
 ```bash
-node engine/test-mna.js && node engine/test-dsp.js && node engine/test-dc.js
+node engine/test-mna.js && node engine/test-dsp.js && node engine/test-dc.js && node engine/test-flow.js
+python test_build.py
 ```
 
 ```bash
@@ -109,6 +111,187 @@ resolve to a current the netlist actually solves for. A part that genuinely
 carries no signal current is declared `'-'`, which is a claim that has to be
 meant: bypassed, shorted, or an open output. Unannotated is not allowed,
 because that is how the dead legs kept getting through.
+
+---
+
+## Writing a new page
+
+A page is `content/<page>.js` defining `BENCH`, built to `benches/<page>.html`
+by `python build.py <page>`. Copy the shape of `2H.js` (circuits) or `2F.js`
+(no circuits). The fields below are the ones added for pages that span several
+groups or show DC and time-varying circuits; everything else is as in the
+existing pages.
+
+**Several groups on one page.** `groups: ['2A', '2B', '2C']` beside
+`group:`. The page id stays the file name. Questions are drawn from every
+listed group, every item must belong to one of them, and every syllabus item
+in them must be on the page (the build warns otherwise). `group` is what the
+tag at the top shows, so make it readable (`'2A to 2C'`); the eyebrow then
+reads "items in groups 2A, 2B and 2C". Without `groups`, the file name is the
+group, as before.
+
+**Sliders in the item, not the rail.** On an item, `controls: ['V', 'R']`, or
+per level `controls: { foundation: ['V'], full: ['V', 'R'] }`. The item gets
+its own strip of those sliders above its instrument, showing only the ones the
+current level lists. A control that any item lists leaves the shared rail; a
+control no item lists stays in it, so a supply voltage common to everything
+can stay at the top. Copies of a control share one value. The build warns if
+an item lists a control the page does not define. Pages that list none keep
+the rail exactly as before.
+
+**Seeds and presets can set toggles.** Besides control ids, a seed (in
+`answers`) or a preset's `values` may carry `toggle: '<option key>'` to set
+the item's toggle, and `item: '<code>'` when the seed belongs to a different
+item from the one the question sits in. `toggle` and `item` are therefore
+reserved, not control ids. A question seed that sets a toggle, names an item,
+or belongs to an item with its own sliders scrolls to that item, clear of the
+rail; otherwise it keeps the question in view as before.
+
+**Charge that is not AC.** A panel can return `flow` beside `layout` (and
+`circuit`). The template scales to the largest current drawn unless `iMax`
+is given.
+
+| `flow` | What moves | Currents |
+|---|---|---|
+| none, with `circuit` | AC slosh, as before | solved at `p.fAnim` or `d.f0` |
+| `{ mode: 'dc' }` | steady one-way drift, speed in proportion to current | `circuit` solved at 0 Hz, real part |
+| `{ mode: 'dc', currents: { R1: 0.012 } }` | the same | the panel's own, in amperes; the sign is the direction |
+| `{ mode: 'time', duration, currents: t => ({ R1: i }) }` | charge and discharge: fast at the switch, creeping to a halt | a function of circuit time in seconds over `duration` |
+| `{ mode: 'ac', currents: { IP: {re, im} } }` | AC slosh | the panel's own phasors (numbers allowed) |
+
+Options: `compress: true` scales speed as `pow(m, 0.32)` when branches span
+orders of magnitude (it gives up the visible Kirchhoff balance that linear
+speed gives); `loop` is the screen seconds one time-series pass takes
+(default 6); `charge: t => ({ R1: q })` gives the closed form charge for an
+exact time series; `label: t => '1.4 τ after the switch closes'` says the
+moment in the note under the circuit; `note` replaces the DC note, and
+`note: false` leaves a note the panel wrote itself. Passes of a time series
+join without a jump, so a charge then discharge cycle (net charge zero) loops
+cleanly.
+
+**Symbols.** Besides `R C L D DZ DV V B Q`:
+
+| type | Draws | Fields |
+|---|---|---|
+| `CP` | polarised (electrolytic) capacitor | the hollow positive plate is on the first terminal, so at rot 90 the positive lead is at the top; turn it to rot 270 for a reversed part and mark it `flowReversed: true` if its current still runs top to bottom |
+| `S` | switch | `open: true`; closed by default. An open switch carries nothing and must not name a current; on a closed one the drawn charge stops at the contacts, so the lever still reads as a switch |
+| `N` | neon lamp | `lit: true` fills the envelope with its glow |
+| `LP` | filament lamp, a circle with a cross | model it as a resistor in the netlist; the drawn charge stops at the glass, so the filament stays readable |
+| `M` | moving coil meter | `meter: 'mA'` (the letter inside, drawn upright), or `reading: 0..1` for a needle instead; name it `RM` and model it as a small resistor in the netlist |
+| `T` | transformer | four pins: primary top and bottom at x &minus;20, secondary at x +20, y &plusmn;30 from its centre; `flow: ['IP', 'IS']` names each winding's current, positive top to bottom; `flowReversed: [false, true]` for a secondary that drives current out of its top; `humps: [8, 4]` shows the turns ratio; `core: 'air'`; `dots: true` |
+
+Every two terminal part runs from its first terminal (left at rot 0, top at
+rot 90) to its second, and a diode's first terminal is its anode: a forward
+biased diode points the way its current goes. A reverse biased Zener drawn
+cathode up (rot 270) carries its current downward, so mark it
+`flowReversed: true`. `Schematic.pins(el)` gives the terminal positions the
+checkers use, so a layout can be checked against them while it is drawn. The
+resistor body is 28 by 10 layout units, the house proportion of 56 by 20
+(2.8 : 1); the circuit is scaled to the canvas. At a capacitor (`C` or `CP`)
+the drawn charge stops at the plates: it arrives at one and leaves the other,
+and none crosses the dielectric. The checkers still see one run end to end.
+
+**Page options in the template.** `circuitColumn: 420` widens the circuit
+column on a wide screen (default 300 px), for a page whose networks would
+otherwise be drawn too small to read. `circuitHeight: 300` goes with it and
+makes the circuit canvas and the graph beside it that tall on the same wide
+screens (default 230 px), so a network can use the width it has been given;
+2H uses both. A page that sizes its canvases itself, as 2A and 3F do, leaves
+it out. `colophonNote` may be one string, one
+per level (`{ foundation: ..., full: ..., all: ... }`), or a function of the
+level, for a note that is true at one level only. A pressed preset button
+(`aria-pressed="true"`) is styled by the template. Legend swatches wrap their
+label in its own element, so a label with a subscript stays one run of text.
+The plot engine draws every axis and cursor label at 15 px, with a true minus
+sign, and `Fmt.eng` writes a true minus sign too. A trace may carry
+`dash: [on, off]`: two traces of one quantity are told apart by dashing one,
+never by fading it, since a faded colour falls below 4.5:1 on the panel and
+faded lines that overlap pile up until they look solid. A filled trace may
+carry `fillTo: 0` to fill to that value rather than to the foot of the axis,
+for a current that never goes negative on an axis that does. `standfirst`, like
+`colophonNote`, may be one string or one per level, for a page whose
+Foundation instruments do less than its Full ones. Subscripts and
+superscripts in the working, its note and the question working are 15 px,
+like everything else, and so are those anywhere else in the items: readout
+labels, legends and prose. A control
+may carry `snap: v => …` to hold only values that exist (2A snaps its marked
+resistor to E12). `Fmt.eng` moves up a prefix when rounding reaches 1000, so
+0.99999 V reads "1 V", never "1000 mV".
+
+**Checking DC and time layouts.** An `allLayouts()` entry may carry the same
+`flow` the panel returns: `{ name, layout, netlist, flow: { mode: 'dc' } }`
+solves at 0 Hz, so a capacitor must be drawn `'-'`; `flow` with `currents`
+needs no netlist; a time series is sampled across its duration. Any entry
+with `flow` is also checked for balance: at every junction, the current drawn
+arriving must equal the current leaving, which catches a wire written the
+wrong way round. Points where a source, transistor, ground or terminal lands
+are not balanced, since current enters or leaves the drawing there. See
+`engine/fixtures/new-modes.js` for worked examples of each.
+
+---
+
+## Colours
+
+One scheme runs across the course and Bench. A quantity is always the
+course's colour for it (from the course's `parts/style.txt`); everything you
+press is the g0lft.org site blue. The variables live in `template/bench.html`,
+light and dark, and reach a panel through `ctx.tokens` (the `t` a panel draws
+with). Dark values are lighter variants, each at least 4.5:1 on the dark panels.
+
+| Variable | Token | Light | Dark | Means |
+|---|---|---|---|---|
+| `--q-v` | `t.v` | `#0D6EFD` | `#6EA8FE` | voltage |
+| `--q-i` | `t.i` | `#FD7E14` | `#FD9843` | current: lines, fills, moving charge |
+| `--q-i-ink` | `t.iInk` | `#C2410C` | `#FD9843` | current as text (`#FD7E14` is too pale to read) |
+| `--q-r` | `t.r` | `#343A40` | `#CED4DA` | resistance; resistors are drawn in it |
+| `--q-p` | `t.p` | `#DC3545` | `#F08A93` | power |
+| `--q-l` | `t.l` | `#198754` | `#5DC593` | inductance, X<sub>L</sub>; inductors are drawn in it |
+| `--q-c` | `t.c` | `#6F42C1` | `#B79CF0` | capacitance, X<sub>C</sub>; capacitors are drawn in it |
+| `--q-z` | `t.z` | `#0A3D7A` | `#9DB8E8` | impedance |
+| `--q-note` | `t.note` | `#FFC107` | `#FFC107` | notices and warnings, fills and rules only |
+| `--q-note-ink` | `t.noteInk` | `#856404` | `#FFD45E` | notices and warnings as text |
+| `--q-mark` | `t.mark` | `#495057` | `#AEBBC6` | a cursor, mark or band that is not a quantity |
+| `--q-v-fill`, `--q-i-fill`, `--q-p-fill` | `t.vFill`, `t.iFill`, `t.pFill` | | | translucent fills under a trace |
+| `--accent` | `t.accent` | `#1F6AE1` (hover `#1F4DB6`) | `#6FA0F2` (hover `#9DBDF6`) | chrome only: level switch, links, toggles, sliders, pressed presets, focus rings, item codes |
+
+Chrome: `--paper #FAFBFC`, `--surface #FFFFFF`, `--surface-2 #FAFBFC`,
+`--ink #1A1A1A`, `--ink-soft #495057`, `--ink-faint #6C757D`, `--wire #6C757D`.
+Keep `--surface` a six digit hex: 2A and 2D read it to tell dark mode.
+
+Never use `--accent` for a quantity, and never draw a quantity in a colour
+that means another. The figure a panel is about (`ro(..., hot)`) is marked by
+a tinted cell, not recoloured, and the working is in ink, so neither can
+contradict the colour of what it shows. The engine now does this by default:
+charge dots are `--q-i`; R, L and C are drawn in `--q-r`, `--q-l`, `--q-c`
+(highlighted parts keep their colour, heavier, label bold); a plot trace with
+no colour is `--q-v`, a mark or cursor with none is `--q-mark`.
+
+**Deprecated, kept as aliases until every page is recoloured.** Do not use
+them in new work; each follows its new name into dark mode.
+
+| Old | Token | Now aliases | Was |
+|---|---|---|---|
+| `--trace` | `t.trace` | `--q-i-ink` | amber, the main trace |
+| `--trace-fill` | `t.fill` | `--q-i-fill` | |
+| `--phase` | `t.phase` | `--q-v` | teal, the second trace |
+| `--marker` | `t.marker` | `--q-p` | magenta, marks, cursors and highlights |
+
+The old names meant "first trace", "second trace" and "mark", not a quantity,
+so each page recolours by what each use shows, not by a search and replace:
+
+| Page | Map each use to |
+|---|---|
+| 2A | `hues()`: `i: t.trace` → `t.i` for lines and bars, `t.iInk` in `span()` text; hard-coded `v` → `t.v`, `p` → `t.p`, `r: t.ink` → `t.r`; `bad: t.marker` and `ok` green → `t.noteInk` / `t.ink` (green is inductance) |
+| 2D | `hues()`: `volt: t.phase` → `t.v`; `amp: t.trace` → `t.i`; `power`, `cap`, `ind` hex → `t.p`, `t.c`, `t.l`; `warn: t.marker` → `t.noteInk`; `spark` → `t.note`; cursors and "the rating" marks (`t.marker`) → `t.mark` |
+| 2E | currents (`t.trace`) → `t.i`; voltages (`t.phase`) → `t.v`; power (`t.marker`, with `t.fill`) → `t.p`, `t.pFill`; V<sub>C</sub> in the phasor sum (`t.marker`) → `t.c`; "your frequency" and signal B → `t.mark` |
+| 2F | done: analogue signal → `t.v`; the held values → a translucent band of `t.v` (`tint(t.v, 0.38)`, 0.5 in dark) behind the signal; the digital blocks of the chain → `t.ink`; samples, Nyquist and marks → `t.mark` |
+| 2H | X<sub>L</sub> and energy in L → `t.l`; X<sub>C</sub> and energy in C → `t.c`; impedance curves (`t.trace`, `t.fill`) → `t.z`; the loop current in amperes (`t.trace`, `t.fill`) → `t.i`, `t.iFill`; phase angle (`t.phase`), f<sub>0</sub> and bandwidth bands, marks and cursors (`t.marker`) → `t.mark` |
+| 2I | done: collector, drain and diode currents (`t.trace`, `t.fill`) → `t.i`, `t.iFill`; input and output voltages → `t.v`; the load and bias lines (`t.phase`) → `t.r`; breakdown, pinch off and saturation marks (`t.marker`) → `t.mark`; circuit labels drawn by the page at 15 px, the circuit canvas sized to the layout. The syllabus's "common emitter (source)" in Full 2I4: the common source stage is drawn under 2I3 (FET), and the 2I4 prose points there |
+| 3F | done: power (`t.marker`, `tint(t.marker, …)`) → `t.p`, `t.pFill`, a second power trace (sent back, asked for, before the filter, third order) `t.p` dashed rather than faded, the heat bar hatched; direct current (`t.trace`) → `t.i`; the PA transfer curve, output against input voltage (`t.phase`) → `t.v`, its swing band and marks → `t.mark`; ratings, the SSB channel and filter loss (`t.phase`) → `t.mark` |
+
+When a page no longer reads `t.trace`, `t.fill`, `t.phase` or `t.marker`,
+say so here (2F, 2H, 2I and 3F no longer read any of them); when none does, delete the aliases from `bench.html` and
+`tokens()`.
 
 ---
 
@@ -167,10 +350,14 @@ displays were broken for most of one session.
 
 ## Where it stands
 
-Three benches are live at https://bench.g0lft.org: **2F** sampling and
-conversion, **2H** tuned circuits and filters, **2I** semiconductors. Each
-links back to the course sessions that use it, at course.g0lft.org. The engine
-tests carry 104 assertions. The Colpitts oscillator is drawn and solved.
+Seven benches are built: **2A to 2C** resistance, power and tolerance,
+**2D** reactive components, **2E** AC theory, **2F** sampling and conversion,
+**2H** tuned circuits and filters, **2I** semiconductors, and **3F** RF power
+amplifiers. 2F, 2H and 2I are live at https://bench.g0lft.org; the other four
+are built and checked here but not yet pushed. Each links back to the course
+sessions that use it, at course.g0lft.org, and those sessions link to it. The engine
+tests carry 149 assertions, and `test_build.py` checks the page and group
+handling. The Colpitts oscillator is drawn and solved.
 
 `overview.html` is the outward facing description, for sending to someone whose
 opinion is wanted. `notes/` holds internal working records, including the
@@ -181,18 +368,20 @@ to put on a public page.
 
 Outstanding, in rough order of value:
 
-1. **Two-tone intermodulation at 3F2.** Needs only the existing DSP engine.
-2. **The remaining syllabus groups.** 126 items, 221 level entries in
-   `content/descriptions.json`; three groups are covered.
-3. **Audio.** Deferred deliberately. The DSP engine must emit a plain sample
+1. **The remaining syllabus groups.** 126 items, 221 level entries in
+   `content/descriptions.json`; nine groups are covered (2A to 2F, 2H, 2I
+   and 3F). Next: 4E/4F feeders (needs a transmission-line element), then 2J
+   power supplies (needs a transient solver).
+2. **Audio.** Deferred deliberately. The DSP engine must emit a plain sample
    buffer with playback as a thin adapter; nothing visual may depend on an
    AudioContext.
-4. **Beta above 400.** The beta control tops out at 400; worth widening.
+3. **Beta above 400.** The beta control tops out at 400; worth widening.
 
 ### Deployment
 
-Only `index.html`, `benches/` and `CNAME` belong on the public site.
-`.github/workflows/pages.yml` stages exactly those and publishes them. It
+Only `index.html`, `benches/`, `images/` (the site logo the pages share)
+and `CNAME` belong on the public site. `.github/workflows/pages.yml` stages
+exactly those and publishes them. It
 takes effect once the repository's Pages source is set to GitHub Actions;
 until then Pages serves the whole repository root, this README, `build.py`,
 `content/` and `bank/questions.csv` included.

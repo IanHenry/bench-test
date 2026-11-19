@@ -1,41 +1,75 @@
 <title>Sampling Bench</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex, nofollow">
-<!-- Kept out of search for now. Delete the robots line when it should be found. -->
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Saira+Semi+Condensed:wght@400;500;600;700&family=Inter:ital,wght@0,400;0,600;1,400&display=swap">
 
 <style>
+  /*
+   * One colour scheme across the course and Bench.
+   * Quantities (--q-*) always mean the same thing: the course's colours from
+   * cdarc-course/parts/style.txt. Chrome follows g0lft.org: site blue for
+   * anything you press, white panels, near-black text. Dark mode keeps every
+   * meaning with a lighter variant, each at least 4.5:1 on the dark panels.
+   * Keep the values as six digit hex: pages read --surface to tell dark mode.
+   */
   :root {
-    --paper:#E4E9EE; --surface:#FBFCFD; --surface-2:#EEF2F6;
-    --ink:#0F1A22; --ink-soft:#4B5C69; --ink-faint:#7E8E9B;
-    --rule:#C3CFD9; --rule-soft:#DCE4EB;
-    --trace:#B26B0C; --trace-fill:rgba(178,107,12,.13);
-    --phase:#16697F; --marker:#A62463; --wire:#54646F;
-    --shadow:0 1px 2px rgba(15,26,34,.06),0 8px 24px rgba(15,26,34,.07);
+    /* quantities */
+    --q-v:#0D6EFD;              /* voltage */
+    --q-i:#FD7E14;              /* current: lines, fills, moving charge */
+    --q-i-ink:#C2410C;          /* current as text */
+    --q-r:#343A40;              /* resistance, and resistors drawn */
+    --q-p:#DC3545;              /* power */
+    --q-l:#198754;              /* inductance, inductive reactance */
+    --q-c:#6F42C1;              /* capacitance, capacitive reactance */
+    --q-z:#0A3D7A;              /* impedance */
+    --q-note:#FFC107;           /* notices and warnings: fills and rules only */
+    --q-note-ink:#856404;       /* notices and warnings as text */
+    --q-mark:#495057;           /* cursors and marks that are not a quantity */
+    --q-v-fill:rgba(13,110,253,.10); --q-i-fill:rgba(253,126,20,.14);
+    --q-p-fill:rgba(220,53,69,.10);
+    /* chrome */
+    --accent:#1F6AE1; --accent-hover:#1F4DB6; --accent-tint:#EAF1FC; --on-accent:#FFFFFF;
+    --paper:#FAFBFC; --surface:#FFFFFF; --surface-2:#FAFBFC;
+    --ink:#1A1A1A; --ink-soft:#495057; --ink-faint:#6C757D;
+    --rule:#DEE2E6; --rule-soft:#E9ECEF; --wire:#6C757D;
+    --shadow:0 1px 2px rgba(26,26,26,.05),0 6px 18px rgba(26,26,26,.05);
     --f-panel:"Saira Semi Condensed","Helvetica Neue",Arial,sans-serif;
     --f-text:Inter,"Segoe UI",system-ui,sans-serif;
     --f-data:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+    /* Deprecated: the old names, kept until every page is recoloured. Each
+       follows its new name into dark mode. README says what each page must
+       map them to; do not use them in new work. */
+    --trace:var(--q-i-ink); --trace-fill:var(--q-i-fill);
+    --phase:var(--q-v); --marker:var(--q-p);
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
+      --q-v:#6EA8FE; --q-i:#FD9843; --q-i-ink:#FD9843; --q-r:#CED4DA;
+      --q-p:#F08A93; --q-l:#5DC593; --q-c:#B79CF0; --q-z:#9DB8E8;
+      --q-note:#FFC107; --q-note-ink:#FFD45E; --q-mark:#AEBBC6;
+      --q-v-fill:rgba(110,168,254,.16); --q-i-fill:rgba(253,152,67,.16);
+      --q-p-fill:rgba(240,138,147,.14);
+      --accent:#6FA0F2; --accent-hover:#9DBDF6; --accent-tint:rgba(111,160,242,.16); --on-accent:#0F1A22;
       --paper:#10171D; --surface:#19222B; --surface-2:#212C36;
-      --ink:#DEE7EE; --ink-soft:#9BABB8; --ink-faint:#6B7C89;
-      --rule:#33424E; --rule-soft:#26333D;
-      --trace:#F0B450; --trace-fill:rgba(240,180,80,.15);
-      --phase:#4FC4DA; --marker:#EC74AC; --wire:#93A4B1;
+      --ink:#DEE7EE; --ink-soft:#AEBBC6; --ink-faint:#93A3B0;
+      --rule:#33424E; --rule-soft:#26333D; --wire:#93A4B1;
       --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.34);
     }
   }
   :root[data-theme="dark"] {
+    --q-v:#6EA8FE; --q-i:#FD9843; --q-i-ink:#FD9843; --q-r:#CED4DA;
+    --q-p:#F08A93; --q-l:#5DC593; --q-c:#B79CF0; --q-z:#9DB8E8;
+    --q-note:#FFC107; --q-note-ink:#FFD45E; --q-mark:#AEBBC6;
+    --q-v-fill:rgba(110,168,254,.16); --q-i-fill:rgba(253,152,67,.16);
+    --q-p-fill:rgba(240,138,147,.14);
+    --accent:#6FA0F2; --accent-hover:#9DBDF6; --accent-tint:rgba(111,160,242,.16); --on-accent:#0F1A22;
     --paper:#10171D; --surface:#19222B; --surface-2:#212C36;
-    --ink:#DEE7EE; --ink-soft:#9BABB8; --ink-faint:#6B7C89;
-    --rule:#33424E; --rule-soft:#26333D;
-    --trace:#F0B450; --trace-fill:rgba(240,180,80,.15);
-    --phase:#4FC4DA; --marker:#EC74AC; --wire:#93A4B1;
+    --ink:#DEE7EE; --ink-soft:#AEBBC6; --ink-faint:#93A3B0;
+    --rule:#33424E; --rule-soft:#26333D; --wire:#93A4B1;
     --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.34);
   }
 
@@ -58,7 +92,7 @@
   .eyebrow { font-family:var(--f-panel); font-size:15px; font-weight:600;
              letter-spacing:.14em; text-transform:uppercase; color:var(--ink-faint);
              display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
-  .eyebrow .tag { color:var(--marker); border:1px solid currentColor;
+  .eyebrow .tag { color:var(--accent); border:1px solid currentColor;
                   border-radius:2px; padding:1px 6px; letter-spacing:.1em; }
   h1 { font-family:var(--f-panel); font-size:clamp(28px,5vw,42px); font-weight:700;
        letter-spacing:-.01em; margin:0; text-wrap:balance; }
@@ -72,8 +106,9 @@
                    padding:8px 16px; border:0; border-right:1px solid var(--rule);
                    background:transparent; color:var(--ink-soft); cursor:pointer; }
   .levels button:last-child { border-right:0; }
-  .levels button[aria-pressed="true"] { background:var(--marker); color:var(--surface); }
-  .levels button:focus-visible { outline:2px solid var(--marker); outline-offset:-2px; }
+  .levels button[aria-pressed="true"] { background:var(--accent); color:var(--on-accent); }
+  .levels button:not([aria-pressed="true"]):hover { color:var(--accent-hover); }
+  .levels button:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
 
   /* sticky control rail */
   .rail-wrap { position:sticky; top:0; z-index:5; padding-top:4px;
@@ -98,12 +133,12 @@
   input[type=range]::-moz-range-track { height:3px; background:var(--rule); border-radius:2px; }
   input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; appearance:none;
       width:16px; height:16px; margin-top:-6.5px; border-radius:50%;
-      background:var(--trace); border:2px solid var(--surface); cursor:grab;
+      background:var(--accent); border:2px solid var(--surface); cursor:grab;
       box-shadow:0 1px 3px rgba(0,0,0,.3); }
   input[type=range]::-moz-range-thumb { width:16px; height:16px; border-radius:50%;
-      background:var(--trace); border:2px solid var(--surface); cursor:grab;
+      background:var(--accent); border:2px solid var(--surface); cursor:grab;
       box-shadow:0 1px 3px rgba(0,0,0,.3); }
-  input[type=range]:focus-visible { outline:2px solid var(--marker); outline-offset:3px; border-radius:3px; }
+  input[type=range]:focus-visible { outline:2px solid var(--accent); outline-offset:3px; border-radius:3px; }
 
   /* item panels */
   .item { background:var(--surface); border:1px solid var(--rule); border-radius:4px;
@@ -121,7 +156,7 @@
   .item-code { font-family:var(--f-panel); font-size:15px; font-weight:600;
                letter-spacing:.13em; text-transform:uppercase; color:var(--ink-faint);
                display:flex; gap:8px; align-items:center; }
-  .item-code b { color:var(--marker); font-weight:700; }
+  .item-code b { color:var(--accent); font-weight:700; }
   .item-heading { font-family:var(--f-panel); font-size:25px; font-weight:700;
                   letter-spacing:-.01em; margin:0; text-wrap:balance; }
   .item-lead { margin:0; font-size:17.5px; color:var(--ink); }
@@ -129,7 +164,9 @@
   .preset { font:inherit; font-size:15px; padding:5px 11px; cursor:pointer;
             border:1px solid var(--rule); border-radius:999px;
             background:var(--surface); color:var(--ink); }
-  .preset:hover { border-color:var(--marker); color:var(--marker); }
+  .preset:hover { border-color:var(--accent-hover); color:var(--accent-hover); }
+  .preset[aria-pressed="true"] { border-color:var(--accent); color:var(--accent); background:var(--accent-tint); font-weight:600; }
+  .preset:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
   .preset-note { font-size:15px; color:var(--ink-faint); }
   .item-headline { font-family:var(--f-text); font-size:15.5px; font-style:italic;
                    color:var(--ink-soft); margin:0; }
@@ -153,9 +190,10 @@
                  letter-spacing:.09em; text-transform:uppercase; cursor:pointer;
                  padding:6px 12px; border:1px solid var(--rule); border-radius:3px;
                  background:transparent; color:var(--ink-soft); }
-  .anim button[aria-pressed="true"] { background:var(--trace); color:var(--surface);
-                                      border-color:var(--trace); }
-  .anim button:focus-visible { outline:2px solid var(--marker); outline-offset:2px; }
+  .anim button[aria-pressed="true"] { background:var(--accent); color:var(--on-accent);
+                                      border-color:var(--accent); }
+  .anim button:not([aria-pressed="true"]):hover { color:var(--accent-hover); border-color:var(--accent-hover); }
+  .anim button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
 
   .stage { display:grid; grid-template-columns:1fr; gap:0; }
   @media (min-width:820px) { .stage { grid-template-columns:300px 1fr; } }
@@ -170,6 +208,12 @@
             letter-spacing:.02em; color:var(--ink-soft); }
   .legend span { display:inline-flex; align-items:center; gap:6px; }
   .legend i { width:15px; height:3px; border-radius:2px; }
+  .legend span.sw-l { display:inline; }
+
+  /* an item that shows its own sliders rather than sharing the rail */
+  .item-ctrls { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+                border-bottom:1px solid var(--rule); background:var(--surface); }
+  .item-ctrls .ctrl { border-bottom:1px solid var(--rule-soft); margin-bottom:-1px; }
 
   .toggle { display:flex; flex-wrap:wrap; gap:0; border-top:1px solid var(--rule-soft);
             background:var(--surface-2); }
@@ -177,8 +221,9 @@
                    letter-spacing:.09em; text-transform:uppercase;
                    padding:9px 15px; border:0; border-right:1px solid var(--rule-soft);
                    background:transparent; color:var(--ink-soft); cursor:pointer; }
-  .toggle button[aria-pressed="true"] { color:var(--trace); box-shadow:inset 0 -2px 0 var(--trace); }
-  .toggle button:focus-visible { outline:2px solid var(--marker); outline-offset:-3px; }
+  .toggle button[aria-pressed="true"] { color:var(--accent); box-shadow:inset 0 -2px 0 var(--accent); }
+  .toggle button:not([aria-pressed="true"]):hover { color:var(--accent-hover); }
+  .toggle button:focus-visible { outline:2px solid var(--accent); outline-offset:-3px; }
 
   .readouts { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
               border-top:1px solid var(--rule); }
@@ -189,12 +234,15 @@
           letter-spacing:.12em; text-transform:uppercase; color:var(--ink-faint); }
   .ro-v { font-family:var(--f-data); font-size:17px; font-weight:500;
           font-variant-numeric:tabular-nums; }
-  .ro.hot .ro-v { color:var(--marker); }
+  /* the figure a panel is about: marked, not recoloured, so a current stays
+     a current and a voltage a voltage whatever the page draws them in */
+  .ro.hot { background:var(--accent-tint); box-shadow:inset 3px 0 0 var(--accent); }
+  .ro.hot .ro-v { font-weight:600; }
   .ro-note { margin:6px 0 0; font-size:15px; color:var(--ink-faint);
              font-style:italic; }
   .panel-failed { margin:0 0 10px; padding:8px 10px; font-size:15px;
-                  border:1px solid var(--marker); border-radius:4px;
-                  color:var(--marker); }
+                  border:1px solid var(--q-p); border-radius:4px;
+                  color:var(--q-p); }
 
   .prose { padding:18px 20px 20px; border-top:1px solid var(--rule);
            display:grid; grid-template-columns:1fr; gap:14px 30px; align-items:start; }
@@ -207,7 +255,7 @@
     .prose-work { grid-column:2; grid-row:1; }
   }
   .prose p { margin:0; max-width:62ch; }
-  .work { background:var(--surface-2); border:1px solid var(--rule-soft);
+  .work { background:var(--surface); border:1px solid var(--rule-soft);
           border-radius:3px; padding:4px 14px 8px; overflow-x:auto; }
   .work-row { display:grid; grid-template-columns:1fr; gap:2px;
               padding:11px 0; border-bottom:1px solid var(--rule-soft); }
@@ -217,19 +265,25 @@
                display:flex; gap:9px; align-items:center; flex-wrap:wrap; }
   .given { border:1px solid currentColor; border-radius:2px; padding:0 5px;
            font-size:15px; letter-spacing:.09em; }
-  .given.yes { color:var(--phase); }
-  .given.no  { color:var(--marker); }
+  .given.yes { color:var(--accent); }
+  .given.no  { color:var(--q-note-ink); }
   .given.int { color:var(--ink-faint); }
   .work-eq { font-family:var(--f-data); font-size:15.5px; font-weight:500; }
   .work-sub { font-family:var(--f-data); font-size:15px; color:var(--ink-soft);
               font-variant-numeric:tabular-nums; }
-  .work-sub b { color:var(--phase); font-weight:500; }
-  .work-out { color:var(--marker); font-weight:600; }
+  .work-sub b { color:var(--ink); font-weight:600; }
+  .work-out { color:var(--ink); font-weight:700; }
   .work-note { font-size:15px; color:var(--ink-soft); margin:9px 0 0; max-width:62ch; }
   .work .lhs { color:var(--ink-faint); }
-  .work .sub { color:var(--phase); }
-  .work .out { color:var(--marker); font-weight:600; }
+  .work .sub { color:var(--ink); font-weight:600; }
+  .work .out { color:var(--ink); font-weight:700; }
   .work .rad { font-family:var(--f-text); font-size:1.06em; }
+  /* the browser's own subscript is 0.83 of the text, 12.5 px in the working:
+     nothing on the page is smaller than 15 px, subscripts and superscripts included */
+  .work sub, .work-lead sub, .work-note sub, .q-work sub,
+  .work sup, .work-lead sup, .work-note sup, .q-work sup { font-size:15px; line-height:0; }
+  /* and everywhere else in the items: readout labels, legends and the prose */
+  #items sub, #items sup { font-size:15px; line-height:0; }
 
   .qlink { display:flex; flex-wrap:wrap; align-items:baseline; gap:8px;
            font-size:15px; color:var(--ink-soft);
@@ -245,7 +299,7 @@
   .q:last-child { border-bottom:none; }
   .q-text { margin:0; font-size:16.5px; max-width:68ch; }
   .q-opts li { max-width:68ch; }
-  .q-img { max-width:100%; align-self:flex-start; background:#fff;
+  .q-img { max-width:min(100%,480px); align-self:flex-start; background:#fff;
            border:1px solid var(--rule-soft); border-radius:3px; padding:6px; }
   .q-opts { list-style:none; margin:0; padding:0; display:flex;
             flex-direction:column; gap:5px; }
@@ -253,7 +307,7 @@
                font-size:15.5px; align-items:baseline; }
   .q-opts .k { font-family:var(--f-panel); font-weight:700; font-size:15px;
                letter-spacing:.08em; color:var(--ink-faint); }
-  .q.shown .q-opts li.right .k { color:var(--e-right,var(--phase)); }
+  .q.shown .q-opts li.right .k { color:var(--e-right,var(--accent)); }
   .q.shown .q-opts li.right { color:var(--ink); font-weight:600; }
   .q.shown .q-opts li.right .k::after { content:' \2713'; }
   .q-foot { display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
@@ -261,22 +315,24 @@
                    letter-spacing:.09em; text-transform:uppercase; cursor:pointer;
                    padding:5px 11px; border:1px solid var(--rule); border-radius:3px;
                    background:transparent; color:var(--ink-soft); }
-  .q-foot button:focus-visible { outline:2px solid var(--marker); outline-offset:2px; }
+  .q-foot button:hover { color:var(--accent-hover); border-color:var(--accent-hover); }
+  .q-foot button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
   .q-ref { font-family:var(--f-data); font-size:15px; color:var(--ink-faint); }
   .q-attrib { font-size:15px; color:var(--ink-faint); padding:10px 15px;
               background:var(--surface-2); border-top:1px solid var(--rule); }
   .q-why { display:none; flex-direction:column; gap:9px;
-           border-left:3px solid var(--phase); padding:2px 0 2px 14px; }
+           border-left:3px solid var(--accent); padding:2px 0 2px 14px; }
   .q.shown .q-why { display:flex; }
   .q-why p { margin:0; font-size:16px; }
   .q-work { font-family:var(--f-data); font-size:15px; line-height:1.75;
             font-variant-numeric:tabular-nums; color:var(--ink-soft); }
-  .q-work div:last-child { color:var(--marker); font-weight:600; }
+  .q-work div:last-child { color:var(--ink); font-weight:700; }
   .q-seed { align-self:flex-start; font-family:var(--f-panel); font-size:15px;
             font-weight:600; letter-spacing:.09em; text-transform:uppercase;
             cursor:pointer; padding:6px 12px; border-radius:3px;
-            border:1px solid var(--trace); background:transparent; color:var(--trace); }
-  .q-seed:focus-visible { outline:2px solid var(--marker); outline-offset:2px; }
+            border:1px solid var(--accent); background:transparent; color:var(--accent); }
+  .q-seed:hover { background:var(--accent); color:var(--on-accent); }
+  .q-seed:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
   /* not upper case: these carry units, and mA, µH or Hz must not become MA, MH or HZ */
   .schem-note { font-family:var(--f-panel); font-size:15px; font-weight:600;
                 letter-spacing:.02em; color:var(--ink-faint);
@@ -290,24 +346,27 @@
                 padding:9px 0 7px; }
   .terms dl { margin:0; display:flex; flex-direction:column; gap:9px; }
   .terms dt { font-family:var(--f-panel); font-size:15px; font-weight:700;
-              letter-spacing:.02em; color:var(--phase); }
+              letter-spacing:.02em; color:var(--accent); }
   .terms dd { margin:2px 0 0; font-size:15.5px; color:var(--ink); max-width:60ch; }
-  .term { border-bottom:1px dotted var(--phase); cursor:help; }
+  .term { border-bottom:1px dotted var(--accent); cursor:help; }
   .q-src { font-size:15.5px; color:var(--ink-soft); border-top:1px dotted var(--rule);
            padding-top:9px; }
   .q-src b { font-family:var(--f-panel); font-size:15px; font-weight:700;
              letter-spacing:.11em; text-transform:uppercase; color:var(--ink-faint);
              display:block; margin-bottom:4px; }
-  .q-src a { color:var(--phase); }
+  .q-src a { color:var(--accent); }
   .q-src code { font-family:var(--f-data); font-size:15px; background:var(--surface);
                 padding:1px 5px; border-radius:3px; }
-  .qlink a { color:var(--phase); }
+  .qlink a { color:var(--accent); }
   .qlink code { font-family:var(--f-data); font-size:15px; background:var(--surface-2);
                 padding:1px 5px; border-radius:3px; }
 
   .colophon { font-size:15px; color:var(--ink-faint); border-top:1px solid var(--rule);
               padding-top:16px; max-width:72ch; }
-  .colophon a { color:var(--phase); }
+  .colophon a { color:var(--accent); }
+  .wrap a { color:var(--accent); }
+  .wrap a:hover { color:var(--accent-hover); }
+  a:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:2px; }
   .colophon .home { display:block; margin-bottom:10px; font-size:15px;
                     color:var(--ink); }
 
@@ -370,7 +429,7 @@
 
 <div class="g0-foot" role="contentinfo">
   <p>Bench Test goes with the free <a href="https://course.g0lft.org">amateur radio training course</a> and the <a href="https://g0lft.org/apps/signal-explorer/index.html">Signal Explorer</a>. Corrections and feedback: <a href="mailto:ian@g0lft.org">ian@g0lft.org</a>.</p>
-  <p>© 2026 Dr Ian Henry, G0LFT. Independent of the RSGB and Ofcom; the RSGB publishes the syllabus and the exams.</p>
+  <p>© 2026 Dr Ian Henry, G0LFT. Licensed <a rel="license noopener" href="https://creativecommons.org/licenses/by-nc-nd/4.0/">CC BY-NC-ND 4.0</a>: share unchanged copies with credit; not for sale; ask before adapting it or using it any other way. Bank questions and diagrams © RSGB. Independent of the RSGB and Ofcom; the RSGB publishes the syllabus and the exams.</p>
   <p><a href="https://g0lft.org/privacy.html">Privacy Policy</a> | <a href="https://g0lft.org/about.html">About</a> | <a href="https://g0lft.org/contact.html">Contact</a> | <a href="https://www.qrz.com/db/G0LFT">QRZ</a> | <a href="https://www.youtube.com/@G0LFT-AmateurRadio">YouTube</a></p>
 </div>
 <script>
@@ -393,10 +452,14 @@ const SI_PREFIXES = [
 /** Trim a number to `sig` significant figures without exponential notation. */
 const trim = (x, sig) => String(Number(x.toPrecision(sig || 4)));
 
+/** The same, with a true minus sign, for text a reader sees. */
+const trimText = (x, sig) => trim(x, sig).replace(/^-/, MINUS);
+
 /** Round to 4 s.f. so the displayed value, the formula and the netlist agree exactly. */
 const round4 = v => parseFloat(v.toPrecision(4));
 
 const NBSP = String.fromCharCode(160);   // no-break space
+const MINUS = String.fromCharCode(0x2212);   // a true minus sign, not a hyphen
 
 /**
  * 0.0001414 -> "141.4 µF". Pass a unit, get a unit. The number is joined to
@@ -407,9 +470,17 @@ function eng(x, unit, sig) {
   unit = unit || '';
   if (!isFinite(x)) return '—';
   if (x === 0) return '0' + NBSP + unit;
-  const sign = x < 0 ? '-' : '', a = Math.abs(x);
-  for (const [mul, pre] of SI_PREFIXES) {
-    if (a >= mul) return sign + trim(a / mul, sig) + NBSP + pre + unit;
+  const sign = x < 0 ? MINUS : '', a = Math.abs(x);
+  for (let k = 0; k < SI_PREFIXES.length; k++) {
+    const [mul, pre] = SI_PREFIXES[k];
+    if (a < mul) continue;
+    const s = trim(a / mul, sig);
+    // 0.99999 V rounds up to "1000 mV": write it with the next prefix up, "1 V"
+    if (Number(s) >= 1000 && k > 0) {
+      const [up, upPre] = SI_PREFIXES[k - 1];
+      return sign + trim(a / up, sig) + NBSP + upPre + unit;
+    }
+    return sign + s + NBSP + pre + unit;
   }
   return sign + trim(a / 1e-12, sig) + NBSP + 'p' + unit;
 }
@@ -427,7 +498,7 @@ function sci(v) {
 const logMap = (t, [lo, hi]) => lo * Math.pow(hi / lo, t / 1000);
 const logUnmap = (v, [lo, hi]) => 1000 * Math.log(v / lo) / Math.log(hi / lo);
 
-const API = { eng, sci, trim, round4, logMap, logUnmap, SI_PREFIXES };
+const API = { eng, sci, trim, trimText, round4, MINUS, logMap, logUnmap, SI_PREFIXES };
 if (typeof window !== 'undefined') window.Fmt = API;
 })();
 
@@ -783,13 +854,20 @@ function sampleSine(f, fs, n, phase) {
  * Round to the nearest of 2^bits levels over -1 .. +1.
  * The residue is the quantisation error the syllabus asks about, and it sets
  * the noise floor you can see on the spectrum.
+ *
+ * The levels sit at the middle of each step, at ±step/2, ±3·step/2 and so on
+ * out to ±(1 − step/2): exactly 2^bits of them, symmetrical about zero, and
+ * no sample from −1 to +1 is ever more than half a step from one. Rounding to
+ * whole steps instead gives 2^bits + 1 levels, one more than the bits can
+ * hold.
  */
 function quantise(x, bits) {
   const levels = Math.pow(2, bits);
   const step = 2 / levels;
+  const top = 1 - step / 2;
   const out = new Float64Array(x.length);
   for (let i = 0; i < x.length; i++) {
-    out[i] = Math.max(-1, Math.min(1, Math.round(x[i] / step) * step));
+    out[i] = Math.max(-top, Math.min(top, (Math.floor(x[i] / step) + 0.5) * step));
   }
   return out;
 }
@@ -1113,21 +1191,37 @@ if (typeof window !== 'undefined') window.DC = API;
  * One linear x axis, up to two y axes, any number of traces, plus the
  * furniture a bench keeps needing: a shaded band (half-power points), dashed
  * markers, and a draggable cursor. Colours come from CSS custom properties so
- * the plot follows the page theme without the caller thinking about it.
+ * the plot follows the page theme without the caller thinking about it. A
+ * trace with no colour is drawn as a voltage (--q-v), as a scope would; a
+ * band, mark or cursor with none in the neutral --q-mark.
  */
 
-const PAD = { l: 70, r: 60, t: 14, b: 36 };   // room for 13 px axis labels
+const PAD = { l: 80, r: 70, t: 14, b: 38 };   // room for 15 px axis labels
+const LABEL_PX = 15;                           // nothing on a plot smaller than this
+// a tick label with a true minus sign rather than a hyphen
+const minus = v => String(v).replace(/^-/, '−');
+// words drawn over the traces get a halo of the background, so a curve
+// running through them does not cut the letters
+function haloText(ctx, text, x, y, surface) {
+  ctx.save();
+  ctx.lineWidth = 4;
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = surface || '#fff';
+  ctx.strokeText(text, x, y);
+  ctx.restore();
+  ctx.fillText(text, x, y);
+}
 
 /**
  * spec = {
  *   xRange: [a, b], xUnit: 'Hz',
  *   left:  { max, unit, sig },            // 0..max
  *   right: { min, max, fmt },             // optional second axis
- *   traces: [{ pts:[{x,y}], axis:'left'|'right', colour, fill }],
+ *   traces: [{ pts:[{x,y}], axis:'left'|'right', colour, fill, fillTo, width, dash:[on,off] }],
  *   bands:  [{ from, to, colour }],
  *   marks:  [{ x, colour, dashed, label }],
  *   cursor: { x, colour, label, dot:{axis,y} },
- *   tokens: { grid, faint, soft, surface, panelFont }
+ *   tokens: { grid, faint, soft, surface, panelFont, v, mark }
  * }
  */
 function draw(canvas, spec) {
@@ -1167,17 +1261,17 @@ function draw(canvas, spec) {
   /* grid and axis labels */
   ctx.strokeStyle = t.grid || '#ddd';
   ctx.lineWidth = 1;
-  ctx.font = '500 13px ' + font;
+  ctx.font = '500 ' + LABEL_PX + 'px ' + font;
   ctx.fillStyle = t.faint || '#888';
   for (let i = 0; i <= 4; i++) {
     const y = Math.round(PAD.t + yOff + H * i / 4) + 0.5;
     ctx.beginPath(); ctx.moveTo(PAD.l, y); ctx.lineTo(PAD.l + W, y); ctx.stroke();
     ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-    ctx.fillText(spec.left.fmt(spec.left.max - (spec.left.max - lmin) * i / 4), PAD.l - 9, y);
+    ctx.fillText(minus(spec.left.fmt(spec.left.max - (spec.left.max - lmin) * i / 4)), PAD.l - 9, y);
     if (spec.right) {
       ctx.textAlign = 'left';
       const v = spec.right.max - (spec.right.max - spec.right.min) * i / 4;
-      ctx.fillText(spec.right.fmt(v), PAD.l + W + 9, y);
+      ctx.fillText(minus(spec.right.fmt(v)), PAD.l + W + 9, y);
     }
   }
   for (let i = 0; i <= 4; i++) {
@@ -1185,14 +1279,14 @@ function draw(canvas, spec) {
     ctx.beginPath(); ctx.moveTo(x, PAD.t + yOff); ctx.lineTo(x, PAD.t + yOff + H); ctx.stroke();
     if (!spec.hideX) {
       ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-      ctx.fillText(spec.xFmt(v), x, PAD.t + yOff + H + 9);
+      ctx.fillText(minus(spec.xFmt(v)), x, PAD.t + yOff + H + 9);
     }
   }
 
   /* shaded bands, behind everything */
   for (const b of (spec.bands || [])) {
     if (b.to < xa || b.from > xb) continue;
-    ctx.fillStyle = b.colour;
+    ctx.fillStyle = b.colour || t.mark || '#495057';
     ctx.globalAlpha = 0.07;
     const a = Math.max(X(b.from), PAD.l), c = Math.min(X(b.to), PAD.l + W);
     ctx.fillRect(a, PAD.t + yOff, c - a, H);
@@ -1203,7 +1297,7 @@ function draw(canvas, spec) {
   ctx.setLineDash([3, 3]);
   for (const m of (spec.marks || [])) {
     if (m.x < xa || m.x > xb) continue;
-    ctx.strokeStyle = m.colour;
+    ctx.strokeStyle = m.colour || t.mark || '#495057';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(X(m.x), PAD.t + yOff); ctx.lineTo(X(m.x), PAD.t + yOff + H);
@@ -1216,11 +1310,11 @@ function draw(canvas, spec) {
     if (l.x < xa || l.x > xb) continue;
     const y = (l.axis === 'right' ? YR : YL)(l.y);
     if (y < PAD.t + yOff - 2 || y > PAD.t + yOff + H + 2) continue;
-    ctx.fillStyle = l.colour;
-    ctx.font = '13px ' + font;
+    ctx.fillStyle = l.colour || t.mark || '#495057';
+    ctx.font = LABEL_PX + 'px ' + font;
     ctx.textAlign = 'right';
     ctx.textBaseline = 'bottom';
-    ctx.fillText(l.text, X(l.x), y - 3);
+    haloText(ctx, l.text, X(l.x), y - 3, t.surface);
   }
   ctx.setLineDash([]);
 
@@ -1228,7 +1322,10 @@ function draw(canvas, spec) {
   for (const tr of spec.traces) {
     if (!tr.fill || !tr.pts.length) continue;
     ctx.beginPath();
-    const base = Math.min(PAD.t + yOff + H, Math.max(PAD.t + yOff, YL(lmin)));
+    // down to the foot of the axis, or to the value fillTo names (a current
+    // that is never negative, filled to its zero on an axis that goes below)
+    const base = Math.min(PAD.t + yOff + H, Math.max(PAD.t + yOff,
+      tr.fillTo === undefined ? YL(lmin) : Y(tr.fillTo, tr.axis)));
     ctx.moveTo(X(tr.pts[0].x), base);
     for (const p of tr.pts) ctx.lineTo(X(p.x), Y(p.y, tr.axis));
     ctx.lineTo(X(tr.pts[tr.pts.length - 1].x), base);
@@ -1238,27 +1335,31 @@ function draw(canvas, spec) {
   }
   for (const tr of spec.traces) {
     if (!tr.pts.length) continue;
-    ctx.strokeStyle = tr.colour;
+    ctx.strokeStyle = tr.colour || t.v || '#0D6EFD';
     ctx.lineWidth = tr.width || 2.2;
     ctx.lineJoin = 'round';
+    // a second trace of the same quantity is told apart by being dashed,
+    // not by being faded, so it keeps the colour's full contrast
+    ctx.setLineDash(tr.dash || []);
     ctx.beginPath();
     tr.pts.forEach((p, i) => {
       const x = X(p.x), y = Y(p.y, tr.axis);
       i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
     });
     ctx.stroke();
+    ctx.setLineDash([]);
   }
 
   /* cursor */
   const c = spec.cursor;
   if (c && c.x >= xa && c.x <= xb) {
-    ctx.strokeStyle = c.colour;
+    ctx.strokeStyle = c.colour || t.mark || '#495057';
     ctx.lineWidth = 1.4;
     ctx.beginPath();
     ctx.moveTo(X(c.x), PAD.t + yOff); ctx.lineTo(X(c.x), PAD.t + yOff + H);
     ctx.stroke();
     if (c.dot) {
-      ctx.fillStyle = c.colour;
+      ctx.fillStyle = c.colour || t.mark || '#495057';
       ctx.beginPath();
       ctx.arc(X(c.x), Y(c.dot.y, c.dot.axis), 4.5, 0, Math.PI * 2);
       ctx.fill();
@@ -1268,11 +1369,11 @@ function draw(canvas, spec) {
     }
     if (c.label) {
       ctx.fillStyle = t.soft || '#666';
-      ctx.font = '600 13px ' + font;
+      ctx.font = '600 ' + LABEL_PX + 'px ' + font;
       const nearRight = (xb - c.x) < (xb - xa) * 0.18;
       ctx.textAlign = nearRight ? 'right' : 'left';
       ctx.textBaseline = 'top';
-      ctx.fillText(c.label, X(c.x) + (nearRight ? -8 : 8), PAD.t + yOff + 4);
+      haloText(ctx, c.label, X(c.x) + (nearRight ? -8 : 8), PAD.t + yOff + 4, t.surface);
     }
   }
 }
@@ -1325,10 +1426,109 @@ if (typeof window !== 'undefined') window.Plot = API;
  *     ]
  *   }
  * rot is degrees clockwise; 0 runs left to right, 90 runs top to bottom.
+ *
+ * Every two terminal part has its first terminal at the start of its axis and
+ * its second at the end: at rot 0 the first is on the left, at rot 90 at the
+ * top. A diode's first terminal is its anode, so the triangle points from the
+ * first terminal to the second, the way conventional current flows forward.
+ *
+ * Types: R C L D DZ DV V B Q, and
+ *   CP polarised capacitor, positive (hollow) plate on the first terminal
+ *   S  switch            { open: true } draws it open; closed by default
+ *   N  neon lamp         { lit: true } fills the envelope with its glow
+ *   M  moving coil meter { meter: 'A' } the letter inside: 'V', 'mA', 'µA'...;
+ *                        { reading: 0..1 } draws a needle instead of the letter
+ *   T  transformer       four terminals, see TRANSFORMER_PINS; { humps: [4, 8] }
+ *                        draws the turns ratio, { core: 'air' } drops the iron
+ *                        core lines, { dots: true } marks the phasing
+ * pins(el) gives the terminal positions that the checkers and the junction
+ * dots use, so a symbol and its checks cannot disagree about where its leads
+ * end, and runs(el) the stretches its charge is drawn along.
  */
 
 const BODY = 26;   // length of the symbol body along its axis
 const SPAN = 60;   // total length including both leads
+// The resistor body keeps the house proportion, 56 by 20 (2.8 : 1), so it
+// reads as the same symbol the course draws, at whatever scale the circuit
+// is drawn.
+const R_LEN = 28, R_THK = 10;
+
+// Three terminal devices do not sit along an axis like the passives do.
+// Relative to the centre at rot 0: base, collector, emitter.
+const TRANSISTOR_PINS = [[-30, 0], [12, -32], [12, 32]];
+
+// A transformer at rot 0 has its primary winding on the left and its
+// secondary on the right, both running top to bottom. In order: primary top,
+// primary bottom, secondary top, secondary bottom. Each winding carries its
+// own current, positive from its top terminal to its bottom one.
+const TRANSFORMER_PINS = [[-20, -30], [-20, 30], [20, -30], [20, 30]];
+
+/** Rotate a point clockwise by rot degrees, on the canvas axes (y down). */
+function turn(pt, deg) {
+  const r = (deg || 0) * Math.PI / 180;
+  const c = Math.cos(r), s = Math.sin(r);
+  return [pt[0] * c - pt[1] * s, pt[0] * s + pt[1] * c];
+}
+
+/** Where an element's terminals land, in layout units, rounded to the grid. */
+function pins(el) {
+  const local = el.type === 'Q' ? TRANSISTOR_PINS
+              : el.type === 'T' ? TRANSFORMER_PINS
+              : null;
+  if (local) {
+    return local.map(pt => {
+      const d = turn(pt, el.rot);
+      return [el.at[0] + Math.round(d[0]), el.at[1] + Math.round(d[1])];
+    });
+  }
+  const rad = (el.rot || 0) * Math.PI / 180;
+  const dx = Math.round(Math.cos(rad) * SPAN / 2);
+  const dy = Math.round(Math.sin(rad) * SPAN / 2);
+  return [[el.at[0] - dx, el.at[1] - dy], [el.at[0] + dx, el.at[1] + dy]];
+}
+
+/*
+ * The straight runs charge is drawn along for an element, each with the name
+ * of the current it carries: [x1, y1, x2, y2, name], positive from the first
+ * point to the second. A transformer has one run per winding, named by its
+ * flow: ['primary current', 'secondary current']. An open switch has none,
+ * because nothing crosses the gap. Sources and transistors have none either:
+ * their bodies are not wire. forDrawing splits a run around a body that has
+ * writing in it.
+ */
+function runs(el, forDrawing) {
+  if (el.type === 'V' || el.type === 'B' || el.type === 'Q') return [];
+  if (el.type === 'S' && el.open) return [];
+  const p = pins(el);
+  if (el.type === 'T') {
+    // flowReversed: [false, true] turns one winding round, for a secondary
+    // that drives its current out of its top terminal
+    const f = Array.isArray(el.flow) ? el.flow : [];
+    const rev = Array.isArray(el.flowReversed) ? el.flowReversed : [];
+    const run = (a, b, name, back) => back
+      ? [p[b][0], p[b][1], p[a][0], p[a][1], name]
+      : [p[a][0], p[a][1], p[b][0], p[b][1], name];
+    return [run(0, 1, f[0], rev[0]), run(2, 3, f[1], rev[1])];
+  }
+  const name = el.flow || el.name;
+  const one = el.flowReversed
+    ? [p[1][0], p[1][1], p[0][0], p[0][1], name]
+    : [p[0][0], p[0][1], p[1][0], p[1][1], name];
+  // Drawn charge stops at the edge of a meter, a neon or a lamp, so the
+  // letter, the electrodes or the filament stay readable, and at the
+  // contacts of a closed switch, so the lever still reads as a switch. At a
+  // capacitor it stops at the plates: charge arrives at one and leaves the
+  // other, and none crosses the dielectric between them. The checkers still
+  // see one run end to end.
+  const body = forDrawing && { M: 16, N: 14, S: 15, LP: 10, C: 8, CP: 11 }[el.type];
+  if (!body) return [one];
+  const [x1, y1, x2, y2] = one, len = Math.hypot(x2 - x1, y2 - y1);
+  const ux = (x2 - x1) / len, uy = (y2 - y1) / len, mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+  return [[x1, y1, mx - ux * body, my - uy * body, name],
+          [mx + ux * body, my + uy * body, x2, y2, name]];
+}
+
+const NEON_GLOW = '255,122,26';   // the orange of a struck neon, as r,g,b
 
 function rotated(ctx, x, y, deg, fn) {
   ctx.save();
@@ -1342,14 +1542,13 @@ function rotated(ctx, x, y, deg, fn) {
 
 const SYMBOL = {
   R(ctx) {
-    const h = 11;
     ctx.beginPath();
-    ctx.rect(-BODY / 2, -h / 2, BODY, h);
+    ctx.rect(-R_LEN / 2, -R_THK / 2, R_LEN, R_THK);
     ctx.fillStyle = ctx._surface;
     ctx.fill();
     ctx.stroke();
-    lead(ctx, -SPAN / 2, -BODY / 2);
-    lead(ctx, BODY / 2, SPAN / 2);
+    lead(ctx, -SPAN / 2, -R_LEN / 2);
+    lead(ctx, R_LEN / 2, SPAN / 2);
   },
 
   C(ctx) {
@@ -1360,6 +1559,30 @@ const SYMBOL = {
     ctx.stroke();
     lead(ctx, -SPAN / 2, -gap);
     lead(ctx, gap, SPAN / 2);
+  },
+
+  /*
+   * Polarised (electrolytic) capacitor: a hollow plate for the positive
+   * side and a filled one for the negative. The positive plate is on the
+   * first terminal, so at rot 90 the positive lead is at the top.
+   */
+  CP(ctx) {
+    const h = 20, gap = 3, thk = 5;
+    const lj = ctx.lineJoin;
+    ctx.lineJoin = 'miter';
+    ctx.beginPath();
+    ctx.rect(-gap - thk, -h / 2, thk, h);
+    ctx.fillStyle = ctx._surface;
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.rect(gap, -h / 2, thk, h);
+    ctx.fillStyle = ctx.strokeStyle;
+    ctx.fill();
+    ctx.stroke();
+    ctx.lineJoin = lj;
+    lead(ctx, -SPAN / 2, -gap - thk);
+    lead(ctx, gap + thk, SPAN / 2);
   },
 
   L(ctx) {
@@ -1496,8 +1719,173 @@ const SYMBOL = {
     ctx.lineWidth = w;
     lead(ctx, -SPAN / 2, -gap);
     lead(ctx, gap, SPAN / 2);
+  },
+
+  /*
+   * Switch: two contacts and a lever hinged on the first. Open, the lever is
+   * lifted well clear of the second contact so the gap cannot be misread;
+   * closed, it lies on it.
+   */
+  S(ctx, el) {
+    const c = 13, r = 2.4;
+    lead(ctx, -SPAN / 2, -c - r);
+    lead(ctx, c + r, SPAN / 2);
+    ctx.beginPath();
+    ctx.arc(-c, 0, r, 0, Math.PI * 2);
+    ctx.moveTo(c + r, 0);
+    ctx.arc(c, 0, r, 0, Math.PI * 2);
+    ctx.fillStyle = ctx._surface;
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-c + r * 0.7, -r * 0.7);
+    if (el && el.open) ctx.lineTo(c - 1, -14);
+    else ctx.lineTo(c, -r);
+    ctx.stroke();
+  },
+
+  /*
+   * Neon lamp: a gas filled envelope with two electrodes facing across a gap,
+   * and the dot that says the envelope holds gas. It conducts only once the
+   * voltage across it reaches its striking voltage, and then it glows.
+   */
+  N(ctx, el) {
+    const r = 14, e = 4, h = 7;
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fillStyle = ctx._surface;
+    ctx.fill();
+    if (el && el.lit) {
+      const g = ctx.createRadialGradient(0, 0, 1, 0, 0, r);
+      g.addColorStop(0, 'rgba(' + NEON_GLOW + ',0.95)');
+      g.addColorStop(0.6, 'rgba(' + NEON_GLOW + ',0.5)');
+      g.addColorStop(1, 'rgba(' + NEON_GLOW + ',0.08)');
+      ctx.fillStyle = g;
+      ctx.fill();
+    }
+    ctx.stroke();
+    lead(ctx, -SPAN / 2, -e);
+    lead(ctx, e, SPAN / 2);
+    const w = ctx.lineWidth;
+    ctx.lineWidth = w * 1.6;
+    ctx.beginPath();
+    ctx.moveTo(-e, -h); ctx.lineTo(-e, h);
+    ctx.moveTo(e, -h); ctx.lineTo(e, h);
+    ctx.stroke();
+    ctx.lineWidth = w;
+    ctx.beginPath();
+    ctx.arc(0, 9.5, 1.7, 0, Math.PI * 2);
+    ctx.fillStyle = ctx.strokeStyle;
+    ctx.fill();
+  },
+
+  /* Filament lamp: a circle with a cross through it. */
+  LP(ctx) {
+    const r = 10, k = r * Math.SQRT1_2;
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fillStyle = ctx._surface;
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-k, -k); ctx.lineTo(k, k);
+    ctx.moveTo(-k, k); ctx.lineTo(k, -k);
+    ctx.stroke();
+    lead(ctx, -SPAN / 2, -r);
+    lead(ctx, r, SPAN / 2);
+  },
+
+  /*
+   * Moving coil meter: a circle with what it measures written inside. The
+   * letter, or the needle, is drawn upright afterwards by meterFace, since a
+   * meter on its side still reads the right way up.
+   */
+  M(ctx) {
+    const r = 16;
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fillStyle = ctx._surface;
+    ctx.fill();
+    ctx.stroke();
+    lead(ctx, -SPAN / 2, -r);
+    lead(ctx, r, SPAN / 2);
+  },
+
+  /*
+   * Transformer: two windings facing each other across the core. The number
+   * of humps on each side can follow the turns ratio, so a step down
+   * transformer looks like one.
+   */
+  T(ctx, el) {
+    const humps = (el && el.humps) || [4, 4];
+    const half = 20;                        // each winding spans y -20 to 20
+    [[-20, 1, humps[0]], [20, -1, humps[1]]].forEach(([x, side, n]) => {
+      n = Math.max(1, Math.round(n));
+      const r = half / n;
+      ctx.beginPath();
+      for (let i = 0; i < n; i++) {
+        const cy = -half + r * (2 * i + 1);
+        // bulge towards the core: right for the primary, left for the secondary
+        ctx.arc(x, cy, r, -Math.PI / 2, Math.PI / 2, side < 0);
+      }
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x, -SPAN / 2); ctx.lineTo(x, -half);
+      ctx.moveTo(x, half); ctx.lineTo(x, SPAN / 2);
+      ctx.stroke();
+    });
+    if (!el || el.core !== 'air') {
+      ctx.beginPath();
+      ctx.moveTo(-3, -half - 2); ctx.lineTo(-3, half + 2);
+      ctx.moveTo(3, -half - 2); ctx.lineTo(3, half + 2);
+      ctx.stroke();
+    }
+    if (el && el.dots) {
+      ctx.fillStyle = ctx.strokeStyle;
+      ctx.beginPath();
+      ctx.arc(-27, -half + 2, 2, 0, Math.PI * 2);
+      ctx.arc(27, -half + 2, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 };
+
+/*
+ * The face of a meter, drawn upright whatever way round the meter sits: the
+ * letter for what it measures, or, given a reading, a scale and a needle
+ * deflected that fraction of full scale.
+ */
+function meterFace(ctx, el, t, colour) {
+  ctx.save();
+  ctx.translate(el.at[0], el.at[1]);
+  if (typeof el.reading === 'number') {
+    const k = Math.max(0, Math.min(1, el.reading));
+    const py = 8, len = 15, a0 = -Math.PI * 5 / 6, a1 = -Math.PI / 6;
+    ctx.strokeStyle = t.soft || '#666';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(0, py, len - 2, a0, a1, false);
+    ctx.stroke();
+    const a = a0 + (a1 - a0) * k;
+    ctx.strokeStyle = colour;
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(0, py);
+    ctx.lineTo(Math.cos(a) * len, py + Math.sin(a) * len);
+    ctx.stroke();
+    ctx.fillStyle = colour;
+    ctx.beginPath();
+    ctx.arc(0, py, 2, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    ctx.fillStyle = colour;
+    ctx.font = '600 15px ' + (t.font || 'sans-serif');
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(el.meter || 'A', 0, 1);
+  }
+  ctx.restore();
+}
 
 function lead(ctx, from, to) {
   ctx.beginPath();
@@ -1569,12 +1957,8 @@ function draw(canvas, layout, opts) {
   const bump = (x, y) => { const k = x + ',' + y; ends[k] = (ends[k] || 0) + 1; };
   for (const [x1, y1, x2, y2] of (layout.wires || [])) { bump(x1, y1); bump(x2, y2); }
   for (const el of layout.elements) {
-    if (el.type === 'Q') continue;          // three terminals, not two
-    const rad = (el.rot || 0) * Math.PI / 180;
-    const dx = Math.round(Math.cos(rad) * SPAN / 2);
-    const dy = Math.round(Math.sin(rad) * SPAN / 2);
-    bump(el.at[0] - dx, el.at[1] - dy);
-    bump(el.at[0] + dx, el.at[1] + dy);
+    if (el.type === 'Q') continue;          // its leads end inside the device drawing
+    for (const [x, y] of pins(el)) bump(x, y);
   }
   ctx.fillStyle = t.wire || '#444';
   for (const k in ends) {
@@ -1600,12 +1984,21 @@ function draw(canvas, layout, opts) {
 
   for (const el of layout.elements) {
     const hot = opts.highlight && opts.highlight.has(el.name);
-    const colour = hot ? (t.marker || '#a02') : (t.wire || '#444');
+    // a part is drawn in the colour of what it is, as the course draws it:
+    // resistors dark, inductors green, capacitors purple; anything else, and
+    // any token a caller did not supply, in the wire colour. A highlighted
+    // part keeps that meaning and is drawn heavier, with its label in bold;
+    // a part with no quantity colour is picked out in ink. t.hot overrides.
+    const own = el.type === 'R' ? t.r : el.type === 'L' ? t.l
+              : (el.type === 'C' || el.type === 'CP') ? t.c : null;
+    const colour = hot ? (t.hot || own || t.ink || '#111')
+                       : (own || t.wire || '#444');
     ctx.strokeStyle = colour;
-    ctx.lineWidth = hot ? 2.4 : 1.6;
+    ctx.lineWidth = hot ? 2.6 : 1.6;
     rotated(ctx, el.at[0], el.at[1], el.rot || 0, () => {
-      (SYMBOL[el.type] || SYMBOL.R)(ctx);
+      (SYMBOL[el.type] || SYMBOL.R)(ctx, el);
     });
+    if (el.type === 'M') meterFace(ctx, el, t, colour);
 
     // labels stay upright whatever the symbol orientation
     const label = el.label || el.name;
@@ -1617,8 +2010,12 @@ function draw(canvas, layout, opts) {
       ctx.font = (hot ? '600 ' : '') + '13px ' + (t.font || 'sans-serif');
       ctx.textAlign = vertical ? (leftOf ? 'right' : 'left') : 'center';
       ctx.textBaseline = vertical ? 'middle' : 'bottom';
-      const lx = el.at[0] + (vertical ? (leftOf ? -20 : 20) : 0);
-      const ly = el.at[1] + (vertical ? 0 : -22);   // clear of the body, with a value under it
+      const off = el.type === 'T' ? 36 : (el.type === 'M' || el.type === 'N') ? 24 : 20;
+      const lx = el.at[0] + (vertical ? (leftOf ? -off : off) : 0);
+      // clear of the body, with a value under it; a transformer's terminals
+      // reach 30 above its centre, so its name sits above those
+      const ly = el.at[1] + (vertical ? 0 : (el.type === 'T' ? -36 : el.type === 'M' ? -24
+                                             : el.type === 'LP' ? -26 : -22));
       ctx.fillText(label, lx, ly);
       if (value) {
         ctx.fillStyle = hot ? colour : (t.soft || '#666');
@@ -1634,7 +2031,7 @@ function draw(canvas, layout, opts) {
   }
 }
 
-const API = { draw, SPAN, BODY };
+const API = { draw, pins, runs, SPAN, BODY, R_LEN, R_THK, TRANSISTOR_PINS, TRANSFORMER_PINS };
 if (typeof window !== 'undefined') window.Schematic = API;
 })();
 
@@ -1647,8 +2044,10 @@ if (typeof window !== 'undefined') window.Schematic = API;
  * moving charge is a long standing convention in circuit teaching tools; this
  * is written from our own solver and no other implementation was consulted.
  *
- * We solve a phasor rather than stepping a time domain simulation, so the
- * instantaneous current in any branch is just
+ * Three modes, because three kinds of current turn up in the syllabus.
+ *
+ * 'ac' (the default). We solve a phasor rather than stepping a time domain
+ * simulation, so the instantaneous current in any branch is just
  *
  *     i(t) = |I| cos(wt + arg I)
  *
@@ -1663,13 +2062,35 @@ if (typeof window !== 'undefined') window.Schematic = API;
  * proportional to |I| / w and peaks a quarter cycle after the current does.
  * The scale is arbitrary and chosen to be visible: what carries meaning is
  * the relative size between branches and the relative timing.
+ *
+ * 'dc'. A steady current, so the charge drifts one way at a steady speed in
+ * proportion to the current in its branch: currents are plain numbers in
+ * amperes, and the sign says which way. Because the dots are evenly spaced
+ * on every run, speed in proportion to current is what makes the charge
+ * arriving at a junction equal the charge leaving it, which is Kirchhoff's
+ * current law made visible. compress: true trades that for visibility when
+ * branch currents span orders of magnitude.
+ *
+ * 'time'. The current follows a function of time, for a capacitor or an
+ * inductor charging and discharging. currents is then a function of circuit
+ * time in seconds returning { name: amperes }, and duration is the circuit
+ * time one pass of the animation covers. Each dot's position is the charge
+ * that has passed so far, the integral of that current, so the dots rush at
+ * the switch and creep to a halt as the capacitor fills. Passes join without
+ * a jump: each completed pass carries the charge it moved into the next.
  */
 
 const SPACING = 17;      // gap between dots, in layout units
-const MAX_SWING = 15;    // largest excursion drawn, in layout units
+const MAX_SWING = 15;    // largest excursion drawn on AC, in layout units
+const DRIFT = 36;        // drift speed at the largest current, layout units per second
+const LOOP = 6;          // seconds on screen for one pass of a time series
+const CURRENT = '#FD7E14';  // --q-i, used when a caller passes no colour
+const STEPS = 240;       // integration steps for the charge in a time series
 
 function magOf(c) { return c ? Math.hypot(c.re, c.im) : 0; }
 function argOf(c) { return c ? Math.atan2(c.im, c.re) : 0; }
+/** A current given either as a number or as a phasor, as a real number. */
+function realOf(c) { return typeof c === 'number' ? c : (c ? c.re : 0); }
 
 /**
  * Dots along one straight run.
@@ -1703,11 +2124,95 @@ function endpoints(el, span) {
   return [el.at[0] - dx, el.at[1] - dy, el.at[0] + dx, el.at[1] + dy];
 }
 
+/*
+ * The runs an element's charge is drawn along. The schematic engine knows
+ * where every symbol's terminals are, the transformer's four included, so it
+ * is asked; this fallback covers the two terminal parts when it is absent.
+ */
+function runsOf(el, span) {
+  const S = (typeof window !== 'undefined' && window.Schematic) ||
+            (typeof require === 'function' ? require('./schematic.js') : null);
+  if (S && S.runs) return S.runs(el, true);
+  if (el.type === 'V' || el.type === 'B') return [];
+  const [x1, y1, x2, y2] = endpoints(el, span);
+  const name = el.flow || el.name;
+  return el.flowReversed ? [[x2, y2, x1, y1, name]] : [[x1, y1, x2, y2, name]];
+}
+
+/** Compressive scaling: keeps a small current moving, and moving less. */
+const squash = m => Math.pow(m, 0.32);
+
+/*
+ * Charge passed by every current in a time series, from 0 to tau, by the
+ * trapezium rule. One call evaluates the function STEPS + 1 times for all
+ * branches together, which is cheap enough to do every frame.
+ */
+function chargeTo(fn, tau) {
+  const q = {};
+  if (!(tau > 0)) return q;
+  const h = tau / STEPS;
+  let prev = fn(0) || {};
+  for (let k = 1; k <= STEPS; k++) {
+    const cur = fn(k * h) || {};
+    for (const n of Object.keys(cur)) {
+      q[n] = (q[n] || 0) + 0.5 * h * (realOf(prev[n]) + realOf(cur[n]));
+    }
+    prev = cur;
+  }
+  return q;
+}
+
+// a whole pass, worked out once per function and duration
+const passCache = (typeof WeakMap !== 'undefined') ? new WeakMap() : null;
+function chargePerPass(fn, duration) {
+  const hit = passCache && passCache.get(fn);
+  if (hit && hit.duration === duration) return hit.q;
+  const q = chargeTo(fn, duration);
+  if (passCache) passCache.set(fn, { duration, q });
+  return q;
+}
+
+/**
+ * Where a time series is, for a flow object: the circuit time tau inside the
+ * current pass, how many passes are complete, and the screen seconds a pass
+ * takes. The page reads tau to say what moment the dots are showing.
+ */
+function timeOf(flow) {
+  const loop = flow.loop || LOOP;
+  const time = Math.max(0, flow.time || 0);
+  const passes = Math.floor(time / loop);
+  return { tau: (time - passes * loop) / loop * flow.duration, passes, loop };
+}
+
+/**
+ * Largest current a time series reaches over one pass, among the names
+ * given (all of them when names is empty), sampled finely enough for any
+ * exponential the syllabus asks about.
+ */
+function peakOf(fn, duration, names) {
+  let peak = 0;
+  for (let k = 0; k <= 400; k++) {
+    const cur = fn(duration * k / 400) || {};
+    for (const n of Object.keys(cur)) {
+      if (names && names.size && !names.has(n)) continue;
+      peak = Math.max(peak, Math.abs(realOf(cur[n])));
+    }
+  }
+  return peak;
+}
+
 /**
  * flow = {
- *   phase,                  // wt, advanced by the caller
- *   currents: { name: {re,im} },
- *   iMax,                   // largest |I| in the circuit, for scaling
+ *   mode,                   // 'ac' (default), 'dc' or 'time'
+ *   phase,                  // ac: wt, advanced by the caller
+ *   time,                   // dc and time: seconds of animation so far
+ *   currents,               // ac: { name: {re,im} }; dc: { name: amperes };
+ *                           // time: t => ({ name: amperes })
+ *   duration, loop,         // time: circuit seconds per pass, screen seconds per pass
+ *   charge,                 // time, optional: t => ({ name: coulombs }) passed since
+ *                           // t = 0, exact where the integral is known
+ *   iMax,                   // largest current drawn, for scaling
+ *   compress,               // dc and time: scale speed compressively
  *   colour
  * }
  * A wire carries the current of whichever element the layout names in its
@@ -1717,36 +2222,78 @@ function endpoints(el, span) {
  */
 function draw(ctx, layout, flow, span) {
   if (!flow || !flow.iMax) return;
-  const swing = name => {
-    const I = flow.currents[name];
-    const m = magOf(I) / flow.iMax;
-    if (!isFinite(m) || m <= 0) return null;
-    /*
-     * Currents in one circuit can differ by four orders of magnitude: a base
-     * carries microamps while its collector carries hundreds of milliamps.
-     * Scaling the movement linearly against the largest makes every other
-     * branch sit perfectly still, which reads as a broken animation rather
-     * than as a small current. Compressing the scale keeps the ordering
-     * visible, so a smaller current still moves and still moves less.
-     */
-    const shown = Math.pow(m, 0.32);
-    // integrating cos gives sin, so the charge lags the current by 90 degrees
-    return { off: MAX_SWING * shown * Math.sin(flow.phase + argOf(I)),
-             intensity: Math.max(0.18, Math.min(1, shown)) };
-  };
+  // moving charge is current, and current is orange everywhere (--q-i)
+  if (!flow.colour) flow = Object.assign({}, flow, { colour: CURRENT });
+  const mode = flow.mode || 'ac';
+  let swing;
+
+  if (mode === 'dc') {
+    const time = flow.time || 0;
+    swing = name => {
+      const I = realOf(flow.currents[name]);
+      const m = Math.abs(I) / flow.iMax;
+      if (!isFinite(m) || m <= 0) return null;
+      const speed = flow.compress ? squash(m) : m;
+      return { off: Math.sign(I) * DRIFT * speed * time,
+               intensity: Math.max(0.18, Math.min(1, squash(m))) };
+    };
+  } else if (mode === 'time') {
+    const fn = flow.currents;
+    if (typeof fn !== 'function' || !(flow.duration > 0)) return;
+    const { tau, passes, loop } = timeOf(flow);
+    const now = fn(tau) || {};
+    // the charge passed so far: the panel's closed form when it gives one,
+    // which is exact, otherwise the current integrated numerically
+    const qOf = typeof flow.charge === 'function'
+      ? (t => flow.charge(t) || {}) : (t => chargeTo(fn, t));
+    const qNow = qOf(tau);
+    const qPass = !passes ? {} : typeof flow.charge === 'function'
+      ? qOf(flow.duration) : chargePerPass(fn, flow.duration);
+    // layout units moved per coulomb, so that the largest current drifts at
+    // DRIFT on screen; a pass of `duration` circuit seconds takes `loop` seconds
+    const perCoulomb = DRIFT * loop / (flow.duration * flow.iMax);
+    swing = name => {
+      if (!(name in now) && !(name in qNow)) return null;
+      const m = Math.abs(realOf(now[name])) / flow.iMax;
+      const q = passes * (qPass[name] || 0) + (qNow[name] || 0);
+      if (!isFinite(m) || (m <= 0 && !q)) return null;
+      // compress acts on the distance moved, which keeps the order of branches
+      const off = flow.compress
+        ? Math.sign(q) * DRIFT * loop * squash(Math.abs(q) / (flow.duration * flow.iMax))
+        : q * perCoulomb;
+      return { off, intensity: m > 0 ? Math.max(0.18, Math.min(1, squash(m))) : 0.18 };
+    };
+  } else {
+    swing = name => {
+      const I = flow.currents[name];
+      const m = magOf(I) / flow.iMax;
+      if (!isFinite(m) || m <= 0) return null;
+      /*
+       * Currents in one circuit can differ by four orders of magnitude: a base
+       * carries microamps while its collector carries hundreds of milliamps.
+       * Scaling the movement linearly against the largest makes every other
+       * branch sit perfectly still, which reads as a broken animation rather
+       * than as a small current. Compressing the scale keeps the ordering
+       * visible, so a smaller current still moves and still moves less.
+       */
+      const shown = squash(m);
+      // integrating cos gives sin, so the charge lags the current by 90 degrees
+      return { off: MAX_SWING * shown * Math.sin(flow.phase + argOf(I)),
+               intensity: Math.max(0.18, Math.min(1, shown)) };
+    };
+  }
 
   for (const el of layout.elements) {
-    if (el.type === 'V' || el.type === 'B') continue;   // a source body is not a wire run
-    // a coupling capacitor is a short to the signal and so is absent from the
-    // netlist, but it still carries a current, named here by el.flow
-    const s = swing(el.flow || el.name);
-    if (!s) continue;
-    // A part drawn the other way round from the current it is named for,
-    // such as a reverse biased diode, says so, and its dots run from its
-    // second end to its first.
-    const [x1, y1, x2, y2] = endpoints(el, span);
-    if (el.flowReversed) dotsAlong(ctx, x2, y2, x1, y1, s.off, s.intensity, flow.colour);
-    else dotsAlong(ctx, x1, y1, x2, y2, s.off, s.intensity, flow.colour);
+    // A coupling capacitor is a short to the signal and so is absent from the
+    // netlist, but it still carries a current, named here by el.flow. A part
+    // drawn the other way round from the current it is named for, such as a
+    // reverse biased diode, says so with flowReversed, and its dots run from
+    // its second end to its first.
+    for (const [x1, y1, x2, y2, name] of runsOf(el, span)) {
+      const s = name ? swing(name) : null;
+      if (!s) continue;
+      dotsAlong(ctx, x1, y1, x2, y2, s.off, s.intensity, flow.colour);
+    }
   }
 
   for (const w of (layout.wires || [])) {
@@ -1757,7 +2304,8 @@ function draw(ctx, layout, flow, span) {
   }
 }
 
-const API = { draw, magOf, argOf, SPACING, MAX_SWING };
+const API = { draw, timeOf, peakOf, chargeTo, magOf, argOf, realOf,
+              SPACING, MAX_SWING, DRIFT, LOOP };
 if (typeof window !== 'undefined') window.Flow = API;
 })();
 
@@ -1777,14 +2325,46 @@ if (typeof window !== 'undefined') window.Flow = API;
 const DSP = window.DSP;
 const F = window.Fmt;
 
-/** One block of samples, plus the smooth signal they were taken from. */
+/** One block of samples of the tone, unrounded: the Full panel is about rate, not depth. */
 function capture(v, n) {
   const fs = v.fs, f = v.fsig;
   const N = n || 2048;
-  const raw = DSP.sampleSine(f, fs, N);
-  return { raw: raw, quant: DSP.quantise(raw, Math.round(v.bits)), fs: fs, f: f, N: N };
+  return { raw: DSP.sampleSine(f, fs, N), fs: fs, f: f, N: N };
 }
 
+
+/*
+ * Colours. Every signal on this page is a voltage, so every trace is the
+ * course's voltage blue. Where two voltages share a plot, the copy the
+ * converter holds is a paler, wider band of the same blue behind the real
+ * signal, not a new hue. Samples, the Nyquist line and the marks are neutral.
+ * The digital stages of the chain hold numbers, not a quantity, so they are
+ * drawn in ink.
+ */
+
+/** A see-through version of a #rrggbb colour; anything else is returned as is. */
+function tint(colour, alpha) {
+  const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(String(colour).trim());
+  if (!m) return colour;
+  return 'rgba(' + parseInt(m[1], 16) + ',' + parseInt(m[2], 16) + ',' +
+    parseInt(m[3], 16) + ',' + alpha + ')';
+}
+
+/** True when the panels are dark, read from the six digit --surface. */
+function isDark(t) {
+  const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(String(t.surface).trim());
+  return !!m && (parseInt(m[1], 16) + parseInt(m[2], 16) + parseInt(m[3], 16)) < 3 * 128;
+}
+
+/** Legend keys the plain bar cannot show: a dot, a dashed line, a wide band. */
+const key = {
+  dot: (c, label) => '<span><i style="width:8px;height:8px;border-radius:50%;background:' + c +
+    '"></i><span class="sw-l">' + label + '</span></span>',
+  dashed: (c, label) => '<span><i style="height:2px;border-radius:0;background:repeating-linear-gradient(90deg,' +
+    c + ' 0 3px,transparent 3px 6px)"></i><span class="sw-l">' + label + '</span></span>',
+  band: (c, label) => '<span><i style="height:6px;background:' + c +
+    '"></i><span class="sw-l">' + label + '</span></span>'
+};
 
 /** Wrap a caption to the width of its block. */
 function wrapText(c, text, cx, y, maxW, lh) {
@@ -1822,7 +2402,7 @@ const BENCH = {
   intro: {
     foundation: [
       'A radio signal in the air changes smoothly. A computer cannot hold a smooth thing, only a list of numbers, so before the signal can be processed it has to be measured over and over again and written down.',
-      'That is all sampling is. Move the controls and watch what the measurements look like compared with the signal they came from.'
+      'Measuring a signal over and over like this is called sampling. Move the controls and watch what the measurements look like compared with the signal they came from.'
     ],
     intermediate: [
       'Sampling turns a smooth signal into a list of numbers. Two things decide how good that list is: how often you measure, and how finely you can write each measurement down.',
@@ -1830,7 +2410,7 @@ const BENCH = {
     ],
     full: [
       'Sampling is straightforward until the signal contains something above half the sample rate. Then the converter reports a frequency that was never there, and nothing downstream can tell the difference.',
-      'That is the whole reason an anti-alias filter exists, and it is easier to believe once you have seen it happen. Push the signal frequency past the Nyquist line and watch where the tone comes back.'
+      'An anti-alias filter is there to stop that, and the need for one is easier to believe once you have seen it happen. Push the signal frequency past the Nyquist line and watch where the tone comes back.'
     ]
   },
 
@@ -1849,7 +2429,7 @@ const BENCH = {
     ],
     keyMessages: [
       { at: '2F1', level: 'foundation',
-        point: 'analogue changes smoothly, digital is a stream of separate measurements' },
+        point: 'analogue changes continually in amplitude, frequency or both; digital is a stream of separate measurements' },
       { at: '2F1', level: 'foundation',
         point: 'faster measuring follows the shape more closely' },
       { at: '2F1', level: 'intermediate',
@@ -1861,7 +2441,7 @@ const BENCH = {
       { at: '2F1', level: 'intermediate',
         point: 'sample faster than twice the highest frequency: twice it is the Nyquist rate, the minimum' },
       { at: '2F1', level: 'full',
-        point: 'sample at a little over twice the highest frequency present, not twice the bandwidth' },
+        point: 'sample at more than twice the highest frequency present, not twice the bandwidth' },
       { at: '2F1', level: 'full',
         point: 'a tone above the limit reflects back below it and cannot afterwards be told apart' },
       { at: '2F1', level: 'full',
@@ -1900,6 +2480,8 @@ const BENCH = {
       // taking them away; above the sample rate the simple rule needs this
       wraps: Math.floor(v.fsig / v.fs),
       rem: v.fsig - Math.floor(v.fsig / v.fs) * v.fs,
+      // what is left lands exactly on the line, as 12 kHz does at 8 kHz
+      remOnLine: Math.abs(v.fsig - Math.floor(v.fsig / v.fs) * v.fs - nyquist) < 1e-9 * v.fs,
       step: DSP.quantStep(bits),
       levels: Math.pow(2, bits),
       snr: DSP.idealSNR(bits),
@@ -1927,54 +2509,49 @@ const BENCH = {
                        F.trim(d.snr, 4) + ' dB'] },
     rule: { given: false, name: 'Choosing a sample rate',
             eq: 'rate &gt; 2 &times; highest frequency present',
-            work: d => ['for a signal reaching <b>' + F.eng(d.fsig, 'Hz', 4) + '</b>',
+            work: d => ['2 &times; <b>' + F.eng(d.fsig, 'Hz', 4) + '</b>',
                         'more than ' + F.eng(2 * d.fsig, 'Hz', 4)] },
     nyq: { given: false, name: 'The Nyquist limit',
            eq: 'f<sub>N</sub> = sample rate / 2',
            work: d => ['<b>' + F.eng(d.fs, 'Hz', 4) + '</b> / 2', F.eng(d.nyquist, 'Hz', 4)] },
+    // These two rows are arithmetic only. Whether a tone moves at all, and
+    // why, is said in words in the note under the working, so no prose sits
+    // after an equals sign.
     reflect: { given: false, name: 'The alias as a reflection',
                eq: 'as far below f<sub>N</sub> as the tone is above it',
+               applies: d => d.aliased,
                work: d => {
+                 const N = F.eng(d.nyquist, 'Hz', 4), out = F.eng(d.alias, 'Hz', 4);
                  const f = '<b>' + F.eng(d.fsig, 'Hz', 4) + '</b>';
-                 if (d.onLine) return [f + ' sits exactly on the line, so it does not move',
-                   'but two samples a cycle is not enough: the rate must be more than twice'];
-                 if (!d.aliased) return [f + ' is below the line already', 'nothing to reflect'];
-                 if (d.wraps === 0) return [f + ' is ' +
-                   F.eng(d.fsig - d.nyquist, 'Hz', 4) + ' above the line',
-                   'so it returns the same distance below, at ' + F.eng(d.alias, 'Hz', 4)];
+                 const r = '<b>' + F.eng(d.fs, 'Hz', 4) + '</b>';
+                 if (d.wraps === 0) return [N + ' &minus; (' + f + ' &minus; ' + N + ')', out];
                  // beyond the sample rate it folds more than once; taking off
                  // whole sample rates leaves the same samples, so do that first
-                 const r = '<b>' + F.eng(d.fs, 'Hz', 4) + '</b>';
-                 const head = f + ' is past the sample rate itself, so take off whole sample rates first: ' +
-                   f + ' &minus; ' + d.wraps + ' &times; ' + r + ' = ' + F.eng(d.rem, 'Hz', 4);
-                 return d.rem > d.nyquist
-                   ? [head + ', which is ' + F.eng(d.rem - d.nyquist, 'Hz', 4) + ' above the line',
-                      'so it returns the same distance below, at ' + F.eng(d.alias, 'Hz', 4)]
-                   : [head + ', which is below the line', 'so that is where it appears: ' + F.eng(d.alias, 'Hz', 4)];
+                 const less = f + ' &minus; ' + (d.wraps > 1 ? d.wraps + ' &times; ' : '') + r;
+                 return d.rem > d.nyquist && !d.remOnLine
+                   ? [N + ' &minus; ((' + less + ') &minus; ' + N + ')', out]
+                   : [less, out];
                } },
     alias: { given: false, name: 'Where a tone above the limit comes back',
              eq: 'f<sub>alias</sub> = sample rate &minus; f, for f between f<sub>N</sub> and the sample rate',
+             // past the sample rate, once whole sample rates are off, what is
+             // left may already be below the line; then there is nothing to
+             // subtract it from and the row above has the answer
+             applies: d => d.aliased && (d.wraps === 0 || (d.rem > d.nyquist && !d.remOnLine)),
              work: d => {
                const f = '<b>' + F.eng(d.fsig, 'Hz', 4) + '</b>', r = '<b>' + F.eng(d.fs, 'Hz', 4) + '</b>';
-               if (d.onLine) return [f + ' is on the limit, not below it, and is not captured properly',
-                                     F.eng(d.alias, 'Hz', 4)];
-               if (!d.aliased) return [f + ' is below the limit, so it stays put', F.eng(d.alias, 'Hz', 4)];
                if (d.wraps === 0) return [r + ' &minus; ' + f, F.eng(d.alias, 'Hz', 4)];
-               // past the sample rate the rule only applies once whole sample
-               // rates have been taken off
-               const rem = F.eng(d.rem, 'Hz', 4);
-               return d.rem > d.nyquist
-                 ? ['not in range as it stands: ' + f + ' &minus; ' + d.wraps + ' &times; ' + r + ' = ' + rem +
-                    ' first, then ' + r + ' &minus; ' + rem, F.eng(d.alias, 'Hz', 4)]
-                 : ['not in range as it stands: ' + f + ' &minus; ' + d.wraps + ' &times; ' + r + ' = ' + rem +
-                    ', already below the limit', F.eng(d.alias, 'Hz', 4)];
+               return [r + ' &minus; (' + f + ' &minus; ' + (d.wraps > 1 ? d.wraps + ' &times; ' : '') + r + ')',
+                       F.eng(d.alias, 'Hz', 4)];
              } },
     // FFT resolution is not in the Full syllabus, which asks only what a
     // Fourier transform does
     bins: { given: false, tag: { full: 'interest' }, name: 'What the transform gives you',
             eq: 'spacing = sample rate / number of samples',
+            // below 1 Hz, "488 mHz" reads too easily as megahertz
             work: d => ['<b>' + F.eng(d.fs, 'Hz', 4) + '</b> / <b>4096</b> samples',
-                        F.eng(d.fs / 4096, 'Hz', 3) + ' per point'] }
+                        (d.fs / 4096 < 1 ? F.trim(d.fs / 4096, 3) + '\u00a0Hz' : F.eng(d.fs / 4096, 'Hz', 3)) +
+                        ' per point'] }
   },
 
 
@@ -1983,7 +2560,7 @@ const BENCH = {
    * uses it, and the build fails if prose uses one before then.
    */
   terms: {
-    'analogue': 'A signal that varies smoothly, taking any value in between, the way a voice or a radio wave does.',
+    'analogue': 'A signal that changes continually in size (amplitude), frequency or both, taking any value in between, as a voice or a radio wave does.',
     'digital': 'A signal stored as a list of separate numbers rather than a smooth curve.',
     'sample': 'One measurement of a signal, taken at a particular instant.',
     'sample rate': 'How many measurements are taken each second.',
@@ -2006,9 +2583,8 @@ const BENCH = {
   panels: {
     /*
      * The signal path, drawn as the blocks it passes through. Smooth on the
-     * way in, numbers in the middle, smooth again on the way out. None of the
-     * controls apply here, and the caption says so rather than leaving the
-     * reader wondering which slider does nothing.
+     * way in, numbers in the middle, smooth again on the way out. No control
+     * applies here, so the item lists none and no slider sits above it.
      */
     chain(ctx) {
       const { p, t, ro } = ctx;
@@ -2021,23 +2597,28 @@ const BENCH = {
       c.clearRect(0, 0, W, H);
 
       const stages = [
-        { label: 'Aerial', sub: 'a smooth signal', kind: 'wave' },
-        { label: 'ADC', sub: 'measures it, over and over', kind: 'box' },
-        { label: 'Software', sub: 'does the work, on numbers', kind: 'box' },
-        { label: 'DAC', sub: 'turns numbers back into a voltage', kind: 'box' },
-        { label: 'Speaker', sub: 'a smooth signal again', kind: 'wave' }
+        { label: 'Aerial', sub: 'smooth', kind: 'wave' },
+        { label: 'ADC', sub: 'measures', kind: 'box' },
+        { label: 'Software', sub: 'works on numbers', kind: 'box' },
+        { label: 'DAC', sub: 'back to a voltage', kind: 'box' },
+        { label: 'Speaker', sub: 'smooth again', kind: 'wave' }
       ];
-      const pad = 14, gap = 16;
+      // on a phone the blocks take the room the margins gave up, so the
+      // longest name, Software, keeps clear of its box
+      const pad = W < 600 ? 6 : 14, gap = W < 600 ? 14 : 16;
       const bw = (W - pad * 2 - gap * (stages.length - 1)) / stages.length;
       const by = H / 2 - 34, bh = 46;
 
-      c.font = '600 14px "Saira Semi Condensed", sans-serif';
+      // nothing on the canvas under 15 px, the house minimum
+      const labelFont = '600 15px "Saira Semi Condensed", sans-serif';
+      const capFont = '15px "Saira Semi Condensed", sans-serif';
+      c.font = labelFont;
       c.textAlign = 'center';
       stages.forEach((s, i) => {
         const x = pad + i * (bw + gap);
         const mid = x + bw / 2;
         const digital = i >= 1 && i <= 3;
-        c.strokeStyle = digital ? t.trace : t.phase;
+        c.strokeStyle = digital ? t.ink : t.v;
         c.fillStyle = t.surface;
         c.lineWidth = digital ? 2 : 1.5;
         c.beginPath();
@@ -2049,10 +2630,10 @@ const BENCH = {
         c.fillText(s.label, mid, by + bh / 2);
 
         c.fillStyle = t.faint;
-        c.font = '13px "Saira Semi Condensed", sans-serif';
+        c.font = capFont;
         c.textBaseline = 'top';
-        wrapText(c, s.sub, mid, by + bh + 8, bw + gap - 4, 15);
-        c.font = '600 14px "Saira Semi Condensed", sans-serif';
+        wrapText(c, s.sub, mid, by + bh + 8, bw + gap - 4, 18);
+        c.font = labelFont;
 
         if (i < stages.length - 1) {
           const ax = x + bw + 2, ay = by + bh / 2;
@@ -2067,20 +2648,19 @@ const BENCH = {
 
       // what is travelling between the blocks: a wave, then numbers, then a wave
       c.fillStyle = t.soft;
-      c.font = '13px "IBM Plex Mono", monospace';
+      c.font = '15px "IBM Plex Mono", monospace';
       c.textBaseline = 'bottom';
       const midGap = i => pad + i * (bw + gap) + bw + gap / 2;
       c.fillText('~~~~', midGap(0), by - 6);
       c.fillText('4 7 6 3', midGap(2), by - 6);
       c.fillText('~~~~', midGap(3), by - 6);
 
-      p.legend.innerHTML = ctx.swatch(t.phase, 'Smooth, analogue') +
-        ctx.swatch(t.trace, 'Numbers, digital');
+      p.legend.innerHTML = ctx.swatch(t.v, 'Smooth, analogue: a voltage') +
+        ctx.swatch(t.ink, 'Numbers, digital');
       p.readouts.innerHTML = ro([
         ['In at this end', 'a smooth signal'],
         ['In the middle', 'a stream of numbers'],
-        ['Out at that end', 'a smooth signal'],
-        ['Controls above', 'apply to the panel before this one']
+        ['Out at that end', 'a smooth signal']
       ]);
       return {};
     },
@@ -2102,8 +2682,8 @@ const BENCH = {
       }[p.topology] || [1, 0, 0];
 
       // The converter's own settings: the tone on the Signal control, sampled
-      // at the Sample rate control. The samples are not rounded here, so the
-      // bit depth plays no part and only the harmonics show on the spectrum.
+      // at the Sample rate control. The samples are not rounded, so only the
+      // harmonics show on the spectrum.
       const f = d.fsig, fs = d.fs, N = 4096;
       const total = mix[0] + mix[1] + mix[2];
       const at = tt => {
@@ -2120,22 +2700,26 @@ const BENCH = {
       const span = 2 / f, pts = [], dots = [];
       for (let i = 0; i <= 600; i++) pts.push({ x: span * i / 600, y: at(span * i / 600) });
       for (let k = 0; k / fs <= span; k++) dots.push({ x: k / fs, y: sig[k] });
+      // the left pane is narrow, so time is counted in cycles of the signal:
+      // five short labels that never collide, at any frequency
       const tspec = {
-        xRange: [0, span], xFmt: x => eng(x, 's', 2), tokens: t,
-        left: { min: -1.15, max: 1.15, fmt: y => trim(y, 2) },
-        traces: [{ pts: pts, colour: t.trace, axis: 'left', width: 2 }],
+        xRange: [0, span], xFmt: x => trim(x * f, 2), tokens: t,
+        left: { min: -1.2, max: 1.2, fmt: y => trim(y, 2) },
+        traces: [{ pts: pts, colour: t.v, axis: 'left', width: 2 }],
         cursor: null
       };
       if (p.schem) {
         Plot.draw(p.schem, tspec);
-        drawDots(p.schem, tspec, dots, t.marker);
+        drawDots(p.schem, tspec, dots, t.mark);
       }
-      if (p.schemNote) p.schemNote.textContent = 'the signal against time, and the samples taken of it';
+      if (p.schemNote) p.schemNote.textContent = 'time, in cycles of the signal';
 
       // frequency domain, in the right pane, from those samples
-      const sp = DSP.spectrum(sig, fs, { floor: -80 });
+      // a floor of -100 dB and a top of +20 puts the five ticks on round
+      // figures: +20, -10, -40, -70, -100
+      const sp = DSP.spectrum(sig, fs, { floor: -100 });
       const fpts = [];
-      for (let i = 1; i < sp.bins; i++) fpts.push({ x: sp.freq[i], y: sp.db[i] + 80 });
+      for (let i = 1; i < sp.bins; i++) fpts.push({ x: sp.freq[i], y: sp.db[i] + 100 });
 
       // where each part of the signal lands once sampled: a harmonic above
       // half the sample rate folds back exactly as a single tone does
@@ -2146,14 +2730,14 @@ const BENCH = {
       });
       Plot.draw(p.graph, {
         xRange: [0, fs / 2], xFmt: x => eng(x, 'Hz', 3), tokens: t,
-        left: { max: 85, fmt: y => Math.round(y - 80) + ' dB' },
-        traces: [{ pts: fpts, colour: t.phase, fill: t.fill, axis: 'left', width: 1.5 }],
-        marks: parts.map(q => ({ x: q.at, colour: t.marker })),
+        left: { max: 120, fmt: y => Math.round(y - 100) + ' dB' },
+        traces: [{ pts: fpts, colour: t.v, fill: t.vFill, axis: 'left', width: 1.5 }],
+        marks: parts.map(q => ({ x: q.at, colour: t.mark })),
         cursor: null
       });
-      p.legend.innerHTML = swatch(t.trace, 'Against time') +
-        swatch(t.phase, 'Against frequency, up to half the sample rate') +
-        swatch(t.marker, 'Samples, and where each part lands');
+      p.legend.innerHTML = swatch(t.v, 'The signal, in time and in frequency') +
+        key.dot(t.mark, 'Samples') +
+        key.dashed(t.mark, 'Where each part lands');
 
       // lines closer together than the transform can separate count as one
       const lines = [];
@@ -2190,35 +2774,39 @@ const BENCH = {
         smooth.push({ x: tt, y: Math.sin(2 * Math.PI * d.fsig * tt) });
       }
       const nS = Math.max(2, Math.floor(span * d.fs));
+      const raw = DSP.sampleSine(d.fsig, d.fs, nS + 1);
+      // the same rounding as the converter model: exactly 2^bits levels
+      const held = level === 'foundation' ? raw : DSP.quantise(raw, d.bits);
       for (let k = 0; k <= nS; k++) {
         const tt = k / d.fs;
-        const raw = Math.sin(2 * Math.PI * d.fsig * tt);
-        const q = level === 'foundation' ? raw
-          : Math.max(-1, Math.min(1, Math.round(raw / d.step) * d.step));
+        const q = held[k];
         dots.push({ x: tt, y: q });
         stair.push({ x: tt, y: q });
         stair.push({ x: Math.min(span, (k + 1) / d.fs), y: q });
       }
 
-      const traces = [{ pts: smooth, colour: t.phase, axis: 'left', width: 1.6 }];
+      // the held copy is wider and paler, and drawn first, so the real signal
+      // still shows where the two coincide
+      const band = tint(t.v, isDark(t) ? 0.5 : 0.38);
+      const traces = [];
       if (level !== 'foundation') {
-        traces.push({ pts: stair, colour: t.trace, axis: 'left', width: 2.2 });
+        traces.push({ pts: stair, colour: band, axis: 'left', width: 5 });
       }
-      traces.push({ pts: dots, colour: t.marker, axis: 'left', width: 0, dots: true });
+      traces.push({ pts: smooth, colour: t.v, axis: 'left', width: 1.6 });
 
       const spec = {
-        xRange: [0, span], xFmt: x => eng(x, 's', 2), tokens: t,
-        left: { min: -1.25, max: 1.25, fmt: y => trim(y, 2) },
-        traces: traces.filter(tr => tr.width !== 0),
+        xRange: [0, span], xFmt: x => eng(x, 's', 3), tokens: t,
+        left: { min: -1.2, max: 1.2, fmt: y => trim(y, 2) },
+        traces: traces,
         cursor: null
       };
       Plot.draw(p.graph, spec);
       // the measurements sit on top, drawn as marks rather than joined up
-      drawDots(p.graph, spec, dots, t.marker);
+      drawDots(p.graph, spec, dots, t.mark);
 
-      p.legend.innerHTML = swatch(t.phase, 'The real signal') +
-        (level === 'foundation' ? '' : swatch(t.trace, 'What the converter holds')) +
-        swatch(t.marker, 'Each measurement');
+      p.legend.innerHTML = swatch(t.v, 'The real signal') +
+        (level === 'foundation' ? '' : key.band(band, 'What the converter holds')) +
+        key.dot(t.mark, 'Each measurement');
 
       const rows = [
         ['Signal', eng(d.fsig, 'Hz', 4)],
@@ -2226,11 +2814,9 @@ const BENCH = {
         ['Samples per cycle', trim(d.fs / d.fsig, 3)]
       ];
       if (level === 'foundation') {
-        // exactly two samples a cycle is the boundary, not a comfortable pass:
-        // land on the zero crossings and you record nothing at all
-        const per = d.fs / d.fsig;
-        rows.push(['Enough?', per > 2.05 ? 'yes' : (per >= 2 ? 'only just' : 'too few'),
-                   per < 2.05]);
+        // how fast is fast enough is the Intermediate rule, so Foundation is
+        // only told how far apart the measurements are
+        rows.push(['Time between measurements', eng(1 / d.fs, 's', 3)]);
       } else {
         rows.push(['Levels available', d.levels.toLocaleString('en-GB')]);
         if (level === 'intermediate') {
@@ -2248,22 +2834,24 @@ const BENCH = {
       const { eng, trim } = Fmt;
 
       const cap = capture(values, 4096);
-      const sp = DSP.spectrum(level === 'foundation' ? cap.raw : cap.quant, d.fs, { floor: -110 });
+      // unrounded samples: bit depth is not on the Full syllabus, and rounding
+      // would add spurs this panel does not explain
+      const sp = DSP.spectrum(cap.raw, d.fs, { floor: -100 });
       const pts = [];
-      for (let i = 1; i < sp.bins; i++) pts.push({ x: sp.freq[i], y: sp.db[i] + 110 });
+      for (let i = 1; i < sp.bins; i++) pts.push({ x: sp.freq[i], y: sp.db[i] + 100 });
 
-      const marks = [{ x: d.nyquist, colour: t.marker }];
+      const marks = [{ x: d.nyquist, colour: t.mark }];
       Plot.draw(p.graph, {
         xRange: [0, d.fs / 2], xFmt: x => eng(x, 'Hz', 3), tokens: t,
-        left: { max: 115, fmt: y => Math.round(y - 110) + ' dB' },
-        traces: [{ pts: pts, colour: t.trace, fill: t.fill, axis: 'left', width: 1.4 }],
+        left: { max: 120, fmt: y => Math.round(y - 100) + ' dB' },
+        traces: [{ pts: pts, colour: t.v, fill: t.vFill, axis: 'left', width: 1.4 }],
         marks: marks,
-        cursor: { x: d.alias, colour: t.phase,
+        cursor: { x: d.alias, colour: t.mark,
                   label: (d.aliased ? 'alias at ' : 'tone at ') + eng(d.alias, 'Hz', 4) }
       });
-      p.legend.innerHTML = swatch(t.trace, 'What the converter reports') +
-        swatch(t.phase, d.aliased ? 'Where the tone came back' : 'The tone') +
-        swatch(t.marker, 'Nyquist, half the sample rate');
+      p.legend.innerHTML = swatch(t.v, 'What the converter reports') +
+        swatch(t.mark, d.aliased ? 'Where the tone came back' : 'The tone') +
+        key.dashed(t.mark, 'Nyquist, half the sample rate');
 
       // the fourth figure is the verdict, or the room left for the filter
       const last = d.onLine ? ['Verdict', 'on the line: not enough', true]
@@ -2272,7 +2860,7 @@ const BENCH = {
       p.readouts.innerHTML = ro([
         ['Tone put in', eng(d.fsig, 'Hz', 4)],
         ['Nyquist limit', eng(d.nyquist, 'Hz', 4)],
-        ['Comes back at', eng(d.alias, 'Hz', 4), d.aliased],
+        ['Appears at', eng(d.alias, 'Hz', 4), d.aliased],
         last
       ]);
       return {};
@@ -2290,6 +2878,9 @@ const BENCH = {
         full: ['Nyquist', 'Nyquist rate', 'aliasing', 'anti-alias filter', 'spectrum']
       },
       panel: { foundation: 'sampling', intermediate: 'sampling', full: 'spectrum' },
+      // bit depth is Intermediate only: it does nothing on the Foundation
+      // panel, and the Full syllabus does not ask about it
+      controls: { foundation: ['fsig', 'fs'], intermediate: ['fsig', 'fs', 'bits'], full: ['fsig', 'fs'] },
       noSchematic: true,
       heading: {
         foundation: 'Measuring a signal over and over',
@@ -2299,7 +2890,7 @@ const BENCH = {
       lead: {
         foundation: 'Start by watching the measurements being taken.',
         intermediate: 'Two controls decide how close the copy is. Change one at a time.',
-        full: 'Everything is fine until the signal goes above half the sample rate. Then it stops being fine in a way that cannot be undone.'
+        full: 'Keep the signal below half the sample rate and it is recorded correctly. Push it above and the error cannot be undone.'
       },
       headline: {
         foundation: 'An analogue signal changes smoothly. A digital one is a stream of samples.',
@@ -2312,28 +2903,56 @@ const BENCH = {
       },
       workLead: {
         intermediate: 'The bit depth sets the size of the smallest step the converter can record, and that step sets how much noise it adds.',
-        full: 'The first two lines give the rule for choosing a rate and the limit it sets. The last two say where a tone above the limit reappears, worked two ways.'
+        // the rows for a tone above the limit appear only when there is one
+        full: d => !d.aliased
+          ? 'The two lines give the rule for choosing a rate and the limit it sets. Push the tone above the limit and more lines appear, working out where it reappears.'
+          : (d.wraps === 0 || (d.rem > d.nyquist && !d.remOnLine))
+            ? 'The first two lines give the rule for choosing a rate and the limit it sets. The last two say where a tone above the limit reappears, worked two ways.'
+            : 'The first two lines give the rule for choosing a rate and the limit it sets. The last says where a tone above the limit reappears.'
       },
       workNote: {
         foundation: 'No arithmetic at this level. What matters is the picture: the smooth line is the signal, the dots are the measurements.',
         intermediate: 'Every extra bit halves the step and buys about 6 dB. Drag the bit depth down to 3 or 4 and the staircase becomes obvious.',
-        full: 'Once a tone has folded back, nothing in the samples shows that it was ever higher: it is indistinguishable from a real tone at the lower frequency. That is why the filter has to come before the converter and not after it.'
+        // where this tone lands, in words, then the point that holds for all
+        full: d => {
+          const e = x => F.eng(x, 'Hz', 4);
+          const f = e(d.fsig), N = e(d.nyquist), a = e(d.alias);
+          let here;
+          if (d.onLine) {
+            here = f + ' sits exactly on the ' + N + ' line, so it does not move. But two samples a cycle is not enough: the rate must be more than twice the signal.';
+          } else if (!d.aliased) {
+            here = f + ' is below the ' + N + ' line already, so it is recorded where it is and there is nothing to reflect.';
+          } else if (d.wraps === 0) {
+            here = f + ' is ' + e(d.fsig - d.nyquist) + ' above the ' + N + ' line, so it comes back the same distance below, at ' + a + '.';
+          } else {
+            const count = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'][d.wraps] || String(d.wraps);
+            const off = f + ' is past the ' + e(d.fs) + ' sample rate itself, so take off ' + count +
+              (d.wraps > 1 ? ' whole sample rates' : ' whole sample rate') +
+              ' first, which leaves exactly the same samples: ' + e(d.rem) + ', ';
+            here = d.remOnLine
+              ? off + 'which lands exactly on the line. It shows at ' + a + ', but two samples a cycle does not capture it properly.'
+              : d.rem > d.nyquist
+                ? off + 'which is ' + e(d.rem - d.nyquist) + ' above the line, so it comes back the same distance below, at ' + a + '.'
+                : off + 'which is below the line, so that is where it appears.';
+          }
+          return here + ' Once a tone has folded back, nothing in the samples shows that it was ever higher: it is indistinguishable from a real tone at the lower frequency. So the filter has to come before the converter, not after it.';
+        }
       },
       explain: {
         foundation: [
           'The smooth line is the signal arriving at the radio. The dots are the moments when the converter measures it and writes the answer down.',
           'Speed the measurements up and the dots crowd together, so the list of numbers describes the signal more closely. Slow them down and the dots grow far apart, and you start to lose the shape between them.',
-          'That is the whole idea. An analogue signal is smooth and continuous. A digital one is a list of measurements taken at a steady rate, sometimes called a number stream.'
+          'An analogue signal changes continually, in size, frequency or both. A digital one is a list of measurements taken at a steady rate, sometimes called a number stream.'
         ],
         intermediate: [
-          'The orange staircase is what the converter actually holds. It can only store one of a fixed set of levels, so each measurement is rounded to the nearest one and the difference is thrown away.',
-          'Drag the bit depth down and the steps get coarse. That rounding error is quantisation error, and it is a form of distortion: what comes out is not quite the shape that went in. On a spectrum it shows as an added noise floor, and you will meet both words for it.',
+          'The pale blue staircase is what the converter actually holds. It can only store one of a fixed set of levels, so each measurement is rounded to the nearest one and the difference is thrown away.',
+          'Drag the bit depth down and the steps get coarse. That rounding error is quantisation error, and it is a form of distortion: what comes out is not quite the shape that went in. On a spectrum it shows as an added noise floor.',
           'Now drag the sample rate. More samples a second follows the shape more closely. The two controls improve different things, which is why a converter is specified by both. Pushing either one up costs money, and it costs processing as well: more samples a second, with more digits in each, is more arithmetic for whatever has to handle the result. A real design settles on enough of each rather than the most of either.',
           'Bit depth also goes by the name resolution, and you will meet both words. They mean the same thing: how finely each measurement can be recorded.',
-          'There is a floor under the sample rate. It has to be more than twice the highest frequency in the signal, and twice that frequency is called the Nyquist rate: the minimum. Drag the sample rate down until it is less than twice the signal and the measurements stop describing it at all. They describe a slower wave that was never there.'
+          'There is a floor under the sample rate. It has to be more than twice the highest frequency in the signal, and twice that frequency is called the Nyquist rate: the minimum. Drag the sample rate down until it is less than twice the signal, and the measurements stop following its shape.'
         ],
         full: [
-          'Turn the limit round and it becomes a design rule: sample at a little over twice the highest frequency you intend to capture. Note highest, not bandwidth. A signal running from 10 kHz to 14 kHz is only 4 kHz wide, but it still needs more than 28k samples a second: what matters is the highest frequency, 14 kHz, not the width.',
+          'To choose a sample rate, take the highest frequency you want to capture and sample at more than twice it. It is the highest frequency that counts, not the bandwidth: a signal from 10 kHz to 14 kHz is only 4 kHz wide, but still needs more than 28,000 samples a second.',
           'Two similar names are worth keeping apart. The Nyquist frequency is half a given sample rate, and it is the line on the display. The Nyquist rate is the minimum sample rate for a given signal, twice its highest frequency. One is a property of the converter, the other of the signal.',
           'Push the signal past the Nyquist line and watch the spectrum. The tone does not disappear and it does not stay put: it folds back and appears somewhere below the line instead.',
           'A 5 kHz tone sampled at 8 kHz comes back at 3 kHz. Nothing downstream can tell that apart from a real 3 kHz tone, because by then they are the same list of numbers.',
@@ -2348,7 +2967,7 @@ const BENCH = {
       code: '2F2',
       levels: ['foundation', 'full'],
       toggle: {
-        label: 'Signal',
+        label: 'Harmonics',
         levels: ['full'],
         options: [['fundamental', 'Sine alone'], ['second', 'Plus 2nd'],
                   ['third', 'Plus 3rd'], ['both', 'Plus both']]
@@ -2358,6 +2977,9 @@ const BENCH = {
         full: ['Fourier transform', 'time domain', 'frequency domain', 'harmonic']
       },
       panel: { foundation: 'chain', full: 'composite' },
+      // no control changes the Foundation chain; bit depth plays no part in
+      // the transform, whose samples are not rounded
+      controls: { full: ['fsig', 'fs'] },
       noSchematic: { foundation: true },
       circuit: 'fundamental',
       heading: {
@@ -2374,13 +2996,13 @@ const BENCH = {
       },
       formulas: { full: ['bins'] },
       workNote: {
-        foundation: 'The device that takes the measurements is an analogue to digital converter, an ADC. On its own it only produces numbers, so something with computing power has to follow it to process them. A DAC then turns the result back into a voltage you can hear.',
-        full: 'The display is a real transform, not a drawing. Every point on it was calculated from a block of 4096 samples of the signal, taken at the sample rate set above, with the fundamental at the Signal setting. The samples are not rounded here, so the bit depth plays no part. The spacing between points is for interest only: the exam asks what the transform does, not how finely it does it.'
+        foundation: 'No arithmetic at this level. Learn the two names: ADC, analogue to digital converter; DAC, digital to analogue converter.',
+        full: 'The display is a real transform, not a drawing. Every point on it was calculated from a block of 4096 samples of the signal, taken at the sample rate set above, with the fundamental at the Signal setting. The spacing between points is for interest only: the exam asks what the transform does, not how finely it does it.'
       },
       explain: {
         foundation: [
           'Follow the path across the panel. A smooth signal arrives from the aerial. The analogue to digital converter, almost always shortened to ADC, measures it over and over and hands on a stream of numbers. That is the doorway between the aerial and the software.',
-          'An ADC on its own does nothing useful. It produces a stream of numbers, and something with computing power has to follow it to do the filtering, demodulating and everything else a receiver needs.',
+          'An ADC only produces numbers. Something with computing power has to follow it to do the filtering, demodulating and everything else a receiver needs.',
           'At the far end the process runs backwards. A digital to analogue converter, a DAC, turns the numbers back into a smoothly changing voltage you can feed to a loudspeaker. Between the two, the signal spends its whole life as numbers.',
           'There are two reasons for going to all this trouble. Anything done in software can be changed by updating the software, which is not true of a circuit built from parts. And numbers survive noise: if you know the signal can only be one of a set of values, you can still tell which one it was meant to be even when it arrives untidy.',
           'That is what makes a software defined radio different. The work that used to be done by tuned circuits and detectors is done by arithmetic instead.'
@@ -2390,7 +3012,7 @@ const BENCH = {
           'A pure sine wave is a single line on the frequency display. Anything that is not a pure sine has more lines, and if the extra ones sit at whole multiples of the first they are called harmonics. A sine with a harmonic added still repeats at the lower of the two frequencies, but the shape is no longer a clean sine, which is how you spot it in the time domain.',
           'The Fourier transform is the arithmetic that gets you from one to the other. Give it a block of samples taken over time and it returns how much of each frequency was in them.',
           'The two displays above are one signal. Add a harmonic and watch both change together: a new line appears on the right, and the shape on the left stops being a clean sine while still repeating at the same rate.',
-          'That is how you tell them apart by eye. The repetition rate follows the fundamental, so the wave still repeats at the lower frequency, but the shape is no longer a plain sine. It is also what the waterfall on an SDR is doing, over and over, many times a second.',
+          'The waterfall on an SDR is this transform, repeated many times a second.',
           'The transform can only report what is in the samples, so the rule from the section before still applies. Raise the signal or lower the sample rate until a harmonic passes half the sample rate, and its line folds back below the edge of the display and no longer sits at its whole multiple of the fundamental.'
         ]
       }
@@ -2422,7 +3044,7 @@ const BENCH = {
       working: ['a tone folds when f &gt; sample rate / 2',
                 'to illustrate (the question gives no figures): 12 kHz is above the 8 kHz limit of a 16k rate',
                 'so it returns at 16 kHz &minus; 12 kHz = 4 kHz',
-                'that is higher analogue frequencies arriving than the converter can accept'],
+                'so aliasing is caused by analogue frequencies higher than the converter is designed to accept'],
       source: { eq: ['nyq', 'alias'], from: ['2F1'] },
       seed: { fsig: 12000, fs: 16000 },
       seedNote: 'The question has no figures; this is an illustration. A 12 kHz tone sampled at 16k folds back to 4 kHz. Set the bench to it and read the spectrum.'
@@ -2464,14 +3086,13 @@ const BENCH = {
 
   outro: {
     foundation: [
-      'Two ideas, then. Sampling is measuring a signal over and over at a steady rate, and an ADC is the part that does it. Everything a software radio does afterwards works on those numbers.'
+      'Sampling is measuring a signal over and over at a steady rate, and an ADC is the part that does it. Everything a software radio does afterwards works on those numbers.'
     ],
     intermediate: [
       'Sample rate and bit depth are separate controls solving separate problems. Rate decides how much of the shape you keep. Depth decides how finely each measurement is recorded, and every bit is worth about 6 dB.'
     ],
     full: [
-      'The Nyquist limit is not a guideline. Below it sampling loses nothing that matters; above it the converter reports a frequency that was never present, and no amount of processing afterwards can separate it from a real one.',
-      'That is the whole argument for the anti-alias filter, and it is why it belongs in front of the converter rather than anywhere else in the chain.'
+      'Below the Nyquist limit, sampling keeps every frequency where it was. Above it, the converter reports a frequency that was never there, and nothing afterwards can separate it from a real one. So the anti-alias filter goes in front of the converter.'
     ]
   }
 };
@@ -2509,6 +3130,8 @@ const QUESTIONS = [{"code": "2F1", "ref": "2025-Full6015", "q": "To digitize an 
   // 'A', 'A and B', 'A, B and C'
   const listed = xs => xs.length < 2 ? xs.join('')
     : xs.slice(0, -1).join(', ') + ' and ' + xs[xs.length - 1];
+  // a page covering several syllabus groups lists them as BENCH.groups
+  const GROUPS = BENCH.groups || [BENCH.group];
   const values = {};
   BENCH.controls.forEach(c => { values[c.id] = c.start; });
 
@@ -2534,8 +3157,16 @@ const QUESTIONS = [{"code": "2F1", "ref": "2025-Full6015", "q": "To digitize an 
     const s = getComputedStyle(document.documentElement);
     const g = n => s.getPropertyValue(n).trim();
     return {
+      // quantities, the same colour for the same thing everywhere
+      v: g('--q-v'), i: g('--q-i'), iInk: g('--q-i-ink'), r: g('--q-r'),
+      p: g('--q-p'), l: g('--q-l'), c: g('--q-c'), z: g('--q-z'),
+      note: g('--q-note'), noteInk: g('--q-note-ink'), mark: g('--q-mark'),
+      vFill: g('--q-v-fill'), iFill: g('--q-i-fill'), pFill: g('--q-p-fill'),
+      accent: g('--accent'),
+      // deprecated: aliases of the above until every page is recoloured
       trace: g('--trace'), fill: g('--trace-fill'), phase: g('--phase'),
-      marker: g('--marker'), grid: g('--rule-soft'), wire: g('--wire'),
+      marker: g('--marker'),
+      grid: g('--rule-soft'), wire: g('--wire'),
       ink: g('--ink'), soft: g('--ink-soft'), faint: g('--ink-faint'),
       surface: g('--surface'),
       panelFont: '"Saira Semi Condensed", sans-serif',
@@ -2580,6 +3211,7 @@ const QUESTIONS = [{"code": "2F1", "ref": "2025-Full6015", "q": "To digitize an 
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let animating = !reduceMotion;
   let phase = 0;
+  let clock = 0;          // seconds of animation, for steady drift and time series
 
   const rail = $('rail');
   const stepsOf = c => (c.integer && c.linear) ? Math.round(c.range[1] - c.range[0]) : 1000;
@@ -2588,29 +3220,55 @@ const QUESTIONS = [{"code": "2F1", "ref": "2025-Full6015", "q": "To digitize an 
     : logUnmap(v, c.range));
   // every calculation on a whole-number control uses the whole number, so the
   // value held and shown is that number too
-  const settle = (c, v) => c.integer ? Math.round(v) : round4(v);
-  BENCH.controls.forEach(c => {
+  // a control may snap to the values that exist, such as preferred resistor values
+  const settle = (c, v) => c.snap ? c.snap(v) : c.integer ? Math.round(v) : round4(v);
+
+  /*
+   * An item can list the controls it uses, as item.controls: a list, or one
+   * list per level. It then gets them as its own strip of sliders above its
+   * instrument, so a page with many circuits does not stack every slider at
+   * the top. A control that any item lists leaves the shared rail and the
+   * rest stay in it, so a page that lists none keeps the rail as it was.
+   * Every copy of a control moves the same value, so two items using the
+   * same control can never disagree about it.
+   */
+  const ctrlById = {};
+  BENCH.controls.forEach(c => { ctrlById[c.id] = c; });
+  const ctrlsAt = item => !item.controls ? null
+    : Array.isArray(item.controls) ? item.controls : (item.controls[level] || []);
+  const ctrlsAny = item => !item.controls ? []
+    : Array.isArray(item.controls) ? item.controls
+    : [].concat(...Object.keys(item.controls).map(k => item.controls[k]));
+  const claimed = new Set();
+  BENCH.items.forEach(it => ctrlsAny(it).forEach(id => claimed.add(id)));
+  const copies = {};      // control id -> every slider showing it
+
+  function makeCtrl(c, parent, suffix) {
     const d = document.createElement('div');
     d.className = 'ctrl';
     d.innerHTML =
-      '<div class="ctrl-head"><label class="ctrl-name" for="s_' + c.id + '">' + c.label +
-      '</label><span class="ctrl-val" id="v_' + c.id + '"></span></div>' +
-      '<input type="range" id="s_' + c.id + '" min="0" max="1000" step="1">' +
+      '<div class="ctrl-head"><label class="ctrl-name" for="s_' + c.id + suffix + '">' + c.label +
+      '</label><span class="ctrl-val" id="v_' + c.id + suffix + '"></span></div>' +
+      '<input type="range" id="s_' + c.id + suffix + '" min="0" max="1000" step="1">' +
       (c.desc ? '<p class="ctrl-desc">' + c.desc + '</p>' : '');
-    rail.appendChild(d);
+    parent.appendChild(d);
     const input = d.querySelector('input');
     // a whole-number linear control, such as bit depth, moves one unit a step
     const steps = stepsOf(c);
     input.max = String(steps);
-    input.value = sliderPos(c, c.start);
+    input.value = sliderPos(c, values[c.id]);
     const toValue = t => c.linear
       ? c.range[0] + (c.range[1] - c.range[0]) * t / steps
       : logMap(t, c.range);
     input.addEventListener('input', () => {
       values[c.id] = settle(c, toValue(+input.value));
+      copies[c.id].forEach(k => { if (k.input !== input) k.input.value = input.value; });
       renderAll();
     });
-  });
+    (copies[c.id] = copies[c.id] || []).push({ input: input, val: d.querySelector('.ctrl-val'), box: d });
+    return d;
+  }
+  BENCH.controls.forEach(c => { if (!claimed.has(c.id)) makeCtrl(c, rail, ''); });
 
   // charge animation control, in the rail beside the component sliders; a
   // bench with no circuit has no charge to move, so it gets no button
@@ -2629,6 +3287,8 @@ const QUESTIONS = [{"code": "2F1", "ref": "2025-Full6015", "q": "To digitize an 
       renderAll();
     });
   })();
+  // every control moved into its item and no charge to move: no rail at all
+  if (!rail.children.length) rail.parentElement.hidden = true;
 
   /* ---- level switch ---- */
   BENCH.levels.forEach(lv => {
@@ -2658,6 +3318,8 @@ const QUESTIONS = [{"code": "2F1", "ref": "2025-Full6015", "q": "To digitize an 
         '<div class="presets"></div>' +
         '<p class="item-headline"></p>' +
       '</div>' +
+      (item.controls ? '<div class="item-ctrls" role="group" aria-label="Controls for ' +
+                       item.code + '"></div>' : '') +
       '<div class="stage" data-stage="' + item.code + '">' +
         (item.noSchematic === true ? '' :
         '<div class="schem"><canvas></canvas><div class="schem-note"></div></div>') +
@@ -2680,8 +3342,14 @@ const QUESTIONS = [{"code": "2F1", "ref": "2025-Full6015", "q": "To digitize an 
       lead: sec.querySelector('.item-lead'),
       presets: sec.querySelector('.presets'),
       topology: item.circuit,
-      cursor: null
+      cursor: null,
+      ctrls: sec.querySelector('.item-ctrls')
     };
+    if (p.ctrls) {
+      ctrlsAny(item).filter((id, i, all) => all.indexOf(id) === i).forEach(id => {
+        if (ctrlById[id]) makeCtrl(ctrlById[id], p.ctrls, '_' + item.code).dataset.ctrl = id;
+      });
+    }
     if (item.toggle) {
       sec.querySelectorAll('.toggle button').forEach(b => {
         b.addEventListener('click', () => { p.topology = b.dataset.k; p.cursor = null; render(p); });
@@ -2708,13 +3376,15 @@ const QUESTIONS = [{"code": "2F1", "ref": "2025-Full6015", "q": "To digitize an 
       '</span><span class="ro-v">' + v + '</span></div>').join('');
     const marked = list.some(r => r[2]);
     return rows + (marked
-      ? '<p class="ro-note">The figure in colour is the one this panel is about.</p>'
+      ? '<p class="ro-note">The marked figure is the one this panel is about.</p>'
       : '');
   }
 
 
+  // the label has its own element, so a label with a subscript in it stays
+  // one run of text inside the flex box rather than splitting at the <sub>
   const swatch = (c, label) =>
-    '<span><i style="background:' + c + '"></i>' + label + '</span>';
+    '<span><i style="background:' + c + '"></i><span class="sw-l">' + label + '</span></span>';
 
 
 
@@ -2752,6 +3422,96 @@ const QUESTIONS = [{"code": "2F1", "ref": "2025-Full6015", "q": "To digitize an 
   }
 
 
+  /*
+   * Every current a layout draws, so the animation can be scaled to the
+   * largest current actually on the page. Some of the biggest currents in a
+   * circuit are inside the device and never appear: the transistor's
+   * controlled source and its own output resistance. Normalising to those
+   * left the largest visible branch at a fraction of full swing and made
+   * every setting where they dominate look sluggish for no reason the reader
+   * could see.
+   */
+  function drawnCurrents(lay) {
+    const shown = new Set();
+    if (lay) {
+      for (const el of (lay.elements || [])) {
+        const nm = el.flow === undefined ? el.name : el.flow;
+        // a transformer names one current per winding
+        (Array.isArray(nm) ? nm : [nm]).forEach(n => { if (n && n !== '-') shown.add(n); });
+      }
+      for (const w of (lay.wires || [])) if (w[4] && w[4] !== '-') shown.add(w[4]);
+    }
+    return shown;
+  }
+
+  /*
+   * The charge animation for a panel. With no flow of its own, a panel that
+   * returns a circuit gets AC: currents taken at whichever frequency it is
+   * drawing attention to, so the cursor changes what you see. A panel can
+   * instead return flow: { mode, currents, ... } (see engine/flow.js):
+   *   mode 'dc'   steady drift. currents { name: amperes }, or left out to
+   *               solve the circuit at 0 Hz
+   *   mode 'time' currents t => ({ name: amperes }) over duration seconds
+   *   mode 'ac'   its own phasors in place of the solved ones
+   * and iMax, compress, loop, note and label as it needs them.
+   */
+  function flowFor(spec, p, d, t) {
+    const fl = spec.flow;
+    if (!fl && !spec.circuit) return null;
+    const mode = (fl && fl.mode) || 'ac';
+    const shown = drawnCurrents(spec.layout);
+    if (mode === 'time') {
+      if (typeof fl.currents !== 'function' || !(fl.duration > 0)) {
+        throw new Error("a 'time' flow needs currents as a function of time, and a duration");
+      }
+      return { mode: mode, currents: fl.currents, duration: fl.duration, loop: fl.loop,
+               iMax: fl.iMax || window.Flow.peakOf(fl.currents, fl.duration, shown),
+               compress: !!fl.compress, note: fl.note, label: fl.label, colour: t.i };
+    }
+    let currents = {};
+    if (fl && fl.currents) {
+      // numbers are accepted on AC too, as phasors at zero phase
+      for (const nm of Object.keys(fl.currents)) {
+        const I = fl.currents[nm];
+        currents[nm] = mode === 'dc' ? window.Flow.realOf(I)
+                     : typeof I === 'number' ? { re: I, im: 0 } : I;
+      }
+    } else {
+      if (!spec.circuit) throw new Error('a flow with no currents needs a circuit to solve');
+      const sol = M.solveAt(spec.circuit, mode === 'dc' ? 0 : (p.fAnim || d.f0));
+      for (const el of spec.circuit.elements) {
+        if (el.type === 'V') continue;
+        const I = M.currentThrough(sol, el.name);
+        currents[el.name] = mode === 'dc' ? I.re : I;
+      }
+    }
+    let iMax = (fl && fl.iMax) || 0;
+    if (!iMax) {
+      for (const nm of Object.keys(currents)) {
+        if (shown.size && !shown.has(nm)) continue;
+        iMax = Math.max(iMax, mode === 'dc' ? Math.abs(currents[nm]) : M.abs(currents[nm]));
+      }
+    }
+    if (!fl) return { currents, iMax, colour: t.i };
+    return { mode: mode, currents, iMax, compress: !!fl.compress, note: fl.note, colour: t.i };
+  }
+
+  /*
+   * What moment a time series is showing, and how much it has been slowed
+   * down. A panel can say the moment in its own terms with flow.label(t),
+   * for instance in time constants after the switch closes.
+   */
+  function timeNote(flow) {
+    const at = window.Flow.timeOf(Object.assign({}, flow, { time: clock }));
+    const when = flow.label ? flow.label(at.tau) : 't = ' + eng(at.tau, 's', 2);
+    const k = at.loop / flow.duration;    // screen seconds per circuit second
+    // two figures: the eye cannot tell 6,471,578 times from 6,500,000
+    const by = x => Number(x.toPrecision(2)).toLocaleString('en-GB');
+    return 'charge at ' + when + ', ' +
+      (k > 1.05 ? 'slowed ' + by(k) + ' times'
+       : k < 0.95 ? 'sped up ' + by(1 / k) + ' times' : 'at real speed');
+  }
+
   function render(p) {
     const d = derived(), t = tokens();
     const item = p.item;
@@ -2777,8 +3537,16 @@ const QUESTIONS = [{"code": "2F1", "ref": "2025-Full6015", "q": "To digitize an 
           esc(list[0].note) + '</span>' : '');
       p.presets.hidden = !list.length;
       p.presets.querySelectorAll('button').forEach(b => {
-        b.addEventListener('click', () => applySeed(list[+b.dataset.i].values));
+        b.addEventListener('click', () => applySeed(list[+b.dataset.i].values, p));
       });
+    }
+    // the item's own sliders, only the ones this level uses
+    if (p.ctrls) {
+      const want = ctrlsAt(item) || [];
+      p.ctrls.querySelectorAll('.ctrl').forEach(box => {
+        box.hidden = want.indexOf(box.dataset.ctrl) < 0;
+      });
+      p.ctrls.hidden = !want.length;
     }
     // the left slot holds a circuit, or a second display, or nothing
     const hideSchem = item.noSchematic === true ||
@@ -2805,48 +3573,23 @@ const QUESTIONS = [{"code": "2F1", "ref": "2025-Full6015", "q": "To digitize an 
       build: build, sweep: sweep, swatch: swatch, ro: ro
     });
 
-    // currents for the charge animation, taken at whichever frequency this
-    // panel is drawing attention to, so the cursor changes what you see
-    if (spec.circuit) {
-      const sol = M.solveAt(spec.circuit, p.fAnim || d.f0);
-      const currents = {};
-      for (const el of spec.circuit.elements) {
-        if (el.type === 'V') continue;
-        currents[el.name] = M.currentThrough(sol, el.name);
-      }
-      /*
-       * Scale the animation to the largest current that is actually drawn.
-       * Some of the biggest currents in the circuit are inside the device and
-       * never appear on the page: the transistor's controlled source and its
-       * own output resistance. Normalising to those left the largest visible
-       * branch at a fraction of full swing and made every setting where they
-       * dominate look sluggish for no reason the reader could see.
-       */
-      const shown = new Set();
-      const lay = spec.layout;
-      if (lay) {
-        for (const el of (lay.elements || [])) {
-          const nm = el.flow === undefined ? el.name : el.flow;
-          if (nm && nm !== '-') shown.add(nm);
-        }
-        for (const w of (lay.wires || [])) if (w[4] && w[4] !== '-') shown.add(w[4]);
-      }
-      let iMax = 0;
-      for (const nm of Object.keys(currents)) {
-        if (shown.size && !shown.has(nm)) continue;
-        iMax = Math.max(iMax, M.abs(currents[nm]));
-      }
-      p.flow = { currents, iMax, colour: t.trace };
-    } else {
-      p.flow = null;
-    }
+    p.flow = flowFor(spec, p, d, t);
     p.layout = spec.layout || null;
     if (p.schemNote && p.flow) {
-      const f = p.fAnim || d.f0;
-      p.schemNote.textContent = animating
-        ? 'charge at ' + eng(f, 'Hz', 4) + ', slowed ' +
-          Math.round(f / animRate()).toLocaleString('en-GB') + ' times'
-        : 'charge held still';
+      const mode = p.flow.mode || 'ac';
+      if (mode === 'ac') {
+        const f = p.fAnim || d.f0;
+        p.schemNote.textContent = animating
+          ? 'charge at ' + eng(f, 'Hz', 4) + ', slowed ' +
+            Number((f / animRate()).toPrecision(2)).toLocaleString('en-GB') + ' times'
+          : 'charge held still';
+      } else if (p.flow.note !== false) {
+        // a panel that writes its own note under the circuit passes note: false
+        p.schemNote.textContent = !animating ? 'charge held still'
+          : mode === 'time' ? timeNote(p.flow)
+          : (p.flow.note || 'steady current: the charge drifts one way, ' +
+                            'faster in a branch that carries more');
+      }
     }
     p.labels = BENCH.labels ? BENCH.labels(p, d, values) : {};
     p.highlight = new Set(Array.isArray(item.highlight)
@@ -2881,7 +3624,7 @@ const QUESTIONS = [{"code": "2F1", "ref": "2025-Full6015", "q": "To digitize an 
       '<div class="prose-work">' + wk + '</div>' +
       '<div class="prose-text">' + termsBlock(item) + paras + '</div>' +
       '<div class="prose-qs">' + questionsFor(item.code) + '</div>';
-    wireQuestions(p.prose);
+    wireQuestions(p.prose, p);
 
     if (item.toggle) {
       const box = p.sec.querySelector('.toggle');
@@ -2899,6 +3642,8 @@ const QUESTIONS = [{"code": "2F1", "ref": "2025-Full6015", "q": "To digitize an 
    */
   const esc = s => String(s).replace(/[&<>"]/g,
     c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  /* bank references like 2025-Full439 read as dated; show the bank and the question number instead */
+  const refLabel = r => { const m = /^\d{4}-([A-Za-z]+?)(\d+)$/.exec(r || ''); return m ? 'RSGB ' + m[1] + ' question bank (syllabus v1.6b) · question ' + m[2] : r; };
 
   function questionsFor(code) {
     if (level !== 'full') {
@@ -2914,7 +3659,7 @@ const QUESTIONS = [{"code": "2F1", "ref": "2025-Full6015", "q": "To digitize an 
     const body = qs.map((q, i) =>
       '<div class="q" data-answer="' + q.answer + '">' +
         '<p class="q-text">' + esc(q.q) + '</p>' +
-        (q.image ? '<img class="q-img" alt="Diagram for question ' + esc(q.ref) +
+        (q.image ? '<img class="q-img" alt="Diagram for ' + esc(refLabel(q.ref)) +
                    '" src="' + q.image + '">' : '') +
         '<ul class="q-opts">' +
           q.options.map((o, k) =>
@@ -2922,7 +3667,7 @@ const QUESTIONS = [{"code": "2F1", "ref": "2025-Full6015", "q": "To digitize an 
             '<span>' + esc(o) + '</span></li>').join('') +
         '</ul>' +
         '<div class="q-foot"><button type="button">Show answer</button>' +
-        '<span class="q-ref">' + esc(q.ref) + '</span></div>' +
+        '<span class="q-ref">' + esc(refLabel(q.ref)) + '</span></div>' +
         answerBlock(q) +
       '</div>').join('');
     return '<div class="qs"><div class="qs-head">' + qs.length +
@@ -2979,19 +3724,45 @@ const QUESTIONS = [{"code": "2F1", "ref": "2025-Full6015", "q": "To digitize an 
     return body ? '<div class="q-src"><b>Where this comes from</b>' + body + '</div>' : '';
   }
 
-  /** Put the sliders where a question's values say, then redraw everything. */
-  function applySeed(seed) {
+  /*
+   * Put the sliders where a question's values say, then redraw everything.
+   * A seed is { control id: value, ... } and may also carry
+   *   toggle: 'key'    set the item's toggle to that option
+   *   item: '2H2'      the item the seed belongs to, when it is not the one
+   *                    the question or preset sits in
+   * Returns the panel the seed belongs to.
+   */
+  function applySeed(seed, p) {
     BENCH.controls.forEach(c => {
       if (!(c.id in seed)) return;
       const v = Math.min(c.range[1], Math.max(c.range[0], seed[c.id]));
       values[c.id] = settle(c, v);
-      const input = $('s_' + c.id);
-      if (input) input.value = sliderPos(c, v);
+      (copies[c.id] || []).forEach(k => { k.input.value = sliderPos(c, v); });
     });
+    const target = seed.item ? panels.find(q => q.item.code === seed.item) : p;
+    if (target && seed.toggle !== undefined && target.item.toggle &&
+        target.item.toggle.options.some(o => o[0] === seed.toggle)) {
+      target.topology = seed.toggle;
+      target.cursor = null;
+    }
     renderAll();
+    return target;
   }
 
-  function wireQuestions(root) {
+  /*
+   * Bring an item's instrument into view, clear of the sticky rail. A seed
+   * that changes a toggle, names an item, or moves sliders that live in the
+   * item has changed something the reader cannot see from the question, so
+   * it goes there.
+   */
+  function scrollToItem(p) {
+    if (!p || p.sec.hidden) return;
+    const railBox = document.querySelector('.rail-wrap');
+    const clear = (railBox && !railBox.hidden ? railBox.offsetHeight : 0) + 14;
+    window.scrollTo({ top: p.sec.getBoundingClientRect().top + window.scrollY - clear });
+  }
+
+  function wireQuestions(root, p) {
     root.querySelectorAll('.q').forEach(q => {
       const btn = q.querySelector('.q-foot button');
       if (!btn) return;
@@ -3005,8 +3776,12 @@ const QUESTIONS = [{"code": "2F1", "ref": "2025-Full6015", "q": "To digitize an 
       if (seedBtn) {
         seedBtn.addEventListener('click', () => {
           const seed = JSON.parse(seedBtn.dataset.seed);
-          applySeed(seed);
-          q.scrollIntoView({ block: 'nearest' });
+          const target = applySeed(seed, p);
+          if (target && (seed.item || seed.toggle !== undefined || target.ctrls)) {
+            scrollToItem(target);
+          } else {
+            q.scrollIntoView({ block: 'nearest' });
+          }
         });
       }
     });
@@ -3034,8 +3809,12 @@ const QUESTIONS = [{"code": "2F1", "ref": "2025-Full6015", "q": "To digitize an 
       tokens: tokens(),
       highlight: p.highlight,
       labels: p.labels,
-      flow: p.flow ? Object.assign({ phase: phase }, p.flow) : null
+      flow: p.flow ? Object.assign({ phase: phase, time: clock }, p.flow) : null
     });
+    // a time series says which moment the dots are showing, as they show it
+    if (p.flow && p.flow.mode === 'time' && animating && p.schemNote && p.flow.note !== false) {
+      p.schemNote.textContent = timeNote(p.flow);
+    }
   }
 
   // Only animate what is on screen. Five panels redrawing at 60 frames a
@@ -3072,6 +3851,7 @@ const QUESTIONS = [{"code": "2F1", "ref": "2025-Full6015", "q": "To digitize an 
     const dt = lastTs ? Math.min(0.05, (ts - lastTs) / 1000) : 0;
     lastTs = ts || 0;
     phase += dt * 2 * Math.PI * animRate();
+    clock += dt;
     panels.forEach(p => { if (!p.sec.hidden && onScreen.has(p.sec)) drawSchematic(p); });
     requestAnimationFrame(tick);
   }
@@ -3080,15 +3860,19 @@ const QUESTIONS = [{"code": "2F1", "ref": "2025-Full6015", "q": "To digitize an 
     const para = xs => (xs || []).map(x => '<p>' + x + '</p>').join('');
     $('intro').innerHTML = para(BENCH.intro && (BENCH.intro[level] || BENCH.intro.all));
     $('outro').innerHTML = para(BENCH.outro && (BENCH.outro[level] || BENCH.outro.all));
+    renderStandfirst();
     // a dimensionless quantity gets no SI prefix: a bias of -0.25 is not -250 m
     BENCH.controls.forEach(c => {
-      $('v_' + c.id).textContent = c.unit ? eng(values[c.id], c.unit, 3) : trim(values[c.id], 3);
+      const shownValue = c.unit ? eng(values[c.id], c.unit, 3)
+                                : trim(values[c.id], 3).replace(/^-/, '−');
+      (copies[c.id] || []).forEach(k => { k.val.textContent = shownValue; });
     });
     $('levels').querySelectorAll('button').forEach((b, i) =>
       b.setAttribute('aria-pressed', String(BENCH.levels[i] === level)));
     const shown = BENCH.items.filter(i => i.levels.includes(level));
     $('grpItems').textContent = 'RSGB ' + LEVEL_NAME[level] + ': ' +
-      shown.length + ' of the ' + BENCH.items.length + ' items in group ' + BENCH.group;
+      shown.length + ' of the ' + BENCH.items.length + ' items in ' +
+      (GROUPS.length > 1 ? 'groups ' + listed(GROUPS) : 'group ' + GROUPS[0]);
     renderColophon();
     // One panel throwing used to take out every item after it, leaving a page
     // of blank frames with nothing to say what had happened. Contain it, and
@@ -3109,17 +3893,47 @@ const QUESTIONS = [{"code": "2F1", "ref": "2025-Full6015", "q": "To digitize an 
     });
   }
 
-  $('grpTag').textContent = BENCH.group;
+  $('grpTag').textContent = BENCH.group || GROUPS.join(' ');
   $('grpTitle').textContent = BENCH.title;
   // The default words describe a circuit bench. A bench with no circuit on it
-  // says what its displays are computed from instead.
-  if (BENCH.standfirst) $('standfirst').textContent = BENCH.standfirst;
+  // says what its displays are computed from instead. One string, or one per
+  // level ({ foundation: ..., full: ..., all: ... }), set again by renderAll
+  // when the level changes.
+  function renderStandfirst() {
+    const s = BENCH.standfirst;
+    const text = typeof s === 'function' ? s(level)
+      : s && typeof s === 'object' ? (s[level] || s.all || '') : s;
+    if (text) $('standfirst').textContent = text;
+  }
+  renderStandfirst();
+  // A page whose circuits need more room than the default 300 px column
+  // names its width, so a network can be drawn at a readable scale.
+  if (BENCH.circuitColumn) {
+    const st = document.createElement('style');
+    st.textContent = '@media (min-width:900px){#items .stage:not(.wide){grid-template-columns:' +
+      Math.round(BENCH.circuitColumn) + 'px 1fr}' +
+      // and, if it names one, a taller canvas for the circuit and the graph
+      // beside it, so a network fills the wider column at a readable scale
+      (BENCH.circuitHeight ? '#items .stage:not(.wide) .schem canvas,#items .stage:not(.wide) .graph canvas{height:' +
+        Math.round(BENCH.circuitHeight) + 'px}' : '') + '}';
+    document.head.appendChild(st);
+  }
   /*
    * The way back to the course. Each bench lists the sessions that send
    * learners to it, by level, so a learner who arrived from a deck can find
    * the session again; at Full it also points to the formula sheet.
    */
   const EX309 = 'https://rsgb.services/public/exams/exam-forms/260218_EX309_Full_2026_v1.pdf';
+  // A page's own note on how it is solved: one string, or one per level
+  // ({ foundation: ..., full: ... }, falling back to `all`), or a function of
+  // the level.
+  function colophonNote() {
+    const n = BENCH.colophonNote;
+    if (typeof n === 'function') return n(level);
+    if (n && typeof n === 'object') return n[level] || n.all || '';
+    return n || '';
+  }
+
   function renderColophon() {
     const used = (BENCH.sessions && BENCH.sessions[level]) || [];
     const course = used.length
@@ -3131,7 +3945,7 @@ const QUESTIONS = [{"code": "2F1", "ref": "2025-Full6015", "q": "To digitize an 
       '<span class="home"><a href="../index.html">All the Bench Test pages</a>' +
       ' &middot; built by Ian Henry, G0LFT, ' +
       '<a href="https://g0lft.org/">g0lft.org</a></span>' + course +
-      (BENCH.colophonNote ||
+      (colophonNote() ||
        'Every curve is solved by a general complex nodal analysis engine, verified against ' +
        'closed form results. Circuit symbols follow the RSGB specification.') + ' ' +
       'Item descriptions are original wording. Questions are held by the RSGB and used under the terms ' +

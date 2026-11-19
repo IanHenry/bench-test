@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Disallow: /bank/
+Sitemap: https://bench.g0lft.org/sitemap.xml

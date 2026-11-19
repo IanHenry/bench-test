@@ -1,8 +1,6 @@
 <title>Bench Test</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex, nofollow">
-<!-- Kept out of search for now. Delete the robots line when it should be found. -->
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -65,7 +63,7 @@
   }
   .eyebrow {
     font-family: "IBM Plex Mono", ui-monospace, monospace;
-    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    font-size: 15px; letter-spacing: .14em; text-transform: uppercase;
     color: var(--accent); margin: 0 0 14px;
   }
   h1 {
@@ -87,7 +85,7 @@
   }
   h3 {
     font-family: Inter, sans-serif; font-weight: 600;
-    font-size: 14.5px; letter-spacing: .05em; text-transform: uppercase;
+    font-size: 15px; letter-spacing: .05em; text-transform: uppercase;
     color: var(--muted); margin: 32px 0 12px;
     padding-bottom: 6px; border-bottom: 1px solid var(--rule-soft);
   }
@@ -112,15 +110,15 @@
   }
   .card .code {
     font-family: "IBM Plex Mono", ui-monospace, monospace;
-    font-size: 12px; color: var(--accent); letter-spacing: .08em;
+    font-size: 15px; color: var(--accent); letter-spacing: .08em;
     display: block; margin-bottom: 8px;
   }
   .card p { margin: 0; font-size: 15.5px; color: var(--muted); max-width: none; }
   .card h4 a { text-decoration: none; }
   .card h4 a:hover { text-decoration: underline; }
   .card .levels {
-    font-family: "IBM Plex Mono", ui-monospace, monospace;
-    font-size: 11.5px; margin-top: 10px; letter-spacing: .03em;
+    font-family: Inter, system-ui, sans-serif; font-weight: 600;
+    font-size: 15px; margin-top: 10px; color: var(--accent);
   }
 
 
@@ -205,6 +203,38 @@
   <h2>The pages</h2>
   <div class="cards">
     <div class="card">
+      <span class="code">Groups 2A to 2C</span>
+      <h4><a href="benches/2A.html">Resistance, power and tolerance</a></h4>
+      <p>Ohm’s law and power, series and parallel networks, potential dividers,
+        source resistance and tolerance, from a first circuit at Foundation to
+        the worst case at Full.</p>
+      <p class="levels">Foundation, Intermediate, Full</p>
+    </div>
+    <div class="card">
+      <span class="code">Group 2D</span>
+      <h4><a href="benches/2D.html">Reactive components</a></h4>
+      <p>What sets a capacitance and an inductance, series and parallel
+        combinations, dielectric losses, polarised capacitors and breakdown,
+        induction, back EMF and the flyback diode, and the CR and LR time
+        constants.</p>
+      <p class="levels">Intermediate, Full</p>
+    </div>
+    <div class="card">
+      <span class="code">Group 2E</span>
+      <h4><a href="benches/2E.html">AC theory</a></h4>
+      <p>Frequency and RMS, lead and lag, reactance and impedance, coupling and
+        decoupling, and wavelength, with voltage and current traced against
+        time.</p>
+      <p class="levels">Foundation, Intermediate, Full</p>
+    </div>
+    <div class="card">
+      <span class="code">Group 2F</span>
+      <h4><a href="benches/2F.html">Sampling</a></h4>
+      <p>Converters, quantisation, sample rate and aliasing, from what a
+        converter does at Foundation to aliasing and the Fourier transform at Full.</p>
+      <p class="levels">Foundation, Intermediate, Full</p>
+    </div>
+    <div class="card">
       <span class="code">Group 2H</span>
       <h4><a href="benches/2H.html">Tuned circuits</a></h4>
       <p>Resonance, Q, bandwidth, dynamic resistance and the four filter
@@ -219,15 +249,15 @@
       <p class="levels">Intermediate, Full</p>
     </div>
     <div class="card">
-      <span class="code">Group 2F</span>
-      <h4><a href="benches/2F.html">Sampling</a></h4>
-      <p>Converters, quantisation, sample rate and aliasing, from what a
-        converter does at Foundation to aliasing and the Fourier transform at Full.</p>
+      <span class="code">Group 3F</span>
+      <h4><a href="benches/3F.html">RF power amplifiers</a></h4>
+      <p>Efficiency and the matched load, linearity and intermodulation, the pi
+        network as match and filter, peak and average power, and ALC.</p>
       <p class="levels">Foundation, Intermediate, Full</p>
     </div>
   </div>
   <p class="col" style="margin-top:20px">Each page covers every level that
-    teaches the group. The level buttons at the top switch the whole page, so
+    teaches its group, or groups. The level buttons at the top switch the whole page, so
     the same instruments appear with the depth, the equations and the worked
     answers set for that level.</p>
 </section>
@@ -259,7 +289,7 @@
 </footer>
 <!--SITEFOOT--><div class="g0-foot" role="contentinfo">
   <p>Bench Test goes with the free <a href="https://course.g0lft.org">amateur radio training course</a> and the <a href="https://g0lft.org/apps/signal-explorer/index.html">Signal Explorer</a>. Corrections and feedback: <a href="mailto:ian@g0lft.org">ian@g0lft.org</a>.</p>
-  <p>© 2026 Dr Ian Henry, G0LFT. Independent of the RSGB and Ofcom; the RSGB publishes the syllabus and the exams.</p>
+  <p>© 2026 Dr Ian Henry, G0LFT. Licensed <a rel="license noopener" href="https://creativecommons.org/licenses/by-nc-nd/4.0/">CC BY-NC-ND 4.0</a>: share unchanged copies with credit; not for sale; ask before adapting it or using it any other way. Bank questions and diagrams © RSGB. Independent of the RSGB and Ofcom; the RSGB publishes the syllabus and the exams.</p>
   <p><a href="https://g0lft.org/privacy.html">Privacy Policy</a> | <a href="https://g0lft.org/about.html">About</a> | <a href="https://g0lft.org/contact.html">Contact</a> | <a href="https://www.qrz.com/db/G0LFT">QRZ</a> | <a href="https://www.youtube.com/@G0LFT-AmateurRadio">YouTube</a></p>
 </div><!--/SITEFOOT-->
 

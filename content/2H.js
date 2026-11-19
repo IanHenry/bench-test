@@ -24,6 +24,74 @@ const M = window.MNA;
 const { eng, trim, sci } = window.Fmt;
 
 /*
+ * Colours. A quantity is always the course's colour for it (README, Colours):
+ * X_L, L and energy in L green; X_C, C and energy in C purple; impedance
+ * navy; resistance dark; voltage blue; current orange. Frequency, Q, phase
+ * and every cursor, mark and band are not one of those, so they stay neutral.
+ * Text names the CSS variable, so it follows the theme without a redraw.
+ */
+const INK = { v: '--q-v', i: '--q-i-ink', r: '--q-r', l: '--q-l', c: '--q-c', z: '--q-z' };
+const hue = (k, html) => '<span style="color:var(' + INK[k] + ')">' + html + '</span>';
+// a see-through fill in a quantity's colour, for one the template has no fill for
+function tint(hex, a) {
+  const m = /^#([0-9a-f]{6})$/i.exec(String(hex || '').trim());
+  if (!m) return 'transparent';
+  const n = parseInt(m[1], 16);
+  return 'rgba(' + (n >> 16) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
+}
+/*
+ * A trace cut into dashes, as runs of points for the plot to draw one by one.
+ * Lengths are measured along the curve with x scaled to three units across
+ * and y to one unit up, roughly the shape of the plot, so a steep stretch is
+ * dashed as evenly as a flat one. `on` and `off` are in those units.
+ */
+function dashes(pts, [xa, xb], [ya, yb], on, off) {
+  const u = p => ({ x: p.x, y: p.y, s: 3 * (p.x - xa) / (xb - xa), v: (p.y - ya) / (yb - ya) });
+  const out = [];
+  let run = [], drawn = true, left = on, prev = null;
+  for (const p0 of pts) {
+    const p = u(p0);
+    if (prev) {
+      let seg = Math.hypot(p.s - prev.s, p.v - prev.v), from = prev;
+      while (seg > left) {
+        const k = left / seg;
+        const mid = { x: from.x + (p.x - from.x) * k, y: from.y + (p.y - from.y) * k,
+                      s: from.s + (p.s - from.s) * k, v: from.v + (p.v - from.v) * k };
+        if (drawn) { run.push({ x: mid.x, y: mid.y }); out.push(run); run = []; }
+        else run = [{ x: mid.x, y: mid.y }];
+        drawn = !drawn; seg -= left; left = drawn ? on : off; from = mid;
+      }
+      left -= seg;
+    } else run = [{ x: p.x, y: p.y }];
+    if (drawn && prev) run.push({ x: p.x, y: p.y });
+    prev = p;
+  }
+  if (drawn && run.length > 1) out.push(run);
+  return out;
+}
+
+// a legend entry for a dashed mark, so it cannot be read as a solid trace
+// Readout labels are set in capitals, which would turn f₀ into F₀. A symbol
+// in a label is wrapped in this so it keeps its case.
+const sym = s => '<span style="text-transform:none">' + s + '</span>';
+
+/*
+ * Frequency labels for the x axis. Five labels of four figures nearly touch
+ * on a phone, so on a graph under 500 px wide only the ends and the middle
+ * are labelled; the grid lines stay. Four figures are kept, because a narrow
+ * sweep needs them to tell its ticks apart.
+ */
+const xLabels = (canvas, a, b, f) => v => {
+  if ((canvas.clientWidth || 500) >= 500) return f(v);
+  const i = Math.round(4 * (v - a) / (b - a));
+  return i % 2 ? '' : f(v);
+};
+
+const dashSwatch = (c, label) =>
+  '<span><i style="background:repeating-linear-gradient(90deg,' + c + ' 0 4px,transparent 4px 7px)"></i>' +
+  '<span class="sw-l">' + label + '</span></span>';
+
+/*
  * The crystal's holder capacitance, as a multiple of the motional C. A real
  * crystal has a motional capacitance of a few femtofarads against picofarads
  * of holder, so its two resonances sit a few kilohertz apart and need a Q in
@@ -61,6 +129,14 @@ const BENCH = {
            'Full session 7 (Tuned circuits, Q, crystals and temperature)']
   },
   circuitBased: true,
+  // The networks are drawn in a wider, taller column on a wide screen, so the
+  // part labels come out at a readable size (README, page options).
+  circuitColumn: 420,
+  circuitHeight: 300,
+  // The energy trace is integrated step by step, not solved by nodal analysis.
+  colophonNote: 'Every response curve is solved by a general complex nodal analysis engine, ' +
+    'verified against closed form results; the energy trace is integrated step by step. ' +
+    'Circuit symbols follow the RSGB specification.',
 
   /** Every circuit this bench draws, for the layout checker. */
   allLayouts: () => {
@@ -75,7 +151,7 @@ const BENCH = {
   bank: {
     url: 'https://rsgb.services/public/exams/eqdb/',
     topic: '2H - Tuned Circuits and resonance',
-    note: 'Full level only. Choose the topic from the Filter by Topic list.'
+    note: 'The RSGB bank covers Full only; pick 2H in its Filter by Topic list.'
   },
 
   intro: {
@@ -320,54 +396,73 @@ C1 b 0 ${v.C}
    * Intermediate booklet (EX308) prints the formula as well.
    */
   equations: {
+    // Symbols and figures carry their quantity's colour: L and X_L green,
+    // C and X_C purple, R dark, Z navy, V blue, I orange. Frequency and Q are
+    // not one of those and stay in ink, and so does f_L, which is a frequency.
     XL: { given: true, tag: { intermediate: 'given' },
-          name: 'Reactance of the inductor', eq: 'X<sub>L</sub> = 2&pi;fL',
-          work: d => ['2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b> &times; <b>' + eng(d.L, 'H', 4) + '</b>',
-                      eng(2 * Math.PI * d.f0 * d.L, 'Ω', 4)] },
+          name: 'Reactance of the inductor',
+          eq: hue('l', 'X<sub>L</sub>') + ' = 2&pi;f' + hue('l', 'L'),
+          work: d => ['2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b> &times; <b>' + hue('l', eng(d.L, 'H', 4)) + '</b>',
+                      hue('l', eng(2 * Math.PI * d.f0 * d.L, 'Ω', 4))] },
     XC: { given: true, tag: { intermediate: 'given' },
-          name: 'Reactance of the capacitor', eq: 'X<sub>C</sub> = 1 / 2&pi;fC',
-          work: d => ['1 / (2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b> &times; <b>' + eng(d.C, 'F', 4) + '</b>)',
-                      eng(1 / (2 * Math.PI * d.f0 * d.C), 'Ω', 4)] },
-    f0: { given: true, name: 'Resonant frequency', eq: 'f<sub>0</sub> = 1 / 2&pi;<span class="rad">&radic;</span>(LC)',
-          work: d => ['1 / 2&pi;<span class="rad">&radic;</span>(<b>' + eng(d.L, 'H', 4) + '</b> &times; <b>' + eng(d.C, 'F', 4) + '</b>)',
+          name: 'Reactance of the capacitor',
+          eq: hue('c', 'X<sub>C</sub>') + ' = 1 / 2&pi;f' + hue('c', 'C'),
+          work: d => ['1 / (2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b> &times; <b>' + hue('c', eng(d.C, 'F', 4)) + '</b>)',
+                      hue('c', eng(1 / (2 * Math.PI * d.f0 * d.C), 'Ω', 4))] },
+    f0: { given: true, name: 'Resonant frequency',
+          eq: 'f<sub>0</sub> = 1 / 2&pi;<span class="rad">&radic;</span>(' + hue('l', 'L') + hue('c', 'C') + ')',
+          work: d => ['1 / 2&pi;<span class="rad">&radic;</span>(<b>' + hue('l', eng(d.L, 'H', 4)) + '</b> &times; <b>' + hue('c', eng(d.C, 'F', 4)) + '</b>)',
                       eng(d.f0, 'Hz', 5)] },
-    Lfor: { given: false, name: 'Rearranged for L', eq: 'L = 1 / ((2&pi;f<sub>0</sub>)&sup2; &times; C)',
-          work: d => ['1 / ((2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b>)&sup2; &times; <b>' + eng(d.C, 'F', 4) + '</b>)',
-                      eng(1 / (Math.pow(2 * Math.PI * d.f0, 2) * d.C), 'H', 4)] },
-    Cfor: { given: false, name: 'Rearranged for C', eq: 'C = 1 / ((2&pi;f<sub>0</sub>)&sup2; &times; L)',
-          work: d => ['1 / ((2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b>)&sup2; &times; <b>' + eng(d.L, 'H', 4) + '</b>)',
-                      eng(1 / (Math.pow(2 * Math.PI * d.f0, 2) * d.L), 'F', 4)] },
+    Lfor: { given: false, name: 'Rearranged for L',
+          eq: hue('l', 'L') + ' = 1 / ((2&pi;f<sub>0</sub>)&sup2; &times; ' + hue('c', 'C') + ')',
+          work: d => ['1 / ((2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b>)&sup2; &times; <b>' + hue('c', eng(d.C, 'F', 4)) + '</b>)',
+                      hue('l', eng(1 / (Math.pow(2 * Math.PI * d.f0, 2) * d.C), 'H', 4))] },
+    Cfor: { given: false, name: 'Rearranged for C',
+          eq: hue('c', 'C') + ' = 1 / ((2&pi;f<sub>0</sub>)&sup2; &times; ' + hue('l', 'L') + ')',
+          work: d => ['1 / ((2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b>)&sup2; &times; <b>' + hue('l', eng(d.L, 'H', 4)) + '</b>)',
+                      hue('c', eng(1 / (Math.pow(2 * Math.PI * d.f0, 2) * d.L), 'F', 4))] },
     Q: { given: true, tag: { intermediate: 'given' },
           name: 'Q factor', eq: 'Q = f<sub>C</sub> / (f<sub>U</sub> &minus; f<sub>L</sub>)',
           work: d => ['<b>' + eng(d.f0, 'Hz', d.sig) + '</b> / (<b>' + eng(d.fHi, 'Hz', d.sig) + '</b> &minus; <b>' + eng(d.fLo, 'Hz', d.sig) + '</b>)',
                       trim(d.Q, 4)] },
-    QL: { given: true, name: 'Q from the coil', eq: 'Q = 2&pi;fL / R',
-          work: d => ['2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b> &times; <b>' + eng(d.L, 'H', 4) + '</b> / <b>' + eng(d.R, 'Ω', 4) + '</b>',
+    QL: { given: true, name: 'Q from the coil',
+          eq: 'Q = 2&pi;f' + hue('l', 'L') + ' / ' + hue('r', 'R'),
+          work: d => ['2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b> &times; <b>' + hue('l', eng(d.L, 'H', 4)) + '</b> / <b>' + hue('r', eng(d.R, 'Ω', 4)) + '</b>',
                       trim(2 * Math.PI * d.f0 * d.L / d.R, 4)] },
-    QC: { given: true, name: 'Q from the capacitor', eq: 'Q = 1 / 2&pi;fCR',
-          work: d => ['1 / (2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b> &times; <b>' + eng(d.C, 'F', 4) + '</b> &times; <b>' + eng(d.R, 'Ω', 4) + '</b>)',
+    QC: { given: true, name: 'Q from the capacitor',
+          eq: 'Q = 1 / 2&pi;f' + hue('c', 'C') + hue('r', 'R'),
+          work: d => ['1 / (2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b> &times; <b>' + hue('c', eng(d.C, 'F', 4)) + '</b> &times; <b>' + hue('r', eng(d.R, 'Ω', 4)) + '</b>)',
                       trim(1 / (2 * Math.PI * d.f0 * d.C * d.R), 4)] },
     Il: { given: false, name: 'Circulating current in a parallel circuit, when Q is high',
-          eq: 'I<sub>circ</sub> &asymp; Q &times; I<sub>supply</sub>',
-          work: d => ['<b>' + trim(d.Q, 4) + '</b> &times; the current fed in',
-                      'about ' + trim(d.Q, 4) + ' times whatever you supply'] },
-    Vl: { given: false, name: 'Voltage across the inductor in a series circuit', eq: 'V<sub>L</sub> = Q &times; V<sub>s</sub>',
-          work: d => ['<b>' + trim(d.Q, 4) + '</b> &times; <b>1 V</b>', eng(d.Q, 'V', 4)] },
+          eq: hue('i', 'I<sub>circ</sub>') + ' &asymp; Q &times; ' + hue('i', 'I<sub>supply</sub>'),
+          // 100 µA fed in, the figure the bank's question uses
+          work: d => ['<b>' + trim(d.Q, 4) + '</b> &times; <b>' + hue('i', '100 &micro;A') + '</b> fed in',
+                      hue('i', eng(d.Q * 1e-4, 'A', 4))] },
+    Vl: { given: false, name: 'Voltage across the inductor in a series circuit',
+          eq: hue('v', 'V<sub>L</sub>') + ' = Q &times; ' + hue('v', 'V<sub>s</sub>'),
+          work: d => ['<b>' + trim(d.Q, 4) + '</b> &times; <b>' + hue('v', '1 V') + '</b>', hue('v', eng(d.Q, 'V', 4))] },
     Zs: { given: true, name: 'Impedance of the series circuit',
-          eq: 'Z = <span class="rad">&radic;</span>(R&sup2; + X&sup2;), with X = X<sub>L</sub> &minus; X<sub>C</sub>',
-          work: d => ['in the series arm at f<sub>0</sub>, X<sub>L</sub> &minus; X<sub>C</sub> = 0, so <span class="rad">&radic;</span>((<b>' + eng(d.R, 'Ω', 4) + '</b>)&sup2; + 0)',
-                      eng(d.R, 'Ω', 4)] },
-    Rd: { given: true, name: 'Dynamic resistance, when Q is high', eq: 'R<sub>D</sub> = L / CR',
-          work: d => ['<b>' + eng(d.L, 'H', 4) + '</b> / (<b>' + eng(d.C, 'F', 4) + '</b> &times; <b>' + eng(d.R, 'Ω', 4) + '</b>)',
-                      eng(d.L / (d.C * d.R), 'Ω', 4)] },
-    QRd: { given: true, name: 'Q from the dynamic resistance', eq: 'Q = 2&pi;fCR<sub>D</sub>',
-          work: d => ['2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b> &times; <b>' + eng(d.C, 'F', 4) + '</b> &times; <b>' + eng(d.L / (d.C * d.R), 'Ω', 4) + '</b>',
+          eq: hue('z', 'Z') + ' = <span class="rad">&radic;</span>(' + hue('r', 'R') + '&sup2; + X&sup2;), with X = ' +
+              hue('l', 'X<sub>L</sub>') + ' &minus; ' + hue('c', 'X<sub>C</sub>'),
+          work: d => ['in the series arm at f<sub>0</sub>, ' + hue('l', 'X<sub>L</sub>') + ' &minus; ' + hue('c', 'X<sub>C</sub>') +
+                      ' = 0, so <span class="rad">&radic;</span>((<b>' + hue('r', eng(d.R, 'Ω', 4)) + '</b>)&sup2; + 0)',
+                      hue('z', eng(d.R, 'Ω', 4))] },
+    Rd: { given: true, name: 'Dynamic resistance, when Q is high',
+          eq: hue('r', 'R<sub>D</sub>') + ' = ' + hue('l', 'L') + ' / ' + hue('c', 'C') + hue('r', 'R'),
+          work: d => ['<b>' + hue('l', eng(d.L, 'H', 4)) + '</b> / (<b>' + hue('c', eng(d.C, 'F', 4)) + '</b> &times; <b>' + hue('r', eng(d.R, 'Ω', 4)) + '</b>)',
+                      hue('r', eng(d.L / (d.C * d.R), 'Ω', 4))] },
+    QRd: { given: true, name: 'Q from the dynamic resistance',
+          eq: 'Q = 2&pi;f' + hue('c', 'C') + hue('r', 'R<sub>D</sub>'),
+          work: d => ['2&pi; &times; <b>' + eng(d.f0, 'Hz', 4) + '</b> &times; <b>' + hue('c', eng(d.C, 'F', 4)) + '</b> &times; <b>' + hue('r', eng(d.L / (d.C * d.R), 'Ω', 4)) + '</b>',
                       trim(2 * Math.PI * d.f0 * d.L / d.R, 4)] },
-    fcr: { given: false, name: 'Cut-off of a CR filter', eq: 'f = 1 / 2&pi;RC',
-          work: d => ['1 / (2&pi; &times; <b>' + eng(d.Rf, 'Ω', 3) + '</b> &times; <b>' + eng(d.C, 'F', 4) + '</b>)',
+    fcr: { given: false, name: 'Cut-off of a CR filter',
+          applies: d => d.device === 'lowpass' || d.device === 'highpass',
+          eq: 'f = 1 / 2&pi;' + hue('r', 'R') + hue('c', 'C'),
+          work: d => ['1 / (2&pi; &times; <b>' + hue('r', eng(d.Rf, 'Ω', 3)) + '</b> &times; <b>' + hue('c', eng(d.C, 'F', 4)) + '</b>)',
                       eng(1 / (2 * Math.PI * d.Rf * d.C), 'Hz', 5)] },
-    fL: { given: false, name: 'Half power points', eq: 'f<sub>L</sub>, f<sub>U</sub> where the current is 0.707 of its peak',
-          work: d => ['bandwidth = <b>' + eng(d.fHi, 'Hz', d.sig) + '</b> &minus; <b>' + eng(d.fLo, 'Hz', d.sig) + '</b>',
+    fL: { given: false, name: 'Bandwidth between the half power points',
+          eq: 'BW = f<sub>U</sub> &minus; f<sub>L</sub>',
+          work: d => ['<b>' + eng(d.fHi, 'Hz', d.sig) + '</b> &minus; <b>' + eng(d.fLo, 'Hz', d.sig) + '</b>',
                       eng(d.BW, 'Hz', 4)] }
   },
 
@@ -382,7 +477,7 @@ C1 b 0 ${v.C}
     'bandwidth': 'The width of the band of frequencies a tuned circuit accepts, measured between the half power points.',
     'half power point': 'A frequency either side of resonance where the current has fallen to 0.707 of its peak, which is half the power.',
     'Q': 'The centre frequency divided by the bandwidth. It says how sharp the circuit is, and it is also how many times the voltage inside it exceeds the voltage applied.',
-    'selectivity': 'How well a circuit picks out one frequency and rejects its neighbours.',
+    'selectivity': 'How well a circuit picks out one frequency and rejects its neighbours, measured as bandwidth &divide; resonant frequency: the smaller, the more selective.',
     'dynamic resistance': 'The purely resistive impedance a parallel tuned circuit presents at resonance, once the loss in the coil is allowed for. Also called dynamic impedance.',
     'skin effect': 'The tendency of radio frequency current to travel near the surface of a conductor rather than through all of it, which makes the resistance higher than it is at DC.'
   },
@@ -393,6 +488,7 @@ C1 b 0 ${v.C}
     reactance(ctx) {
       const { p, d, t, level, values, M, Plot, build, sweep, swatch, ro, Fmt } = ctx;
       const { eng, trim, sci } = Fmt;
+      p.fAnim = null;
       const spec = build('series');
       const fa = d.f0 / 3, fb = d.f0 * 3;
       const n = 320, XL = [], XC = [];
@@ -404,18 +500,18 @@ C1 b 0 ${v.C}
       Plot.draw(p.graph, {
         xRange: [fa, fb], xFmt: v => eng(v, 'Hz', 3), tokens: t,
         left: { max: d.Z0 * 3, fmt: v => eng(v, 'Ω', 2) },
-        traces: [{ pts: XL, colour: t.trace, axis: 'left' },
-                 { pts: XC, colour: t.phase, axis: 'left' }],
-        marks: [{ x: d.f0, colour: t.marker }],
-        cursor: { x: d.f0, colour: t.marker, label: 'f₀ ' + eng(d.f0, 'Hz', 4) }
+        traces: [{ pts: XL, colour: t.l, axis: 'left' },
+                 { pts: XC, colour: t.c, axis: 'left' }],
+        marks: [{ x: d.f0, colour: t.mark }],
+        cursor: { x: d.f0, colour: t.mark, label: 'f₀ ' + eng(d.f0, 'Hz', 4) }
       });
-      p.legend.innerHTML = swatch(t.trace, 'Reactance of L') + swatch(t.phase, 'Reactance of C') +
-                           swatch(t.marker, 'They cross here');
+      p.legend.innerHTML = swatch(t.l, 'Reactance of L') + swatch(t.c, 'Reactance of C') +
+                           swatch(t.mark, 'They cross here');
       p.readouts.innerHTML = ro([
         ['Crossing at', eng(d.f0, 'Hz', 5), true],
         ['Reactance there', eng(d.Z0, 'Ω', 4)],
-        ['X of L', 'rises with f'],
-        ['X of C', 'falls with f']
+        ['X of L', hue('l', 'rises with f')],
+        ['X of C', hue('c', 'falls with f')]
       ]);
       return spec;
     },
@@ -423,6 +519,7 @@ C1 b 0 ${v.C}
     impedance(ctx) {
       const { p, d, t, level, values, M, Plot, build, sweep, swatch, ro, Fmt } = ctx;
       const { eng, trim, sci } = Fmt;
+      p.fAnim = null;
       const spec = build(p.topology);
       const wide = p.topology === 'parallel';
       const a = Math.max(d.f0 - d.BW * 6, d.f0 * 0.05), b = d.f0 + d.BW * 6;
@@ -434,22 +531,27 @@ C1 b 0 ${v.C}
         return { x: s.f, y };
       });
       const peak = Math.max(...pts.map(q => q.y));
-      p.legend.innerHTML = swatch(t.trace, wide ? 'Impedance of the tank' : 'Impedance of the loop');
+      p.legend.innerHTML = swatch(t.z, wide ? 'Impedance of the tank' : 'Impedance of the loop');
       Plot.draw(p.graph, {
-        xRange: [a, b], xFmt: v => eng(v, 'Hz', 4), tokens: t,
+        xRange: [a, b], xFmt: xLabels(p.graph, a, b, v => eng(v, 'Hz', 4)), tokens: t,
         left: { max: peak * 1.1, fmt: v => eng(v, 'Ω', 2) },
-        traces: [{ pts, colour: t.trace, fill: t.fill, axis: 'left' }],
-        marks: [{ x: d.f0, colour: t.marker }],
-        cursor: { x: d.f0, colour: t.marker, label: 'f₀' }
+        traces: [{ pts, colour: t.z, fill: tint(t.z, 0.12), axis: 'left' }],
+        marks: [{ x: d.f0, colour: t.mark }],
+        cursor: { x: d.f0, colour: t.mark, label: 'f₀' }
       });
       // solved at f0 itself, not read off the nearest point of the sweep
       const sol0 = M.solveAt(spec.circuit, d.f0);
       const i0 = M.abs(M.currentThrough(sol0, spec.z.i));
       const z0 = spec.z.mode === 'tank' ? M.abs(M.nodeV(sol0, spec.z.v)) / i0 : 1 / i0;
+      // With enough loss a parallel tank has no peak at all: at low frequency
+      // the coil's own R shows through and is larger than Z at f0. Below a Q
+      // of about 0.8 that happens, so the readout says so rather than
+      // claiming a maximum the curve does not have.
+      const peaked = z0 > pts[0].y && z0 > pts[pts.length - 1].y;
       p.readouts.innerHTML = ro([
         ['Connection', wide ? 'Parallel' : 'Series'],
-        ['Z at resonance', eng(z0, 'Ω', 4), true],
-        ['Behaviour', wide ? 'maximum' : 'minimum'],
+        ['Z at resonance', hue('z', eng(z0, 'Ω', 4)), true],
+        ['Behaviour', wide ? (peaked ? 'maximum' : 'no peak: Q is below 1') : 'minimum'],
         ['Resonance', eng(d.f0, 'Hz', 5)]
       ]);
       return spec;
@@ -458,6 +560,7 @@ C1 b 0 ${v.C}
     energy(ctx) {
       const { p, d, t, level, values, M, Plot, build, sweep, swatch, ro, Fmt } = ctx;
       const { eng, trim, sci } = Fmt;
+      p.fAnim = null;
       const spec = build('parallel');
       // natural response of the parallel LCR, integrated directly
       const steps = 900, T = 6 / d.f0, dt = T / steps;
@@ -479,20 +582,24 @@ C1 b 0 ${v.C}
         xRange: [0, T], xFmt: x => eng(x, 's', 2), tokens: t,
         left: { max: peak * 1.15, fmt: y => eng(y, 'J', 2) },
         traces: [
-          { pts: eT, colour: t.faint, width: 1.2, axis: 'left' },
-          { pts: eC, colour: t.trace, fill: t.fill, axis: 'left' },
-          { pts: eL, colour: t.phase, axis: 'left' }
+          { pts: eT, colour: t.mark, width: 1.2, axis: 'left' },
+          { pts: eC, colour: t.c, fill: tint(t.c, 0.12), axis: 'left' },
+          { pts: eL, colour: t.l, axis: 'left' }
         ],
         cursor: null
       });
-      p.legend.innerHTML = swatch(t.trace, 'Energy in C') + swatch(t.phase, 'Energy in L') +
-                           swatch(t.faint, 'Total');
+      p.legend.innerHTML = swatch(t.c, 'Energy in C') + swatch(t.l, 'Energy in L') +
+                           swatch(t.mark, 'Total');
+      // Below a Q of one half the loss stops the swing before it starts: the
+      // capacitor drains through the coil and the energy never comes back.
+      const swings = d.Q >= 0.5;
       p.readouts.innerHTML = ro([
         ['Resonant frequency', eng(d.f0, 'Hz', 5), true],
-        ['Hand-overs each cycle', 'two: C to L, then L to C'],
-        ['Peak energy', eng(peak, 'J', 3)],
-        ['Lost through', eng(d.R, 'Ω', 3)],
-        ['Cycles shown', '6']
+        ['Hand-overs each cycle', swings ? 'two: C to L, then L to C'
+                                         : 'none: too much loss to oscillate'],
+        ['Energy at the start', eng(peak, 'J', 3)],
+        ['Lost through', hue('r', eng(d.R, 'Ω', 3))],
+        swings ? ['Cycles shown', '6'] : ['Time shown', eng(T, 's', 3)]
       ]);
       return spec;
     },
@@ -508,27 +615,31 @@ C1 b 0 ${v.C}
       const fc = p.cursor === null ? d.f0 : fa + (fb - fa) * p.cursor;
       const at = probeAt(spec, fc);
       const at0 = probeAt(spec, d.f0);
+      // the charge moves at the frequency the cursor is on
+      p.fAnim = fc;
       Plot.draw(p.graph, {
-        xRange: [fa, fb], xFmt: v => eng(v, 'Hz', 4), tokens: t,
+        xRange: [fa, fb], xFmt: xLabels(p.graph, fa, fb, v => eng(v, 'Hz', 4)), tokens: t,
         left: { max: peak * 1.08, fmt: v => eng(v, 'A', 3) },
         right: { min: -90, max: 90, fmt: v => Math.round(v) + '°' },
         traces: [
-          { pts: s.map(q => ({ x: q.f, y: q.ph * 180 / Math.PI })), colour: t.phase, axis: 'right', width: 1.6 },
-          { pts: s.map(q => ({ x: q.f, y: q.mag })), colour: t.trace, fill: t.fill, axis: 'left' }
+          { pts: s.map(q => ({ x: q.f, y: q.ph * 180 / Math.PI })), colour: t.mark, axis: 'right', width: 1.6 },
+          { pts: s.map(q => ({ x: q.f, y: q.mag })), colour: t.i, fill: t.iFill, axis: 'left' }
         ],
-        bands: [{ from: d.fLo, to: d.fHi, colour: t.marker }],
-        marks: [{ x: d.fLo, colour: t.marker }, { x: d.fHi, colour: t.marker }],
-        cursor: { x: fc, colour: t.marker, dot: { y: at.mag, axis: 'left' },
+        bands: [{ from: d.fLo, to: d.fHi, colour: t.mark }],
+        marks: [{ x: d.fLo, colour: t.mark }, { x: d.fHi, colour: t.mark }],
+        cursor: { x: fc, colour: t.mark, dot: { y: at.mag, axis: 'left' },
                   label: p.cursor === null ? 'f₀' : eng(fc, 'Hz', 4) }
       });
-      p.legend.innerHTML = swatch(t.trace, 'Current') + swatch(t.phase, 'Phase') +
-                           swatch(t.marker, 'Half power points');
+      // the phase is not a quantity with a colour of its own, so it shares the
+      // neutral with the marks; the marks are dashed, and so is their swatch
+      p.legend.innerHTML = swatch(t.i, 'Current') + swatch(t.mark, 'Phase of the current, right scale') +
+                           dashSwatch(t.mark, 'Half power points');
       const rows = [
-        ['Resonance f₀', eng(d.f0, 'Hz', 5)],
+        ['Resonance ' + sym('f₀'), eng(d.f0, 'Hz', 5)],
         ['Q factor', trim(d.Q, 4)],
         ['Bandwidth', eng(d.BW, 'Hz', 4)]
       ];
-      if (level === 'full') rows.push(['V across L at f₀', eng(at0.vl, 'V', 4), true]);
+      if (level === 'full') rows.push(['V across L at ' + sym('f₀'), hue('v', eng(at0.vl, 'V', 4)), true]);
       else rows.push(['Selectivity', 'BW / f₀ = ' + trim(1 / d.Q, 3)]);
       p.readouts.innerHTML = ro(rows);
       return spec;
@@ -542,6 +653,8 @@ C1 b 0 ${v.C}
       p.bigR = isCR;
       const Rf = values.R * 100;
       const fRef = isCR ? 1 / (2 * Math.PI * Rf * d.C) : d.f0;
+      // the charge moves at the cut-off or the centre, whichever is marked
+      p.fAnim = fRef;
       const fa = fRef / 12, fb = fRef * 12;
       const n = 340, pts = [];
       for (let i = 0; i < n; i++) {
@@ -553,21 +666,21 @@ C1 b 0 ${v.C}
       Plot.draw(p.graph, {
         xRange: [Math.log10(fa), Math.log10(fb)],
         xFmt: v => eng(Math.pow(10, v), 'Hz', 3), tokens: t,
-        left: { max: 66, fmt: v => Math.round(v - 60) + ' dB' },
-        traces: [{ pts: pts.map(q => ({ x: q.x, y: q.y + 60 })), colour: t.trace, fill: t.fill, axis: 'left' }],
-        marks: [{ x: Math.log10(fRef), colour: t.marker }],
-        cursor: { x: Math.log10(fRef), colour: t.marker,
+        left: { max: 60, fmt: v => Math.round(v - 60) + ' dB' },
+        traces: [{ pts: pts.map(q => ({ x: q.x, y: q.y + 60 })), colour: t.v, fill: t.vFill, axis: 'left' }],
+        marks: [{ x: Math.log10(fRef), colour: t.mark }],
+        cursor: { x: Math.log10(fRef), colour: t.mark,
                   label: (isCR ? 'cut-off ' : 'f₀ ') + eng(fRef, 'Hz', 4) }
       });
       const name = { lowpass: 'Low pass', highpass: 'High pass',
                      bandpass: 'Band pass', notch: 'Notch' }[p.topology];
-      p.legend.innerHTML = swatch(t.trace, 'Output relative to input') +
-                           swatch(t.marker, isCR ? 'Cut-off' : 'Centre frequency');
+      p.legend.innerHTML = swatch(t.v, 'Output voltage relative to input') +
+                           swatch(t.mark, isCR ? 'Cut-off' : 'Centre frequency');
       p.readouts.innerHTML = ro([
         ['Filter', name],
         [isCR ? 'Cut-off' : 'Centre', eng(fRef, 'Hz', 5), true],
-        isCR ? ['Resistor, 100 × the R control', eng(Rf, 'Ω', 3)]
-             : ['Resistor, the R control', eng(values.R, 'Ω', 3)],
+        isCR ? ['Resistor, 100 × the R control', hue('r', eng(Rf, 'Ω', 3))]
+             : ['Resistor, the R control', hue('r', eng(values.R, 'Ω', 3))],
         ['Shape set by', isCR ? 'R and C' : 'Q = ' + trim(d.Q, 3)]
       ]);
       return spec;
@@ -581,6 +694,7 @@ C1 b 0 ${v.C}
       const { p, d, t, M, Plot, build, swatch, ro, Fmt } = ctx;
       const { eng } = Fmt;
       p.bigR = false;
+      p.fAnim = null;
       const spec = build('crystal');
       const C0 = d.C * CRYSTAL_HOLDER;
       const fpIdeal = 1 / (2 * Math.PI * Math.sqrt(d.L * d.C * C0 / (d.C + C0)));
@@ -605,7 +719,11 @@ C1 b 0 ${v.C}
       const fDip = golden(a, fPk, (u, w) => u < w);
       // a turning point that lands on the edge of its window is not one
       const edge = (f, lo, hi) => Math.min(f - lo, hi - f) < (hi - lo) * 1e-3;
-      const separate = !edge(fPk, d.f0, b) && !edge(fDip, a, fPk);
+      // Below a Q of about 30 the holder pulls the dip well below f0 and below
+      // R (5% low and under half R at a Q of 5), which would contradict the
+      // working, so the two are read out only where the dip is close to R.
+      const lowQ = d.Q < 30;
+      const separate = !edge(fPk, d.f0, b) && !edge(fDip, a, fPk) && !lowQ;
 
       const xs = [];
       for (let i = 0; i < 500; i++) xs.push(a + (b - a) * i / 499);
@@ -616,21 +734,21 @@ C1 b 0 ${v.C}
       const lo = Math.floor(Math.min(...ys));
       const hi = lo + 4 * Math.max(1, Math.ceil((Math.ceil(Math.max(...ys)) - lo) / 4));
       Plot.draw(p.graph, {
-        xRange: [a, b], xFmt: v => eng(v, 'Hz', 4), tokens: t,
+        xRange: [a, b], xFmt: xLabels(p.graph, a, b, v => eng(v, 'Hz', 4)), tokens: t,
         left: { min: lo, max: hi, fmt: v => eng(Math.pow(10, v), 'Ω', 2) },
-        traces: [{ pts, colour: t.trace, axis: 'left' }],
-        marks: separate ? [{ x: fDip, colour: t.marker }, { x: fPk, colour: t.marker }] : [],
+        traces: [{ pts, colour: t.z, axis: 'left' }],
+        marks: separate ? [{ x: fDip, colour: t.mark }, { x: fPk, colour: t.mark }] : [],
         cursor: null
       });
-      p.legend.innerHTML = swatch(t.trace, 'Impedance of the crystal, log scale') +
-                           swatch(t.marker, 'Series and parallel resonance');
-      const none = 'not separate at this Q';
+      p.legend.innerHTML = swatch(t.z, 'Impedance of the crystal, log scale') +
+                           dashSwatch(t.mark, 'Series and parallel resonance');
+      const none = lowQ ? 'not read out below Q 30' : 'not separate at this Q';
       p.readouts.innerHTML = ro([
         ['Series resonance', separate ? eng(fDip, 'Hz', 5) : none, separate],
-        ['Z there, a dip', separate ? eng(Z(fDip), 'Ω', 4) : '—'],
+        ['Z there, a dip', separate ? hue('z', eng(Z(fDip), 'Ω', 4)) : '—'],
         ['Parallel resonance', separate ? eng(fPk, 'Hz', 5) : none, separate],
-        ['Z there, a peak', separate ? eng(Z(fPk), 'Ω', 4) : '—'],
-        ['Holder C₀ = 10 × C', eng(C0, 'F', 3)]
+        ['Z there, a peak', separate ? hue('z', eng(Z(fPk), 'Ω', 4)) : '—'],
+        ['Holder C₀ = 10 × C', hue('c', eng(C0, 'F', 3))]
       ]);
       return spec;
     },
@@ -645,6 +763,7 @@ C1 b 0 ${v.C}
       const { p, d, t, M, Plot, build, swatch, ro, Fmt } = ctx;
       const { eng, trim } = Fmt;
       p.bigR = false;
+      p.fAnim = null;
       const spec = build('parallel');
       const a = Math.max(d.f0 - d.BW * 6, d.f0 * 0.05), b = d.f0 + d.BW * 6;
       const Zc = f => {
@@ -652,29 +771,33 @@ C1 b 0 ${v.C}
         return M.div(M.nodeV(sol, 't'), M.currentThrough(sol, 'RS'));
       };
       const mag = [], ph = [];
-      for (let i = 0; i < 320; i++) {
-        const f = a + (b - a) * i / 319, z = Zc(f);
-        mag.push({ x: f, y: M.abs(z) });
+      for (let i = 0; i < 960; i++) {
+        const f = a + (b - a) * i / 959, z = Zc(f);
+        if (i % 3 === 0) mag.push({ x: f, y: M.abs(z) });
         ph.push({ x: f, y: M.arg(z) * 180 / Math.PI });
       }
       const peak = Math.max(...mag.map(q => q.y));
+      // The phase has no colour of its own and the neutral is close to the
+      // impedance's navy, in dark mode above all, so it is drawn dashed.
+      const phDash = dashes(ph, [a, b], [-90, 90], 0.05, 0.035)
+        .map(run => ({ pts: run, colour: t.mark, axis: 'right', width: 1.6 }));
       Plot.draw(p.graph, {
-        xRange: [a, b], xFmt: v => eng(v, 'Hz', 4), tokens: t,
+        xRange: [a, b], xFmt: xLabels(p.graph, a, b, v => eng(v, 'Hz', 4)), tokens: t,
         left: { max: peak * 1.1, fmt: v => eng(v, 'Ω', 2) },
         right: { min: -90, max: 90, fmt: v => Math.round(v) + '°' },
-        traces: [{ pts: mag, colour: t.trace, fill: t.fill, axis: 'left' },
-                 { pts: ph, colour: t.phase, axis: 'right', width: 1.6 }],
-        marks: [{ x: d.f0, colour: t.marker }],
-        cursor: { x: d.f0, colour: t.marker, label: 'f₀' }
+        traces: [{ pts: mag, colour: t.z, fill: tint(t.z, 0.12), axis: 'left', width: 2.6 }]
+          .concat(phDash),
+        marks: [{ x: d.f0, colour: t.mark }],
+        cursor: { x: d.f0, colour: t.mark, label: 'f₀' }
       });
-      p.legend.innerHTML = swatch(t.trace, 'Impedance of the tank, left scale') +
-                           swatch(t.phase, 'Its phase, right scale') +
-                           swatch(t.marker, 'f₀');
+      p.legend.innerHTML = swatch(t.z, 'Impedance of the tank, left scale') +
+                           dashSwatch(t.mark, 'Its phase, right scale') +
+                           swatch(t.mark, 'f₀');
       const z0 = Zc(d.f0), deg = M.arg(z0) * 180 / Math.PI;
       p.readouts.innerHTML = ro([
-        ['R<sub>D</sub> = L / CR', eng(d.L / (d.C * d.R), 'Ω', 4), true],
-        ['Tank at f₀, solved', eng(M.abs(z0), 'Ω', 4)],
-        ['Phase there', trim(deg, 2) + '°'],
+        ['R<sub>D</sub> = L / CR', hue('r', eng(d.L / (d.C * d.R), 'Ω', 4)), true],
+        ['Tank at ' + sym('f₀') + ', solved', hue('z', eng(M.abs(z0), 'Ω', 4))],
+        ['Phase there', Fmt.trimText(deg, 2) + '°'],
         ['Purely resistive?', Math.abs(deg) <= 2 ? 'yes, near enough' : 'no: Q is too low']
       ]);
       return spec;
@@ -746,7 +869,7 @@ C1 b 0 ${v.C}
                  full: 'The crystal as a tuned circuit' },
       lead: {
         intermediate: 'The reactances cancel whichever way you wire them. What happens next depends entirely on whether they sit in line or side by side.',
-        full: 'Nature gets there first. A slice of quartz behaves like both connections at once.'
+        full: 'A quartz crystal behaves like a series and a parallel tuned circuit at once.'
       },
       headline: {
         intermediate: 'At resonance a series circuit shows low impedance and a parallel one shows high impedance.',
@@ -772,9 +895,9 @@ C1 b 0 ${v.C}
           'These are the two response curves the syllabus asks you to identify. The shape alone tells you which connection you are looking at.'
         ],
         full: [
-          'A quartz crystal is a tuned circuit that happens to be made of rock. Its equivalent circuit, drawn here, is a series L, C and R, with another capacitance across the lot from the holder and its electrodes.',
+          'A quartz crystal behaves as a tuned circuit. Its equivalent circuit, drawn here, is a series L, C and R, with another capacitance across the lot from the holder and its electrodes.',
           'So it has two resonances close together. At the series one its impedance dips to about R. At the parallel one just above, it peaks. Read both off the curve, then drag R up and watch the dip and the peak both flatten as the loss rises.',
-          'Crystals are ground for one or the other. Put a series crystal in a circuit expecting parallel operation and it will not sit on its marked frequency.'
+          'Crystals are made for either series or parallel operation. Put a series crystal in a circuit expecting parallel operation and it will not sit on its marked frequency.'
         ]
       },
       highlight: ['L1', 'C1']
@@ -798,7 +921,7 @@ C1 b 0 ${v.C}
       },
       explain: {
         intermediate: [
-          'Charge the capacitor and let it go. It pushes current into the coil, which builds a magnetic field around it. When the capacitor is empty the field collapses, drives the current onward, and charges the capacitor the other way round.',
+          'For this trace the source is removed: C starts charged to 1&nbsp;V. Charge the capacitor and let it go. It pushes current into the coil, which builds a magnetic field around it. When the capacitor is empty the field collapses, drives the current onward, and charges the capacitor the other way round.',
           'The two stores take turns. The total would stay put for ever if the resistance were not quietly turning some of it into heat on every pass, which is the slow decline on the trace.',
           'In every cycle at the resonant frequency the energy passes from the capacitor to the coil and back again, so it changes hands twice per cycle. Increase L or C and each exchange takes longer, so the cycle is longer and the resonant frequency comes down.'
         ]
@@ -810,7 +933,7 @@ C1 b 0 ${v.C}
       code: '2H4',
       levels: ['intermediate', 'full'],
       introduces: {
-        intermediate: ['bandwidth', 'Q', 'selectivity', 'skin effect'],
+        intermediate: ['half power point', 'bandwidth', 'Q', 'selectivity', 'skin effect'],
         full: ['half power point']
       },
       panel: 'resonance',
@@ -819,7 +942,7 @@ C1 b 0 ${v.C}
                  full: 'Q as a magnification factor' },
       lead: {
         intermediate: 'A tuned circuit does not pick out one frequency and refuse all others. It accepts a band, and the width of that band is what makes it useful.',
-        full: 'The sharpness has a second consequence, and it is the one that catches people out.'
+        full: 'A sharp tuned circuit also magnifies voltage and current.'
       },
       headline: {
         intermediate: 'Selectivity, and how the bandwidth compares with the frequency at the centre of it.',
@@ -841,13 +964,13 @@ C1 b 0 ${v.C}
         intermediate: [
           'The band is measured between the half power points, where the current has fallen to 0.707 of its peak. Divide the centre frequency by that width and you have Q.',
           'Drag R and watch the shaded band widen and narrow while the peak stays put. Of the three components, R is the only one that changes the sharpness without moving the centre: L and C change it as well, but they move the resonant frequency while they do it.',
-          'It is worth knowing where that R comes from. Mostly it is the resistance of the coil, and at radio frequencies it is higher than a meter would tell you, because the current crowds towards the surface of the wire instead of using the whole thickness. That is the skin effect, and it gets worse as the frequency rises.',
+          'Background, beyond the syllabus: it is worth knowing where that R comes from. Mostly it is the resistance of the coil, and at radio frequencies it is higher than a meter would tell you, because the current crowds towards the surface of the wire instead of using the whole thickness. That is the skin effect, and it gets worse as the frequency rises.',
           'A higher Q means a more selective circuit, and that is what lets a receiver separate one station from its neighbour.'
         ],
         full: [
-          'Q is measured between the half power points, the two frequencies either side of resonance where the current has fallen to 0.707 of its peak. The centre frequency divided by the gap between them is Q, and both figures can be read straight off a response curve.',
-          'Q is also a magnification factor, and this is where it stops being an abstraction. One volt goes in. Look at the voltage across the inductor.',
-          'The same voltage appears across the capacitor, in antiphase. The two cancel exactly, which is precisely why the impedance of the whole circuit collapses to R.',
+          'Bandwidth is measured between the half power points, the two frequencies either side of resonance where the current has fallen to 0.707 of its peak. The centre frequency divided by the gap between them is Q, and both figures can be read straight off a response curve.',
+          'Q is also a magnification factor. One volt goes in. Look at the voltage across the inductor.',
+          'The same voltage appears across the capacitor, in antiphase. They cancel, so the impedance of the whole circuit falls to R.',
           'The same multiplication happens to current, but in a parallel tuned circuit rather than a series one. There the current circulating between the coil and the capacitor is about Q times the current drawn from the source. Feed 100 microamps into a circuit with a Q of 80 and about 8 milliamps is going round inside it. That rule is an approximation that holds when Q is high, as it is in any tuned circuit worth the name; at a Q of a few it is well out.',
           'That is why tuned circuits in a transmitter need components rated far above the supply voltage and the supply current. An antenna matching unit passing high power is the everyday case: the current going round inside it is many times the current arriving from the transmitter, which is why its components are so much larger than the power alone would suggest.'
         ]
@@ -893,7 +1016,7 @@ C1 b 0 ${v.C}
         intermediate: [
           'Switch between the four and watch the circuit and the curve change together. The cut-off is marked where the output has fallen to 0.707 of the input, the same half power point as before.',
           'The band pass and the notch are the two connections from earlier, put to work. A series LC in the signal path lets a band through. A series LC to ground swallows one.',
-          'Watch the charge on the notch. At the centre frequency almost all of it goes to ground through the coil and capacitor instead of reaching the output.'
+          'Watch the charge on the notch. At the centre frequency the coil and capacitor act almost as a short to ground, so the output voltage falls nearly to zero.'
         ],
         full: [
           'The dynamic resistance, sometimes called the dynamic impedance, is what a parallel tuned circuit really looks like at resonance once you allow for the resistance in the coil. It is purely resistive, which is the whole point of the name, and it only means anything at that one frequency. Move away from resonance and the impedance turns reactive again, so there is no dynamic resistance to speak of.',
@@ -934,7 +1057,7 @@ C1 b 0 ${v.C}
       source: { eq: ['f0'], from: ['2H1'],
                 note: 'The largest capacitance gives the lowest frequency.' },
       seed: { L: 5e-6, C: 50e-12 },
-      seedNote: 'Set the bench to 5 &micro;H and 50 pF, then drag C down to 5 pF to see the other end of the range.'
+      seedNote: 'Set the bench to 5 &micro;H and 50 pF, then drag C to its 10 pF minimum; at 5 pF the frequency would be 31.8 MHz.'
     },
     '2025-Full132': {
       why: 'Resonance depends on the product of L and C, and the product is under a square root on the bottom of the fraction, so making either one larger brings the frequency down. The other three options all decrease something, and decreasing either L or C sends the frequency up instead.',
@@ -961,8 +1084,8 @@ C1 b 0 ${v.C}
                 '= 10 MHz / 200 kHz = 10,000 kHz / 200 kHz',
                 '= 50'],
       source: { eq: ['Q'], from: ['2H4'] },
-      seed: { R: 6.283, L: 14.14e-6, C: 141.4e-12 },
-      seedNote: 'The bench is set to a Q of about 50 so you can compare the shape with the one in the question.'
+      seed: { R: 6.283, L: 5e-6, C: 50.66e-12 },
+      seedNote: 'The bench is set to 10 MHz with a Q of 50, so the band is 200 kHz wide like the one in the question.'
     },
     '2025-Full150': {
       why: 'At resonance the voltage across the coil and across the capacitor is Q times the applied voltage, and in a parallel circuit the current circulating between them is about Q times the current drawn from the source. Both can be far larger than anything you put in, so the components have to be rated for it.',
@@ -990,7 +1113,7 @@ C1 b 0 ${v.C}
 
   outro: {
     intermediate: [
-      'All five of those came from one fact: at a single frequency the coil and the capacitor cancel. Everything else was a consequence, whether that was the shape of a curve, the direction the charge moved, or which filter you ended up with.',
+      'All five of those came from one fact: at a single frequency the coil and the capacitor cancel. The curves, the moving charge and the four filters all follow from it.',
       'It is also why the same handful of parts turn up all over a radio. Once you can see what a tuned circuit does, an oscillator, an IF stage and an antenna trap stop looking like separate topics.'
     ],
     full: [

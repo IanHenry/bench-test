@@ -210,14 +210,14 @@
       "intermediate": "Put a varicap in an oscillator and you have frequency modulation."
     },
     "3F1": {
-      "foundation": "The power amplifier lifts the signal to the level you actually transmit.",
+      "foundation": "The power amplifier lifts the signal to the level you transmit.",
       "intermediate": "Efficiency, and working out the RF you get out from the DC you put in."
     },
     "3F2": {
       "full": "Which modes need a linear amplifier, and how distortion makes harmonics and intermodulation."
     },
     "3F3": {
-      "foundation": "The power amplifier needs a matched load. The wrong antenna can damage it.",
+      "foundation": "The power amplifier needs a matched load. The wrong aerial can damage it.",
       "full": "The parts of a PA stage, and what each one contributes."
     },
     "3F4": {

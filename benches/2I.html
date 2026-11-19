@@ -1,41 +1,75 @@
 <title>Semiconductor Bench</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex, nofollow">
-<!-- Kept out of search for now. Delete the robots line when it should be found. -->
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Saira+Semi+Condensed:wght@400;500;600;700&family=Inter:ital,wght@0,400;0,600;1,400&display=swap">
 
 <style>
+  /*
+   * One colour scheme across the course and Bench.
+   * Quantities (--q-*) always mean the same thing: the course's colours from
+   * cdarc-course/parts/style.txt. Chrome follows g0lft.org: site blue for
+   * anything you press, white panels, near-black text. Dark mode keeps every
+   * meaning with a lighter variant, each at least 4.5:1 on the dark panels.
+   * Keep the values as six digit hex: pages read --surface to tell dark mode.
+   */
   :root {
-    --paper:#E4E9EE; --surface:#FBFCFD; --surface-2:#EEF2F6;
-    --ink:#0F1A22; --ink-soft:#4B5C69; --ink-faint:#7E8E9B;
-    --rule:#C3CFD9; --rule-soft:#DCE4EB;
-    --trace:#B26B0C; --trace-fill:rgba(178,107,12,.13);
-    --phase:#16697F; --marker:#A62463; --wire:#54646F;
-    --shadow:0 1px 2px rgba(15,26,34,.06),0 8px 24px rgba(15,26,34,.07);
+    /* quantities */
+    --q-v:#0D6EFD;              /* voltage */
+    --q-i:#FD7E14;              /* current: lines, fills, moving charge */
+    --q-i-ink:#C2410C;          /* current as text */
+    --q-r:#343A40;              /* resistance, and resistors drawn */
+    --q-p:#DC3545;              /* power */
+    --q-l:#198754;              /* inductance, inductive reactance */
+    --q-c:#6F42C1;              /* capacitance, capacitive reactance */
+    --q-z:#0A3D7A;              /* impedance */
+    --q-note:#FFC107;           /* notices and warnings: fills and rules only */
+    --q-note-ink:#856404;       /* notices and warnings as text */
+    --q-mark:#495057;           /* cursors and marks that are not a quantity */
+    --q-v-fill:rgba(13,110,253,.10); --q-i-fill:rgba(253,126,20,.14);
+    --q-p-fill:rgba(220,53,69,.10);
+    /* chrome */
+    --accent:#1F6AE1; --accent-hover:#1F4DB6; --accent-tint:#EAF1FC; --on-accent:#FFFFFF;
+    --paper:#FAFBFC; --surface:#FFFFFF; --surface-2:#FAFBFC;
+    --ink:#1A1A1A; --ink-soft:#495057; --ink-faint:#6C757D;
+    --rule:#DEE2E6; --rule-soft:#E9ECEF; --wire:#6C757D;
+    --shadow:0 1px 2px rgba(26,26,26,.05),0 6px 18px rgba(26,26,26,.05);
     --f-panel:"Saira Semi Condensed","Helvetica Neue",Arial,sans-serif;
     --f-text:Inter,"Segoe UI",system-ui,sans-serif;
     --f-data:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+    /* Deprecated: the old names, kept until every page is recoloured. Each
+       follows its new name into dark mode. README says what each page must
+       map them to; do not use them in new work. */
+    --trace:var(--q-i-ink); --trace-fill:var(--q-i-fill);
+    --phase:var(--q-v); --marker:var(--q-p);
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
+      --q-v:#6EA8FE; --q-i:#FD9843; --q-i-ink:#FD9843; --q-r:#CED4DA;
+      --q-p:#F08A93; --q-l:#5DC593; --q-c:#B79CF0; --q-z:#9DB8E8;
+      --q-note:#FFC107; --q-note-ink:#FFD45E; --q-mark:#AEBBC6;
+      --q-v-fill:rgba(110,168,254,.16); --q-i-fill:rgba(253,152,67,.16);
+      --q-p-fill:rgba(240,138,147,.14);
+      --accent:#6FA0F2; --accent-hover:#9DBDF6; --accent-tint:rgba(111,160,242,.16); --on-accent:#0F1A22;
       --paper:#10171D; --surface:#19222B; --surface-2:#212C36;
-      --ink:#DEE7EE; --ink-soft:#9BABB8; --ink-faint:#6B7C89;
-      --rule:#33424E; --rule-soft:#26333D;
-      --trace:#F0B450; --trace-fill:rgba(240,180,80,.15);
-      --phase:#4FC4DA; --marker:#EC74AC; --wire:#93A4B1;
+      --ink:#DEE7EE; --ink-soft:#AEBBC6; --ink-faint:#93A3B0;
+      --rule:#33424E; --rule-soft:#26333D; --wire:#93A4B1;
       --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.34);
     }
   }
   :root[data-theme="dark"] {
+    --q-v:#6EA8FE; --q-i:#FD9843; --q-i-ink:#FD9843; --q-r:#CED4DA;
+    --q-p:#F08A93; --q-l:#5DC593; --q-c:#B79CF0; --q-z:#9DB8E8;
+    --q-note:#FFC107; --q-note-ink:#FFD45E; --q-mark:#AEBBC6;
+    --q-v-fill:rgba(110,168,254,.16); --q-i-fill:rgba(253,152,67,.16);
+    --q-p-fill:rgba(240,138,147,.14);
+    --accent:#6FA0F2; --accent-hover:#9DBDF6; --accent-tint:rgba(111,160,242,.16); --on-accent:#0F1A22;
     --paper:#10171D; --surface:#19222B; --surface-2:#212C36;
-    --ink:#DEE7EE; --ink-soft:#9BABB8; --ink-faint:#6B7C89;
-    --rule:#33424E; --rule-soft:#26333D;
-    --trace:#F0B450; --trace-fill:rgba(240,180,80,.15);
-    --phase:#4FC4DA; --marker:#EC74AC; --wire:#93A4B1;
+    --ink:#DEE7EE; --ink-soft:#AEBBC6; --ink-faint:#93A3B0;
+    --rule:#33424E; --rule-soft:#26333D; --wire:#93A4B1;
     --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.34);
   }
 
@@ -58,7 +92,7 @@
   .eyebrow { font-family:var(--f-panel); font-size:15px; font-weight:600;
              letter-spacing:.14em; text-transform:uppercase; color:var(--ink-faint);
              display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
-  .eyebrow .tag { color:var(--marker); border:1px solid currentColor;
+  .eyebrow .tag { color:var(--accent); border:1px solid currentColor;
                   border-radius:2px; padding:1px 6px; letter-spacing:.1em; }
   h1 { font-family:var(--f-panel); font-size:clamp(28px,5vw,42px); font-weight:700;
        letter-spacing:-.01em; margin:0; text-wrap:balance; }
@@ -72,8 +106,9 @@
                    padding:8px 16px; border:0; border-right:1px solid var(--rule);
                    background:transparent; color:var(--ink-soft); cursor:pointer; }
   .levels button:last-child { border-right:0; }
-  .levels button[aria-pressed="true"] { background:var(--marker); color:var(--surface); }
-  .levels button:focus-visible { outline:2px solid var(--marker); outline-offset:-2px; }
+  .levels button[aria-pressed="true"] { background:var(--accent); color:var(--on-accent); }
+  .levels button:not([aria-pressed="true"]):hover { color:var(--accent-hover); }
+  .levels button:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
 
   /* sticky control rail */
   .rail-wrap { position:sticky; top:0; z-index:5; padding-top:4px;
@@ -98,12 +133,12 @@
   input[type=range]::-moz-range-track { height:3px; background:var(--rule); border-radius:2px; }
   input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; appearance:none;
       width:16px; height:16px; margin-top:-6.5px; border-radius:50%;
-      background:var(--trace); border:2px solid var(--surface); cursor:grab;
+      background:var(--accent); border:2px solid var(--surface); cursor:grab;
       box-shadow:0 1px 3px rgba(0,0,0,.3); }
   input[type=range]::-moz-range-thumb { width:16px; height:16px; border-radius:50%;
-      background:var(--trace); border:2px solid var(--surface); cursor:grab;
+      background:var(--accent); border:2px solid var(--surface); cursor:grab;
       box-shadow:0 1px 3px rgba(0,0,0,.3); }
-  input[type=range]:focus-visible { outline:2px solid var(--marker); outline-offset:3px; border-radius:3px; }
+  input[type=range]:focus-visible { outline:2px solid var(--accent); outline-offset:3px; border-radius:3px; }
 
   /* item panels */
   .item { background:var(--surface); border:1px solid var(--rule); border-radius:4px;
@@ -121,7 +156,7 @@
   .item-code { font-family:var(--f-panel); font-size:15px; font-weight:600;
                letter-spacing:.13em; text-transform:uppercase; color:var(--ink-faint);
                display:flex; gap:8px; align-items:center; }
-  .item-code b { color:var(--marker); font-weight:700; }
+  .item-code b { color:var(--accent); font-weight:700; }
   .item-heading { font-family:var(--f-panel); font-size:25px; font-weight:700;
                   letter-spacing:-.01em; margin:0; text-wrap:balance; }
   .item-lead { margin:0; font-size:17.5px; color:var(--ink); }
@@ -129,7 +164,9 @@
   .preset { font:inherit; font-size:15px; padding:5px 11px; cursor:pointer;
             border:1px solid var(--rule); border-radius:999px;
             background:var(--surface); color:var(--ink); }
-  .preset:hover { border-color:var(--marker); color:var(--marker); }
+  .preset:hover { border-color:var(--accent-hover); color:var(--accent-hover); }
+  .preset[aria-pressed="true"] { border-color:var(--accent); color:var(--accent); background:var(--accent-tint); font-weight:600; }
+  .preset:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
   .preset-note { font-size:15px; color:var(--ink-faint); }
   .item-headline { font-family:var(--f-text); font-size:15.5px; font-style:italic;
                    color:var(--ink-soft); margin:0; }
@@ -153,9 +190,10 @@
                  letter-spacing:.09em; text-transform:uppercase; cursor:pointer;
                  padding:6px 12px; border:1px solid var(--rule); border-radius:3px;
                  background:transparent; color:var(--ink-soft); }
-  .anim button[aria-pressed="true"] { background:var(--trace); color:var(--surface);
-                                      border-color:var(--trace); }
-  .anim button:focus-visible { outline:2px solid var(--marker); outline-offset:2px; }
+  .anim button[aria-pressed="true"] { background:var(--accent); color:var(--on-accent);
+                                      border-color:var(--accent); }
+  .anim button:not([aria-pressed="true"]):hover { color:var(--accent-hover); border-color:var(--accent-hover); }
+  .anim button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
 
   .stage { display:grid; grid-template-columns:1fr; gap:0; }
   @media (min-width:820px) { .stage { grid-template-columns:300px 1fr; } }
@@ -170,6 +208,12 @@
             letter-spacing:.02em; color:var(--ink-soft); }
   .legend span { display:inline-flex; align-items:center; gap:6px; }
   .legend i { width:15px; height:3px; border-radius:2px; }
+  .legend span.sw-l { display:inline; }
+
+  /* an item that shows its own sliders rather than sharing the rail */
+  .item-ctrls { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+                border-bottom:1px solid var(--rule); background:var(--surface); }
+  .item-ctrls .ctrl { border-bottom:1px solid var(--rule-soft); margin-bottom:-1px; }
 
   .toggle { display:flex; flex-wrap:wrap; gap:0; border-top:1px solid var(--rule-soft);
             background:var(--surface-2); }
@@ -177,8 +221,9 @@
                    letter-spacing:.09em; text-transform:uppercase;
                    padding:9px 15px; border:0; border-right:1px solid var(--rule-soft);
                    background:transparent; color:var(--ink-soft); cursor:pointer; }
-  .toggle button[aria-pressed="true"] { color:var(--trace); box-shadow:inset 0 -2px 0 var(--trace); }
-  .toggle button:focus-visible { outline:2px solid var(--marker); outline-offset:-3px; }
+  .toggle button[aria-pressed="true"] { color:var(--accent); box-shadow:inset 0 -2px 0 var(--accent); }
+  .toggle button:not([aria-pressed="true"]):hover { color:var(--accent-hover); }
+  .toggle button:focus-visible { outline:2px solid var(--accent); outline-offset:-3px; }
 
   .readouts { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
               border-top:1px solid var(--rule); }
@@ -189,12 +234,15 @@
           letter-spacing:.12em; text-transform:uppercase; color:var(--ink-faint); }
   .ro-v { font-family:var(--f-data); font-size:17px; font-weight:500;
           font-variant-numeric:tabular-nums; }
-  .ro.hot .ro-v { color:var(--marker); }
+  /* the figure a panel is about: marked, not recoloured, so a current stays
+     a current and a voltage a voltage whatever the page draws them in */
+  .ro.hot { background:var(--accent-tint); box-shadow:inset 3px 0 0 var(--accent); }
+  .ro.hot .ro-v { font-weight:600; }
   .ro-note { margin:6px 0 0; font-size:15px; color:var(--ink-faint);
              font-style:italic; }
   .panel-failed { margin:0 0 10px; padding:8px 10px; font-size:15px;
-                  border:1px solid var(--marker); border-radius:4px;
-                  color:var(--marker); }
+                  border:1px solid var(--q-p); border-radius:4px;
+                  color:var(--q-p); }
 
   .prose { padding:18px 20px 20px; border-top:1px solid var(--rule);
            display:grid; grid-template-columns:1fr; gap:14px 30px; align-items:start; }
@@ -207,7 +255,7 @@
     .prose-work { grid-column:2; grid-row:1; }
   }
   .prose p { margin:0; max-width:62ch; }
-  .work { background:var(--surface-2); border:1px solid var(--rule-soft);
+  .work { background:var(--surface); border:1px solid var(--rule-soft);
           border-radius:3px; padding:4px 14px 8px; overflow-x:auto; }
   .work-row { display:grid; grid-template-columns:1fr; gap:2px;
               padding:11px 0; border-bottom:1px solid var(--rule-soft); }
@@ -217,19 +265,25 @@
                display:flex; gap:9px; align-items:center; flex-wrap:wrap; }
   .given { border:1px solid currentColor; border-radius:2px; padding:0 5px;
            font-size:15px; letter-spacing:.09em; }
-  .given.yes { color:var(--phase); }
-  .given.no  { color:var(--marker); }
+  .given.yes { color:var(--accent); }
+  .given.no  { color:var(--q-note-ink); }
   .given.int { color:var(--ink-faint); }
   .work-eq { font-family:var(--f-data); font-size:15.5px; font-weight:500; }
   .work-sub { font-family:var(--f-data); font-size:15px; color:var(--ink-soft);
               font-variant-numeric:tabular-nums; }
-  .work-sub b { color:var(--phase); font-weight:500; }
-  .work-out { color:var(--marker); font-weight:600; }
+  .work-sub b { color:var(--ink); font-weight:600; }
+  .work-out { color:var(--ink); font-weight:700; }
   .work-note { font-size:15px; color:var(--ink-soft); margin:9px 0 0; max-width:62ch; }
   .work .lhs { color:var(--ink-faint); }
-  .work .sub { color:var(--phase); }
-  .work .out { color:var(--marker); font-weight:600; }
+  .work .sub { color:var(--ink); font-weight:600; }
+  .work .out { color:var(--ink); font-weight:700; }
   .work .rad { font-family:var(--f-text); font-size:1.06em; }
+  /* the browser's own subscript is 0.83 of the text, 12.5 px in the working:
+     nothing on the page is smaller than 15 px, subscripts and superscripts included */
+  .work sub, .work-lead sub, .work-note sub, .q-work sub,
+  .work sup, .work-lead sup, .work-note sup, .q-work sup { font-size:15px; line-height:0; }
+  /* and everywhere else in the items: readout labels, legends and the prose */
+  #items sub, #items sup { font-size:15px; line-height:0; }
 
   .qlink { display:flex; flex-wrap:wrap; align-items:baseline; gap:8px;
            font-size:15px; color:var(--ink-soft);
@@ -245,7 +299,7 @@
   .q:last-child { border-bottom:none; }
   .q-text { margin:0; font-size:16.5px; max-width:68ch; }
   .q-opts li { max-width:68ch; }
-  .q-img { max-width:100%; align-self:flex-start; background:#fff;
+  .q-img { max-width:min(100%,480px); align-self:flex-start; background:#fff;
            border:1px solid var(--rule-soft); border-radius:3px; padding:6px; }
   .q-opts { list-style:none; margin:0; padding:0; display:flex;
             flex-direction:column; gap:5px; }
@@ -253,7 +307,7 @@
                font-size:15.5px; align-items:baseline; }
   .q-opts .k { font-family:var(--f-panel); font-weight:700; font-size:15px;
                letter-spacing:.08em; color:var(--ink-faint); }
-  .q.shown .q-opts li.right .k { color:var(--e-right,var(--phase)); }
+  .q.shown .q-opts li.right .k { color:var(--e-right,var(--accent)); }
   .q.shown .q-opts li.right { color:var(--ink); font-weight:600; }
   .q.shown .q-opts li.right .k::after { content:' \2713'; }
   .q-foot { display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
@@ -261,22 +315,24 @@
                    letter-spacing:.09em; text-transform:uppercase; cursor:pointer;
                    padding:5px 11px; border:1px solid var(--rule); border-radius:3px;
                    background:transparent; color:var(--ink-soft); }
-  .q-foot button:focus-visible { outline:2px solid var(--marker); outline-offset:2px; }
+  .q-foot button:hover { color:var(--accent-hover); border-color:var(--accent-hover); }
+  .q-foot button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
   .q-ref { font-family:var(--f-data); font-size:15px; color:var(--ink-faint); }
   .q-attrib { font-size:15px; color:var(--ink-faint); padding:10px 15px;
               background:var(--surface-2); border-top:1px solid var(--rule); }
   .q-why { display:none; flex-direction:column; gap:9px;
-           border-left:3px solid var(--phase); padding:2px 0 2px 14px; }
+           border-left:3px solid var(--accent); padding:2px 0 2px 14px; }
   .q.shown .q-why { display:flex; }
   .q-why p { margin:0; font-size:16px; }
   .q-work { font-family:var(--f-data); font-size:15px; line-height:1.75;
             font-variant-numeric:tabular-nums; color:var(--ink-soft); }
-  .q-work div:last-child { color:var(--marker); font-weight:600; }
+  .q-work div:last-child { color:var(--ink); font-weight:700; }
   .q-seed { align-self:flex-start; font-family:var(--f-panel); font-size:15px;
             font-weight:600; letter-spacing:.09em; text-transform:uppercase;
             cursor:pointer; padding:6px 12px; border-radius:3px;
-            border:1px solid var(--trace); background:transparent; color:var(--trace); }
-  .q-seed:focus-visible { outline:2px solid var(--marker); outline-offset:2px; }
+            border:1px solid var(--accent); background:transparent; color:var(--accent); }
+  .q-seed:hover { background:var(--accent); color:var(--on-accent); }
+  .q-seed:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
   /* not upper case: these carry units, and mA, µH or Hz must not become MA, MH or HZ */
   .schem-note { font-family:var(--f-panel); font-size:15px; font-weight:600;
                 letter-spacing:.02em; color:var(--ink-faint);
@@ -290,24 +346,27 @@
                 padding:9px 0 7px; }
   .terms dl { margin:0; display:flex; flex-direction:column; gap:9px; }
   .terms dt { font-family:var(--f-panel); font-size:15px; font-weight:700;
-              letter-spacing:.02em; color:var(--phase); }
+              letter-spacing:.02em; color:var(--accent); }
   .terms dd { margin:2px 0 0; font-size:15.5px; color:var(--ink); max-width:60ch; }
-  .term { border-bottom:1px dotted var(--phase); cursor:help; }
+  .term { border-bottom:1px dotted var(--accent); cursor:help; }
   .q-src { font-size:15.5px; color:var(--ink-soft); border-top:1px dotted var(--rule);
            padding-top:9px; }
   .q-src b { font-family:var(--f-panel); font-size:15px; font-weight:700;
              letter-spacing:.11em; text-transform:uppercase; color:var(--ink-faint);
              display:block; margin-bottom:4px; }
-  .q-src a { color:var(--phase); }
+  .q-src a { color:var(--accent); }
   .q-src code { font-family:var(--f-data); font-size:15px; background:var(--surface);
                 padding:1px 5px; border-radius:3px; }
-  .qlink a { color:var(--phase); }
+  .qlink a { color:var(--accent); }
   .qlink code { font-family:var(--f-data); font-size:15px; background:var(--surface-2);
                 padding:1px 5px; border-radius:3px; }
 
   .colophon { font-size:15px; color:var(--ink-faint); border-top:1px solid var(--rule);
               padding-top:16px; max-width:72ch; }
-  .colophon a { color:var(--phase); }
+  .colophon a { color:var(--accent); }
+  .wrap a { color:var(--accent); }
+  .wrap a:hover { color:var(--accent-hover); }
+  a:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:2px; }
   .colophon .home { display:block; margin-bottom:10px; font-size:15px;
                     color:var(--ink); }
 
@@ -370,7 +429,7 @@
 
 <div class="g0-foot" role="contentinfo">
   <p>Bench Test goes with the free <a href="https://course.g0lft.org">amateur radio training course</a> and the <a href="https://g0lft.org/apps/signal-explorer/index.html">Signal Explorer</a>. Corrections and feedback: <a href="mailto:ian@g0lft.org">ian@g0lft.org</a>.</p>
-  <p>© 2026 Dr Ian Henry, G0LFT. Independent of the RSGB and Ofcom; the RSGB publishes the syllabus and the exams.</p>
+  <p>© 2026 Dr Ian Henry, G0LFT. Licensed <a rel="license noopener" href="https://creativecommons.org/licenses/by-nc-nd/4.0/">CC BY-NC-ND 4.0</a>: share unchanged copies with credit; not for sale; ask before adapting it or using it any other way. Bank questions and diagrams © RSGB. Independent of the RSGB and Ofcom; the RSGB publishes the syllabus and the exams.</p>
   <p><a href="https://g0lft.org/privacy.html">Privacy Policy</a> | <a href="https://g0lft.org/about.html">About</a> | <a href="https://g0lft.org/contact.html">Contact</a> | <a href="https://www.qrz.com/db/G0LFT">QRZ</a> | <a href="https://www.youtube.com/@G0LFT-AmateurRadio">YouTube</a></p>
 </div>
 <script>
@@ -393,10 +452,14 @@ const SI_PREFIXES = [
 /** Trim a number to `sig` significant figures without exponential notation. */
 const trim = (x, sig) => String(Number(x.toPrecision(sig || 4)));
 
+/** The same, with a true minus sign, for text a reader sees. */
+const trimText = (x, sig) => trim(x, sig).replace(/^-/, MINUS);
+
 /** Round to 4 s.f. so the displayed value, the formula and the netlist agree exactly. */
 const round4 = v => parseFloat(v.toPrecision(4));
 
 const NBSP = String.fromCharCode(160);   // no-break space
+const MINUS = String.fromCharCode(0x2212);   // a true minus sign, not a hyphen
 
 /**
  * 0.0001414 -> "141.4 µF". Pass a unit, get a unit. The number is joined to
@@ -407,9 +470,17 @@ function eng(x, unit, sig) {
   unit = unit || '';
   if (!isFinite(x)) return '—';
   if (x === 0) return '0' + NBSP + unit;
-  const sign = x < 0 ? '-' : '', a = Math.abs(x);
-  for (const [mul, pre] of SI_PREFIXES) {
-    if (a >= mul) return sign + trim(a / mul, sig) + NBSP + pre + unit;
+  const sign = x < 0 ? MINUS : '', a = Math.abs(x);
+  for (let k = 0; k < SI_PREFIXES.length; k++) {
+    const [mul, pre] = SI_PREFIXES[k];
+    if (a < mul) continue;
+    const s = trim(a / mul, sig);
+    // 0.99999 V rounds up to "1000 mV": write it with the next prefix up, "1 V"
+    if (Number(s) >= 1000 && k > 0) {
+      const [up, upPre] = SI_PREFIXES[k - 1];
+      return sign + trim(a / up, sig) + NBSP + upPre + unit;
+    }
+    return sign + s + NBSP + pre + unit;
   }
   return sign + trim(a / 1e-12, sig) + NBSP + 'p' + unit;
 }
@@ -427,7 +498,7 @@ function sci(v) {
 const logMap = (t, [lo, hi]) => lo * Math.pow(hi / lo, t / 1000);
 const logUnmap = (v, [lo, hi]) => 1000 * Math.log(v / lo) / Math.log(hi / lo);
 
-const API = { eng, sci, trim, round4, logMap, logUnmap, SI_PREFIXES };
+const API = { eng, sci, trim, trimText, round4, MINUS, logMap, logUnmap, SI_PREFIXES };
 if (typeof window !== 'undefined') window.Fmt = API;
 })();
 
@@ -783,13 +854,20 @@ function sampleSine(f, fs, n, phase) {
  * Round to the nearest of 2^bits levels over -1 .. +1.
  * The residue is the quantisation error the syllabus asks about, and it sets
  * the noise floor you can see on the spectrum.
+ *
+ * The levels sit at the middle of each step, at ±step/2, ±3·step/2 and so on
+ * out to ±(1 − step/2): exactly 2^bits of them, symmetrical about zero, and
+ * no sample from −1 to +1 is ever more than half a step from one. Rounding to
+ * whole steps instead gives 2^bits + 1 levels, one more than the bits can
+ * hold.
  */
 function quantise(x, bits) {
   const levels = Math.pow(2, bits);
   const step = 2 / levels;
+  const top = 1 - step / 2;
   const out = new Float64Array(x.length);
   for (let i = 0; i < x.length; i++) {
-    out[i] = Math.max(-1, Math.min(1, Math.round(x[i] / step) * step));
+    out[i] = Math.max(-top, Math.min(top, (Math.floor(x[i] / step) + 0.5) * step));
   }
   return out;
 }
@@ -1113,21 +1191,37 @@ if (typeof window !== 'undefined') window.DC = API;
  * One linear x axis, up to two y axes, any number of traces, plus the
  * furniture a bench keeps needing: a shaded band (half-power points), dashed
  * markers, and a draggable cursor. Colours come from CSS custom properties so
- * the plot follows the page theme without the caller thinking about it.
+ * the plot follows the page theme without the caller thinking about it. A
+ * trace with no colour is drawn as a voltage (--q-v), as a scope would; a
+ * band, mark or cursor with none in the neutral --q-mark.
  */
 
-const PAD = { l: 70, r: 60, t: 14, b: 36 };   // room for 13 px axis labels
+const PAD = { l: 80, r: 70, t: 14, b: 38 };   // room for 15 px axis labels
+const LABEL_PX = 15;                           // nothing on a plot smaller than this
+// a tick label with a true minus sign rather than a hyphen
+const minus = v => String(v).replace(/^-/, '−');
+// words drawn over the traces get a halo of the background, so a curve
+// running through them does not cut the letters
+function haloText(ctx, text, x, y, surface) {
+  ctx.save();
+  ctx.lineWidth = 4;
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = surface || '#fff';
+  ctx.strokeText(text, x, y);
+  ctx.restore();
+  ctx.fillText(text, x, y);
+}
 
 /**
  * spec = {
  *   xRange: [a, b], xUnit: 'Hz',
  *   left:  { max, unit, sig },            // 0..max
  *   right: { min, max, fmt },             // optional second axis
- *   traces: [{ pts:[{x,y}], axis:'left'|'right', colour, fill }],
+ *   traces: [{ pts:[{x,y}], axis:'left'|'right', colour, fill, fillTo, width, dash:[on,off] }],
  *   bands:  [{ from, to, colour }],
  *   marks:  [{ x, colour, dashed, label }],
  *   cursor: { x, colour, label, dot:{axis,y} },
- *   tokens: { grid, faint, soft, surface, panelFont }
+ *   tokens: { grid, faint, soft, surface, panelFont, v, mark }
  * }
  */
 function draw(canvas, spec) {
@@ -1167,17 +1261,17 @@ function draw(canvas, spec) {
   /* grid and axis labels */
   ctx.strokeStyle = t.grid || '#ddd';
   ctx.lineWidth = 1;
-  ctx.font = '500 13px ' + font;
+  ctx.font = '500 ' + LABEL_PX + 'px ' + font;
   ctx.fillStyle = t.faint || '#888';
   for (let i = 0; i <= 4; i++) {
     const y = Math.round(PAD.t + yOff + H * i / 4) + 0.5;
     ctx.beginPath(); ctx.moveTo(PAD.l, y); ctx.lineTo(PAD.l + W, y); ctx.stroke();
     ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-    ctx.fillText(spec.left.fmt(spec.left.max - (spec.left.max - lmin) * i / 4), PAD.l - 9, y);
+    ctx.fillText(minus(spec.left.fmt(spec.left.max - (spec.left.max - lmin) * i / 4)), PAD.l - 9, y);
     if (spec.right) {
       ctx.textAlign = 'left';
       const v = spec.right.max - (spec.right.max - spec.right.min) * i / 4;
-      ctx.fillText(spec.right.fmt(v), PAD.l + W + 9, y);
+      ctx.fillText(minus(spec.right.fmt(v)), PAD.l + W + 9, y);
     }
   }
   for (let i = 0; i <= 4; i++) {
@@ -1185,14 +1279,14 @@ function draw(canvas, spec) {
     ctx.beginPath(); ctx.moveTo(x, PAD.t + yOff); ctx.lineTo(x, PAD.t + yOff + H); ctx.stroke();
     if (!spec.hideX) {
       ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-      ctx.fillText(spec.xFmt(v), x, PAD.t + yOff + H + 9);
+      ctx.fillText(minus(spec.xFmt(v)), x, PAD.t + yOff + H + 9);
     }
   }
 
   /* shaded bands, behind everything */
   for (const b of (spec.bands || [])) {
     if (b.to < xa || b.from > xb) continue;
-    ctx.fillStyle = b.colour;
+    ctx.fillStyle = b.colour || t.mark || '#495057';
     ctx.globalAlpha = 0.07;
     const a = Math.max(X(b.from), PAD.l), c = Math.min(X(b.to), PAD.l + W);
     ctx.fillRect(a, PAD.t + yOff, c - a, H);
@@ -1203,7 +1297,7 @@ function draw(canvas, spec) {
   ctx.setLineDash([3, 3]);
   for (const m of (spec.marks || [])) {
     if (m.x < xa || m.x > xb) continue;
-    ctx.strokeStyle = m.colour;
+    ctx.strokeStyle = m.colour || t.mark || '#495057';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(X(m.x), PAD.t + yOff); ctx.lineTo(X(m.x), PAD.t + yOff + H);
@@ -1216,11 +1310,11 @@ function draw(canvas, spec) {
     if (l.x < xa || l.x > xb) continue;
     const y = (l.axis === 'right' ? YR : YL)(l.y);
     if (y < PAD.t + yOff - 2 || y > PAD.t + yOff + H + 2) continue;
-    ctx.fillStyle = l.colour;
-    ctx.font = '13px ' + font;
+    ctx.fillStyle = l.colour || t.mark || '#495057';
+    ctx.font = LABEL_PX + 'px ' + font;
     ctx.textAlign = 'right';
     ctx.textBaseline = 'bottom';
-    ctx.fillText(l.text, X(l.x), y - 3);
+    haloText(ctx, l.text, X(l.x), y - 3, t.surface);
   }
   ctx.setLineDash([]);
 
@@ -1228,7 +1322,10 @@ function draw(canvas, spec) {
   for (const tr of spec.traces) {
     if (!tr.fill || !tr.pts.length) continue;
     ctx.beginPath();
-    const base = Math.min(PAD.t + yOff + H, Math.max(PAD.t + yOff, YL(lmin)));
+    // down to the foot of the axis, or to the value fillTo names (a current
+    // that is never negative, filled to its zero on an axis that goes below)
+    const base = Math.min(PAD.t + yOff + H, Math.max(PAD.t + yOff,
+      tr.fillTo === undefined ? YL(lmin) : Y(tr.fillTo, tr.axis)));
     ctx.moveTo(X(tr.pts[0].x), base);
     for (const p of tr.pts) ctx.lineTo(X(p.x), Y(p.y, tr.axis));
     ctx.lineTo(X(tr.pts[tr.pts.length - 1].x), base);
@@ -1238,27 +1335,31 @@ function draw(canvas, spec) {
   }
   for (const tr of spec.traces) {
     if (!tr.pts.length) continue;
-    ctx.strokeStyle = tr.colour;
+    ctx.strokeStyle = tr.colour || t.v || '#0D6EFD';
     ctx.lineWidth = tr.width || 2.2;
     ctx.lineJoin = 'round';
+    // a second trace of the same quantity is told apart by being dashed,
+    // not by being faded, so it keeps the colour's full contrast
+    ctx.setLineDash(tr.dash || []);
     ctx.beginPath();
     tr.pts.forEach((p, i) => {
       const x = X(p.x), y = Y(p.y, tr.axis);
       i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
     });
     ctx.stroke();
+    ctx.setLineDash([]);
   }
 
   /* cursor */
   const c = spec.cursor;
   if (c && c.x >= xa && c.x <= xb) {
-    ctx.strokeStyle = c.colour;
+    ctx.strokeStyle = c.colour || t.mark || '#495057';
     ctx.lineWidth = 1.4;
     ctx.beginPath();
     ctx.moveTo(X(c.x), PAD.t + yOff); ctx.lineTo(X(c.x), PAD.t + yOff + H);
     ctx.stroke();
     if (c.dot) {
-      ctx.fillStyle = c.colour;
+      ctx.fillStyle = c.colour || t.mark || '#495057';
       ctx.beginPath();
       ctx.arc(X(c.x), Y(c.dot.y, c.dot.axis), 4.5, 0, Math.PI * 2);
       ctx.fill();
@@ -1268,11 +1369,11 @@ function draw(canvas, spec) {
     }
     if (c.label) {
       ctx.fillStyle = t.soft || '#666';
-      ctx.font = '600 13px ' + font;
+      ctx.font = '600 ' + LABEL_PX + 'px ' + font;
       const nearRight = (xb - c.x) < (xb - xa) * 0.18;
       ctx.textAlign = nearRight ? 'right' : 'left';
       ctx.textBaseline = 'top';
-      ctx.fillText(c.label, X(c.x) + (nearRight ? -8 : 8), PAD.t + yOff + 4);
+      haloText(ctx, c.label, X(c.x) + (nearRight ? -8 : 8), PAD.t + yOff + 4, t.surface);
     }
   }
 }
@@ -1325,10 +1426,109 @@ if (typeof window !== 'undefined') window.Plot = API;
  *     ]
  *   }
  * rot is degrees clockwise; 0 runs left to right, 90 runs top to bottom.
+ *
+ * Every two terminal part has its first terminal at the start of its axis and
+ * its second at the end: at rot 0 the first is on the left, at rot 90 at the
+ * top. A diode's first terminal is its anode, so the triangle points from the
+ * first terminal to the second, the way conventional current flows forward.
+ *
+ * Types: R C L D DZ DV V B Q, and
+ *   CP polarised capacitor, positive (hollow) plate on the first terminal
+ *   S  switch            { open: true } draws it open; closed by default
+ *   N  neon lamp         { lit: true } fills the envelope with its glow
+ *   M  moving coil meter { meter: 'A' } the letter inside: 'V', 'mA', 'µA'...;
+ *                        { reading: 0..1 } draws a needle instead of the letter
+ *   T  transformer       four terminals, see TRANSFORMER_PINS; { humps: [4, 8] }
+ *                        draws the turns ratio, { core: 'air' } drops the iron
+ *                        core lines, { dots: true } marks the phasing
+ * pins(el) gives the terminal positions that the checkers and the junction
+ * dots use, so a symbol and its checks cannot disagree about where its leads
+ * end, and runs(el) the stretches its charge is drawn along.
  */
 
 const BODY = 26;   // length of the symbol body along its axis
 const SPAN = 60;   // total length including both leads
+// The resistor body keeps the house proportion, 56 by 20 (2.8 : 1), so it
+// reads as the same symbol the course draws, at whatever scale the circuit
+// is drawn.
+const R_LEN = 28, R_THK = 10;
+
+// Three terminal devices do not sit along an axis like the passives do.
+// Relative to the centre at rot 0: base, collector, emitter.
+const TRANSISTOR_PINS = [[-30, 0], [12, -32], [12, 32]];
+
+// A transformer at rot 0 has its primary winding on the left and its
+// secondary on the right, both running top to bottom. In order: primary top,
+// primary bottom, secondary top, secondary bottom. Each winding carries its
+// own current, positive from its top terminal to its bottom one.
+const TRANSFORMER_PINS = [[-20, -30], [-20, 30], [20, -30], [20, 30]];
+
+/** Rotate a point clockwise by rot degrees, on the canvas axes (y down). */
+function turn(pt, deg) {
+  const r = (deg || 0) * Math.PI / 180;
+  const c = Math.cos(r), s = Math.sin(r);
+  return [pt[0] * c - pt[1] * s, pt[0] * s + pt[1] * c];
+}
+
+/** Where an element's terminals land, in layout units, rounded to the grid. */
+function pins(el) {
+  const local = el.type === 'Q' ? TRANSISTOR_PINS
+              : el.type === 'T' ? TRANSFORMER_PINS
+              : null;
+  if (local) {
+    return local.map(pt => {
+      const d = turn(pt, el.rot);
+      return [el.at[0] + Math.round(d[0]), el.at[1] + Math.round(d[1])];
+    });
+  }
+  const rad = (el.rot || 0) * Math.PI / 180;
+  const dx = Math.round(Math.cos(rad) * SPAN / 2);
+  const dy = Math.round(Math.sin(rad) * SPAN / 2);
+  return [[el.at[0] - dx, el.at[1] - dy], [el.at[0] + dx, el.at[1] + dy]];
+}
+
+/*
+ * The straight runs charge is drawn along for an element, each with the name
+ * of the current it carries: [x1, y1, x2, y2, name], positive from the first
+ * point to the second. A transformer has one run per winding, named by its
+ * flow: ['primary current', 'secondary current']. An open switch has none,
+ * because nothing crosses the gap. Sources and transistors have none either:
+ * their bodies are not wire. forDrawing splits a run around a body that has
+ * writing in it.
+ */
+function runs(el, forDrawing) {
+  if (el.type === 'V' || el.type === 'B' || el.type === 'Q') return [];
+  if (el.type === 'S' && el.open) return [];
+  const p = pins(el);
+  if (el.type === 'T') {
+    // flowReversed: [false, true] turns one winding round, for a secondary
+    // that drives its current out of its top terminal
+    const f = Array.isArray(el.flow) ? el.flow : [];
+    const rev = Array.isArray(el.flowReversed) ? el.flowReversed : [];
+    const run = (a, b, name, back) => back
+      ? [p[b][0], p[b][1], p[a][0], p[a][1], name]
+      : [p[a][0], p[a][1], p[b][0], p[b][1], name];
+    return [run(0, 1, f[0], rev[0]), run(2, 3, f[1], rev[1])];
+  }
+  const name = el.flow || el.name;
+  const one = el.flowReversed
+    ? [p[1][0], p[1][1], p[0][0], p[0][1], name]
+    : [p[0][0], p[0][1], p[1][0], p[1][1], name];
+  // Drawn charge stops at the edge of a meter, a neon or a lamp, so the
+  // letter, the electrodes or the filament stay readable, and at the
+  // contacts of a closed switch, so the lever still reads as a switch. At a
+  // capacitor it stops at the plates: charge arrives at one and leaves the
+  // other, and none crosses the dielectric between them. The checkers still
+  // see one run end to end.
+  const body = forDrawing && { M: 16, N: 14, S: 15, LP: 10, C: 8, CP: 11 }[el.type];
+  if (!body) return [one];
+  const [x1, y1, x2, y2] = one, len = Math.hypot(x2 - x1, y2 - y1);
+  const ux = (x2 - x1) / len, uy = (y2 - y1) / len, mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+  return [[x1, y1, mx - ux * body, my - uy * body, name],
+          [mx + ux * body, my + uy * body, x2, y2, name]];
+}
+
+const NEON_GLOW = '255,122,26';   // the orange of a struck neon, as r,g,b
 
 function rotated(ctx, x, y, deg, fn) {
   ctx.save();
@@ -1342,14 +1542,13 @@ function rotated(ctx, x, y, deg, fn) {
 
 const SYMBOL = {
   R(ctx) {
-    const h = 11;
     ctx.beginPath();
-    ctx.rect(-BODY / 2, -h / 2, BODY, h);
+    ctx.rect(-R_LEN / 2, -R_THK / 2, R_LEN, R_THK);
     ctx.fillStyle = ctx._surface;
     ctx.fill();
     ctx.stroke();
-    lead(ctx, -SPAN / 2, -BODY / 2);
-    lead(ctx, BODY / 2, SPAN / 2);
+    lead(ctx, -SPAN / 2, -R_LEN / 2);
+    lead(ctx, R_LEN / 2, SPAN / 2);
   },
 
   C(ctx) {
@@ -1360,6 +1559,30 @@ const SYMBOL = {
     ctx.stroke();
     lead(ctx, -SPAN / 2, -gap);
     lead(ctx, gap, SPAN / 2);
+  },
+
+  /*
+   * Polarised (electrolytic) capacitor: a hollow plate for the positive
+   * side and a filled one for the negative. The positive plate is on the
+   * first terminal, so at rot 90 the positive lead is at the top.
+   */
+  CP(ctx) {
+    const h = 20, gap = 3, thk = 5;
+    const lj = ctx.lineJoin;
+    ctx.lineJoin = 'miter';
+    ctx.beginPath();
+    ctx.rect(-gap - thk, -h / 2, thk, h);
+    ctx.fillStyle = ctx._surface;
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.rect(gap, -h / 2, thk, h);
+    ctx.fillStyle = ctx.strokeStyle;
+    ctx.fill();
+    ctx.stroke();
+    ctx.lineJoin = lj;
+    lead(ctx, -SPAN / 2, -gap - thk);
+    lead(ctx, gap + thk, SPAN / 2);
   },
 
   L(ctx) {
@@ -1496,8 +1719,173 @@ const SYMBOL = {
     ctx.lineWidth = w;
     lead(ctx, -SPAN / 2, -gap);
     lead(ctx, gap, SPAN / 2);
+  },
+
+  /*
+   * Switch: two contacts and a lever hinged on the first. Open, the lever is
+   * lifted well clear of the second contact so the gap cannot be misread;
+   * closed, it lies on it.
+   */
+  S(ctx, el) {
+    const c = 13, r = 2.4;
+    lead(ctx, -SPAN / 2, -c - r);
+    lead(ctx, c + r, SPAN / 2);
+    ctx.beginPath();
+    ctx.arc(-c, 0, r, 0, Math.PI * 2);
+    ctx.moveTo(c + r, 0);
+    ctx.arc(c, 0, r, 0, Math.PI * 2);
+    ctx.fillStyle = ctx._surface;
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-c + r * 0.7, -r * 0.7);
+    if (el && el.open) ctx.lineTo(c - 1, -14);
+    else ctx.lineTo(c, -r);
+    ctx.stroke();
+  },
+
+  /*
+   * Neon lamp: a gas filled envelope with two electrodes facing across a gap,
+   * and the dot that says the envelope holds gas. It conducts only once the
+   * voltage across it reaches its striking voltage, and then it glows.
+   */
+  N(ctx, el) {
+    const r = 14, e = 4, h = 7;
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fillStyle = ctx._surface;
+    ctx.fill();
+    if (el && el.lit) {
+      const g = ctx.createRadialGradient(0, 0, 1, 0, 0, r);
+      g.addColorStop(0, 'rgba(' + NEON_GLOW + ',0.95)');
+      g.addColorStop(0.6, 'rgba(' + NEON_GLOW + ',0.5)');
+      g.addColorStop(1, 'rgba(' + NEON_GLOW + ',0.08)');
+      ctx.fillStyle = g;
+      ctx.fill();
+    }
+    ctx.stroke();
+    lead(ctx, -SPAN / 2, -e);
+    lead(ctx, e, SPAN / 2);
+    const w = ctx.lineWidth;
+    ctx.lineWidth = w * 1.6;
+    ctx.beginPath();
+    ctx.moveTo(-e, -h); ctx.lineTo(-e, h);
+    ctx.moveTo(e, -h); ctx.lineTo(e, h);
+    ctx.stroke();
+    ctx.lineWidth = w;
+    ctx.beginPath();
+    ctx.arc(0, 9.5, 1.7, 0, Math.PI * 2);
+    ctx.fillStyle = ctx.strokeStyle;
+    ctx.fill();
+  },
+
+  /* Filament lamp: a circle with a cross through it. */
+  LP(ctx) {
+    const r = 10, k = r * Math.SQRT1_2;
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fillStyle = ctx._surface;
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-k, -k); ctx.lineTo(k, k);
+    ctx.moveTo(-k, k); ctx.lineTo(k, -k);
+    ctx.stroke();
+    lead(ctx, -SPAN / 2, -r);
+    lead(ctx, r, SPAN / 2);
+  },
+
+  /*
+   * Moving coil meter: a circle with what it measures written inside. The
+   * letter, or the needle, is drawn upright afterwards by meterFace, since a
+   * meter on its side still reads the right way up.
+   */
+  M(ctx) {
+    const r = 16;
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fillStyle = ctx._surface;
+    ctx.fill();
+    ctx.stroke();
+    lead(ctx, -SPAN / 2, -r);
+    lead(ctx, r, SPAN / 2);
+  },
+
+  /*
+   * Transformer: two windings facing each other across the core. The number
+   * of humps on each side can follow the turns ratio, so a step down
+   * transformer looks like one.
+   */
+  T(ctx, el) {
+    const humps = (el && el.humps) || [4, 4];
+    const half = 20;                        // each winding spans y -20 to 20
+    [[-20, 1, humps[0]], [20, -1, humps[1]]].forEach(([x, side, n]) => {
+      n = Math.max(1, Math.round(n));
+      const r = half / n;
+      ctx.beginPath();
+      for (let i = 0; i < n; i++) {
+        const cy = -half + r * (2 * i + 1);
+        // bulge towards the core: right for the primary, left for the secondary
+        ctx.arc(x, cy, r, -Math.PI / 2, Math.PI / 2, side < 0);
+      }
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x, -SPAN / 2); ctx.lineTo(x, -half);
+      ctx.moveTo(x, half); ctx.lineTo(x, SPAN / 2);
+      ctx.stroke();
+    });
+    if (!el || el.core !== 'air') {
+      ctx.beginPath();
+      ctx.moveTo(-3, -half - 2); ctx.lineTo(-3, half + 2);
+      ctx.moveTo(3, -half - 2); ctx.lineTo(3, half + 2);
+      ctx.stroke();
+    }
+    if (el && el.dots) {
+      ctx.fillStyle = ctx.strokeStyle;
+      ctx.beginPath();
+      ctx.arc(-27, -half + 2, 2, 0, Math.PI * 2);
+      ctx.arc(27, -half + 2, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 };
+
+/*
+ * The face of a meter, drawn upright whatever way round the meter sits: the
+ * letter for what it measures, or, given a reading, a scale and a needle
+ * deflected that fraction of full scale.
+ */
+function meterFace(ctx, el, t, colour) {
+  ctx.save();
+  ctx.translate(el.at[0], el.at[1]);
+  if (typeof el.reading === 'number') {
+    const k = Math.max(0, Math.min(1, el.reading));
+    const py = 8, len = 15, a0 = -Math.PI * 5 / 6, a1 = -Math.PI / 6;
+    ctx.strokeStyle = t.soft || '#666';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(0, py, len - 2, a0, a1, false);
+    ctx.stroke();
+    const a = a0 + (a1 - a0) * k;
+    ctx.strokeStyle = colour;
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(0, py);
+    ctx.lineTo(Math.cos(a) * len, py + Math.sin(a) * len);
+    ctx.stroke();
+    ctx.fillStyle = colour;
+    ctx.beginPath();
+    ctx.arc(0, py, 2, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    ctx.fillStyle = colour;
+    ctx.font = '600 15px ' + (t.font || 'sans-serif');
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(el.meter || 'A', 0, 1);
+  }
+  ctx.restore();
+}
 
 function lead(ctx, from, to) {
   ctx.beginPath();
@@ -1569,12 +1957,8 @@ function draw(canvas, layout, opts) {
   const bump = (x, y) => { const k = x + ',' + y; ends[k] = (ends[k] || 0) + 1; };
   for (const [x1, y1, x2, y2] of (layout.wires || [])) { bump(x1, y1); bump(x2, y2); }
   for (const el of layout.elements) {
-    if (el.type === 'Q') continue;          // three terminals, not two
-    const rad = (el.rot || 0) * Math.PI / 180;
-    const dx = Math.round(Math.cos(rad) * SPAN / 2);
-    const dy = Math.round(Math.sin(rad) * SPAN / 2);
-    bump(el.at[0] - dx, el.at[1] - dy);
-    bump(el.at[0] + dx, el.at[1] + dy);
+    if (el.type === 'Q') continue;          // its leads end inside the device drawing
+    for (const [x, y] of pins(el)) bump(x, y);
   }
   ctx.fillStyle = t.wire || '#444';
   for (const k in ends) {
@@ -1600,12 +1984,21 @@ function draw(canvas, layout, opts) {
 
   for (const el of layout.elements) {
     const hot = opts.highlight && opts.highlight.has(el.name);
-    const colour = hot ? (t.marker || '#a02') : (t.wire || '#444');
+    // a part is drawn in the colour of what it is, as the course draws it:
+    // resistors dark, inductors green, capacitors purple; anything else, and
+    // any token a caller did not supply, in the wire colour. A highlighted
+    // part keeps that meaning and is drawn heavier, with its label in bold;
+    // a part with no quantity colour is picked out in ink. t.hot overrides.
+    const own = el.type === 'R' ? t.r : el.type === 'L' ? t.l
+              : (el.type === 'C' || el.type === 'CP') ? t.c : null;
+    const colour = hot ? (t.hot || own || t.ink || '#111')
+                       : (own || t.wire || '#444');
     ctx.strokeStyle = colour;
-    ctx.lineWidth = hot ? 2.4 : 1.6;
+    ctx.lineWidth = hot ? 2.6 : 1.6;
     rotated(ctx, el.at[0], el.at[1], el.rot || 0, () => {
-      (SYMBOL[el.type] || SYMBOL.R)(ctx);
+      (SYMBOL[el.type] || SYMBOL.R)(ctx, el);
     });
+    if (el.type === 'M') meterFace(ctx, el, t, colour);
 
     // labels stay upright whatever the symbol orientation
     const label = el.label || el.name;
@@ -1617,8 +2010,12 @@ function draw(canvas, layout, opts) {
       ctx.font = (hot ? '600 ' : '') + '13px ' + (t.font || 'sans-serif');
       ctx.textAlign = vertical ? (leftOf ? 'right' : 'left') : 'center';
       ctx.textBaseline = vertical ? 'middle' : 'bottom';
-      const lx = el.at[0] + (vertical ? (leftOf ? -20 : 20) : 0);
-      const ly = el.at[1] + (vertical ? 0 : -22);   // clear of the body, with a value under it
+      const off = el.type === 'T' ? 36 : (el.type === 'M' || el.type === 'N') ? 24 : 20;
+      const lx = el.at[0] + (vertical ? (leftOf ? -off : off) : 0);
+      // clear of the body, with a value under it; a transformer's terminals
+      // reach 30 above its centre, so its name sits above those
+      const ly = el.at[1] + (vertical ? 0 : (el.type === 'T' ? -36 : el.type === 'M' ? -24
+                                             : el.type === 'LP' ? -26 : -22));
       ctx.fillText(label, lx, ly);
       if (value) {
         ctx.fillStyle = hot ? colour : (t.soft || '#666');
@@ -1634,7 +2031,7 @@ function draw(canvas, layout, opts) {
   }
 }
 
-const API = { draw, SPAN, BODY };
+const API = { draw, pins, runs, SPAN, BODY, R_LEN, R_THK, TRANSISTOR_PINS, TRANSFORMER_PINS };
 if (typeof window !== 'undefined') window.Schematic = API;
 })();
 
@@ -1647,8 +2044,10 @@ if (typeof window !== 'undefined') window.Schematic = API;
  * moving charge is a long standing convention in circuit teaching tools; this
  * is written from our own solver and no other implementation was consulted.
  *
- * We solve a phasor rather than stepping a time domain simulation, so the
- * instantaneous current in any branch is just
+ * Three modes, because three kinds of current turn up in the syllabus.
+ *
+ * 'ac' (the default). We solve a phasor rather than stepping a time domain
+ * simulation, so the instantaneous current in any branch is just
  *
  *     i(t) = |I| cos(wt + arg I)
  *
@@ -1663,13 +2062,35 @@ if (typeof window !== 'undefined') window.Schematic = API;
  * proportional to |I| / w and peaks a quarter cycle after the current does.
  * The scale is arbitrary and chosen to be visible: what carries meaning is
  * the relative size between branches and the relative timing.
+ *
+ * 'dc'. A steady current, so the charge drifts one way at a steady speed in
+ * proportion to the current in its branch: currents are plain numbers in
+ * amperes, and the sign says which way. Because the dots are evenly spaced
+ * on every run, speed in proportion to current is what makes the charge
+ * arriving at a junction equal the charge leaving it, which is Kirchhoff's
+ * current law made visible. compress: true trades that for visibility when
+ * branch currents span orders of magnitude.
+ *
+ * 'time'. The current follows a function of time, for a capacitor or an
+ * inductor charging and discharging. currents is then a function of circuit
+ * time in seconds returning { name: amperes }, and duration is the circuit
+ * time one pass of the animation covers. Each dot's position is the charge
+ * that has passed so far, the integral of that current, so the dots rush at
+ * the switch and creep to a halt as the capacitor fills. Passes join without
+ * a jump: each completed pass carries the charge it moved into the next.
  */
 
 const SPACING = 17;      // gap between dots, in layout units
-const MAX_SWING = 15;    // largest excursion drawn, in layout units
+const MAX_SWING = 15;    // largest excursion drawn on AC, in layout units
+const DRIFT = 36;        // drift speed at the largest current, layout units per second
+const LOOP = 6;          // seconds on screen for one pass of a time series
+const CURRENT = '#FD7E14';  // --q-i, used when a caller passes no colour
+const STEPS = 240;       // integration steps for the charge in a time series
 
 function magOf(c) { return c ? Math.hypot(c.re, c.im) : 0; }
 function argOf(c) { return c ? Math.atan2(c.im, c.re) : 0; }
+/** A current given either as a number or as a phasor, as a real number. */
+function realOf(c) { return typeof c === 'number' ? c : (c ? c.re : 0); }
 
 /**
  * Dots along one straight run.
@@ -1703,11 +2124,95 @@ function endpoints(el, span) {
   return [el.at[0] - dx, el.at[1] - dy, el.at[0] + dx, el.at[1] + dy];
 }
 
+/*
+ * The runs an element's charge is drawn along. The schematic engine knows
+ * where every symbol's terminals are, the transformer's four included, so it
+ * is asked; this fallback covers the two terminal parts when it is absent.
+ */
+function runsOf(el, span) {
+  const S = (typeof window !== 'undefined' && window.Schematic) ||
+            (typeof require === 'function' ? require('./schematic.js') : null);
+  if (S && S.runs) return S.runs(el, true);
+  if (el.type === 'V' || el.type === 'B') return [];
+  const [x1, y1, x2, y2] = endpoints(el, span);
+  const name = el.flow || el.name;
+  return el.flowReversed ? [[x2, y2, x1, y1, name]] : [[x1, y1, x2, y2, name]];
+}
+
+/** Compressive scaling: keeps a small current moving, and moving less. */
+const squash = m => Math.pow(m, 0.32);
+
+/*
+ * Charge passed by every current in a time series, from 0 to tau, by the
+ * trapezium rule. One call evaluates the function STEPS + 1 times for all
+ * branches together, which is cheap enough to do every frame.
+ */
+function chargeTo(fn, tau) {
+  const q = {};
+  if (!(tau > 0)) return q;
+  const h = tau / STEPS;
+  let prev = fn(0) || {};
+  for (let k = 1; k <= STEPS; k++) {
+    const cur = fn(k * h) || {};
+    for (const n of Object.keys(cur)) {
+      q[n] = (q[n] || 0) + 0.5 * h * (realOf(prev[n]) + realOf(cur[n]));
+    }
+    prev = cur;
+  }
+  return q;
+}
+
+// a whole pass, worked out once per function and duration
+const passCache = (typeof WeakMap !== 'undefined') ? new WeakMap() : null;
+function chargePerPass(fn, duration) {
+  const hit = passCache && passCache.get(fn);
+  if (hit && hit.duration === duration) return hit.q;
+  const q = chargeTo(fn, duration);
+  if (passCache) passCache.set(fn, { duration, q });
+  return q;
+}
+
+/**
+ * Where a time series is, for a flow object: the circuit time tau inside the
+ * current pass, how many passes are complete, and the screen seconds a pass
+ * takes. The page reads tau to say what moment the dots are showing.
+ */
+function timeOf(flow) {
+  const loop = flow.loop || LOOP;
+  const time = Math.max(0, flow.time || 0);
+  const passes = Math.floor(time / loop);
+  return { tau: (time - passes * loop) / loop * flow.duration, passes, loop };
+}
+
+/**
+ * Largest current a time series reaches over one pass, among the names
+ * given (all of them when names is empty), sampled finely enough for any
+ * exponential the syllabus asks about.
+ */
+function peakOf(fn, duration, names) {
+  let peak = 0;
+  for (let k = 0; k <= 400; k++) {
+    const cur = fn(duration * k / 400) || {};
+    for (const n of Object.keys(cur)) {
+      if (names && names.size && !names.has(n)) continue;
+      peak = Math.max(peak, Math.abs(realOf(cur[n])));
+    }
+  }
+  return peak;
+}
+
 /**
  * flow = {
- *   phase,                  // wt, advanced by the caller
- *   currents: { name: {re,im} },
- *   iMax,                   // largest |I| in the circuit, for scaling
+ *   mode,                   // 'ac' (default), 'dc' or 'time'
+ *   phase,                  // ac: wt, advanced by the caller
+ *   time,                   // dc and time: seconds of animation so far
+ *   currents,               // ac: { name: {re,im} }; dc: { name: amperes };
+ *                           // time: t => ({ name: amperes })
+ *   duration, loop,         // time: circuit seconds per pass, screen seconds per pass
+ *   charge,                 // time, optional: t => ({ name: coulombs }) passed since
+ *                           // t = 0, exact where the integral is known
+ *   iMax,                   // largest current drawn, for scaling
+ *   compress,               // dc and time: scale speed compressively
  *   colour
  * }
  * A wire carries the current of whichever element the layout names in its
@@ -1717,36 +2222,78 @@ function endpoints(el, span) {
  */
 function draw(ctx, layout, flow, span) {
   if (!flow || !flow.iMax) return;
-  const swing = name => {
-    const I = flow.currents[name];
-    const m = magOf(I) / flow.iMax;
-    if (!isFinite(m) || m <= 0) return null;
-    /*
-     * Currents in one circuit can differ by four orders of magnitude: a base
-     * carries microamps while its collector carries hundreds of milliamps.
-     * Scaling the movement linearly against the largest makes every other
-     * branch sit perfectly still, which reads as a broken animation rather
-     * than as a small current. Compressing the scale keeps the ordering
-     * visible, so a smaller current still moves and still moves less.
-     */
-    const shown = Math.pow(m, 0.32);
-    // integrating cos gives sin, so the charge lags the current by 90 degrees
-    return { off: MAX_SWING * shown * Math.sin(flow.phase + argOf(I)),
-             intensity: Math.max(0.18, Math.min(1, shown)) };
-  };
+  // moving charge is current, and current is orange everywhere (--q-i)
+  if (!flow.colour) flow = Object.assign({}, flow, { colour: CURRENT });
+  const mode = flow.mode || 'ac';
+  let swing;
+
+  if (mode === 'dc') {
+    const time = flow.time || 0;
+    swing = name => {
+      const I = realOf(flow.currents[name]);
+      const m = Math.abs(I) / flow.iMax;
+      if (!isFinite(m) || m <= 0) return null;
+      const speed = flow.compress ? squash(m) : m;
+      return { off: Math.sign(I) * DRIFT * speed * time,
+               intensity: Math.max(0.18, Math.min(1, squash(m))) };
+    };
+  } else if (mode === 'time') {
+    const fn = flow.currents;
+    if (typeof fn !== 'function' || !(flow.duration > 0)) return;
+    const { tau, passes, loop } = timeOf(flow);
+    const now = fn(tau) || {};
+    // the charge passed so far: the panel's closed form when it gives one,
+    // which is exact, otherwise the current integrated numerically
+    const qOf = typeof flow.charge === 'function'
+      ? (t => flow.charge(t) || {}) : (t => chargeTo(fn, t));
+    const qNow = qOf(tau);
+    const qPass = !passes ? {} : typeof flow.charge === 'function'
+      ? qOf(flow.duration) : chargePerPass(fn, flow.duration);
+    // layout units moved per coulomb, so that the largest current drifts at
+    // DRIFT on screen; a pass of `duration` circuit seconds takes `loop` seconds
+    const perCoulomb = DRIFT * loop / (flow.duration * flow.iMax);
+    swing = name => {
+      if (!(name in now) && !(name in qNow)) return null;
+      const m = Math.abs(realOf(now[name])) / flow.iMax;
+      const q = passes * (qPass[name] || 0) + (qNow[name] || 0);
+      if (!isFinite(m) || (m <= 0 && !q)) return null;
+      // compress acts on the distance moved, which keeps the order of branches
+      const off = flow.compress
+        ? Math.sign(q) * DRIFT * loop * squash(Math.abs(q) / (flow.duration * flow.iMax))
+        : q * perCoulomb;
+      return { off, intensity: m > 0 ? Math.max(0.18, Math.min(1, squash(m))) : 0.18 };
+    };
+  } else {
+    swing = name => {
+      const I = flow.currents[name];
+      const m = magOf(I) / flow.iMax;
+      if (!isFinite(m) || m <= 0) return null;
+      /*
+       * Currents in one circuit can differ by four orders of magnitude: a base
+       * carries microamps while its collector carries hundreds of milliamps.
+       * Scaling the movement linearly against the largest makes every other
+       * branch sit perfectly still, which reads as a broken animation rather
+       * than as a small current. Compressing the scale keeps the ordering
+       * visible, so a smaller current still moves and still moves less.
+       */
+      const shown = squash(m);
+      // integrating cos gives sin, so the charge lags the current by 90 degrees
+      return { off: MAX_SWING * shown * Math.sin(flow.phase + argOf(I)),
+               intensity: Math.max(0.18, Math.min(1, shown)) };
+    };
+  }
 
   for (const el of layout.elements) {
-    if (el.type === 'V' || el.type === 'B') continue;   // a source body is not a wire run
-    // a coupling capacitor is a short to the signal and so is absent from the
-    // netlist, but it still carries a current, named here by el.flow
-    const s = swing(el.flow || el.name);
-    if (!s) continue;
-    // A part drawn the other way round from the current it is named for,
-    // such as a reverse biased diode, says so, and its dots run from its
-    // second end to its first.
-    const [x1, y1, x2, y2] = endpoints(el, span);
-    if (el.flowReversed) dotsAlong(ctx, x2, y2, x1, y1, s.off, s.intensity, flow.colour);
-    else dotsAlong(ctx, x1, y1, x2, y2, s.off, s.intensity, flow.colour);
+    // A coupling capacitor is a short to the signal and so is absent from the
+    // netlist, but it still carries a current, named here by el.flow. A part
+    // drawn the other way round from the current it is named for, such as a
+    // reverse biased diode, says so with flowReversed, and its dots run from
+    // its second end to its first.
+    for (const [x1, y1, x2, y2, name] of runsOf(el, span)) {
+      const s = name ? swing(name) : null;
+      if (!s) continue;
+      dotsAlong(ctx, x1, y1, x2, y2, s.off, s.intensity, flow.colour);
+    }
   }
 
   for (const w of (layout.wires || [])) {
@@ -1757,7 +2304,8 @@ function draw(ctx, layout, flow, span) {
   }
 }
 
-const API = { draw, magOf, argOf, SPACING, MAX_SWING };
+const API = { draw, timeOf, peakOf, chargeTo, magOf, argOf, realOf,
+              SPACING, MAX_SWING, DRIFT, LOOP };
 if (typeof window !== 'undefined') window.Flow = API;
 })();
 
@@ -1866,7 +2414,7 @@ const DEVICE = {
     ctx.beginPath(); ctx.moveTo(3, 0); ctx.lineTo(-5, -3.6); ctx.lineTo(-5, 3.6);
     ctx.closePath(); ctx.fillStyle = ctx.strokeStyle; ctx.fill();
   },
-  dgmos(ctx) {
+  dgmos(ctx, u) {
     ctx.beginPath(); ctx.arc(0, 0, 22, 0, Math.PI * 2); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(6, -16); ctx.lineTo(6, 16); ctx.stroke();       // channel, solid: depletion
     ctx.beginPath(); ctx.moveTo(6, -12); ctx.lineTo(12, -12); ctx.lineTo(12, -32); ctx.stroke();
@@ -1880,41 +2428,145 @@ const DEVICE = {
     ctx.beginPath(); ctx.moveTo(1, -15); ctx.lineTo(1, -3); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-10, 0); ctx.lineTo(-10, 9); ctx.lineTo(1, 9); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(1, -9); ctx.lineTo(-14, -9); ctx.lineTo(-14, -40); ctx.stroke();
-    // labels clear of every lead: G1 below its lead, G2 left of its own
-    ctx.font = '13px sans-serif'; ctx.fillStyle = ctx.strokeStyle;
-    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-    ctx.fillText('G1', -14, 15); ctx.fillText('G2', -18, -26);
+    // labels clear of every lead: G1 below its lead, G2 left of its own, at
+    // 15 px on screen whatever the drawing's scale (u is layout units per px)
+    ctx.font = '600 ' + (LABEL_PX * (u || 1)) + 'px ' + (ctx._labelFont || 'sans-serif');
+    ctx.fillStyle = ctx._labelInk || ctx.strokeStyle;
+    ctx.textAlign = 'right'; ctx.textBaseline = 'top';
+    ctx.fillText('G1', -24, 12);
+    ctx.textBaseline = 'middle';
+    ctx.fillText('G2', -19, -28);
   }
 };
+const LABEL_PX = 15;          // nothing on a circuit smaller than this, as on a plot
 // where gate 2 of a dual gate device leaves its symbol, relative to its centre
 const DG_G2 = [-14, -40];
+
+/*
+ * Colours. Every line is the colour of the quantity it shows (README,
+ * "Colours"): a current orange, a voltage blue, a capacitance purple, the
+ * resistor's own line dark, a cursor or mark neutral. Two lines of one
+ * quantity are told apart by dashing the second or tinting a family, never
+ * by a new hue. A dashed trace here is the same points broken into short
+ * runs, about 8 px on and 5 px off at whatever width the graph is drawn
+ * (written before the plot engine took `dash`; it draws the same thing).
+ */
+function dashTrace(tr, canvas, xRange) {
+  const [a, b] = xRange;
+  const px = Math.max(120, ((canvas && canvas.clientWidth) || 600) - 150);
+  const per = (b - a) * 13 / px;
+  const runs = [];
+  let run = null;
+  for (const q of tr.pts) {
+    const ph = ((q.x - a) / per) % 1;
+    if (ph < 8 / 13) {
+      if (!run) { run = Object.assign({}, tr, { pts: [], fill: null }); runs.push(run); }
+      run.pts.push(q);
+    } else {
+      run = null;
+    }
+  }
+  return runs;
+}
+// a legend swatch drawn dashed, for a dashed trace or a dashed mark
+const dashed = c => 'repeating-linear-gradient(90deg,' + c + ' 0 4px,transparent 4px 7px)';
+// the same hue, lighter, for a family of curves behind the one that matters
+function tint(c, a) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(String(c || '').trim());
+  if (!m) return c;
+  const n = parseInt(m[1], 16);
+  return 'rgba(' + (n >> 16) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
+}
+
+/*
+ * Circuit size and labels. The template's 230 px canvas drew these circuits
+ * at about three quarters scale, and the engine's 13 px labels with them, so
+ * they came out between 9 and 13 px. Each panel now makes its circuit canvas
+ * tall enough to draw at SCHEM_SCALE where the column is wide enough (the
+ * column is widened by circuitColumn below), and the labels are drawn here at
+ * 15 px on screen whatever the scale, in place of the engine's.
+ */
+const SCHEM_SCALE = 1.4;
+function sizeStage(p, layout, twoPlots) {
+  const cv = p.schem;
+  if (!cv || !layout || !cv.style) return;
+  const cw = cv.clientWidth || 300;
+  const s = Math.min(SCHEM_SCALE, (cw - 32) / layout.w);
+  const h = Math.max(230, Math.round(s * layout.h + 32));
+  cv.style.height = h + 'px';
+  // side by side, the graph is given the circuit's height; stacked on a
+  // narrow screen, a graph of two plots is given room for both scales
+  const side = typeof window !== 'undefined' && window.matchMedia &&
+    window.matchMedia('(min-width:820px)').matches;
+  if (p.graph && p.graph.style) {
+    p.graph.style.height = side ? Math.max(h, twoPlots ? 360 : 0) + 'px' : (twoPlots ? '380px' : '');
+  }
+}
 
 if (typeof window !== 'undefined' && window.Schematic && window.Schematic.draw &&
     !window.Schematic.draw.withDevices) {
   const plainDraw = window.Schematic.draw;
   const withDevices = function (canvas, layout, opts) {
+    opts = opts || {};
     const special = (layout.elements || []).filter(e => e.kind && DEVICE[e.kind]);
-    if (!special.length) return plainDraw(canvas, layout, opts);
-    const rest = Object.assign({}, layout,
-      { elements: layout.elements.filter(e => special.indexOf(e) < 0) });
-    plainDraw(canvas, rest, opts);
+    // the engine draws everything but the special devices, with no labels
+    const rest = Object.assign({}, layout, {
+      elements: layout.elements.filter(e => special.indexOf(e) < 0)
+        .map(e => Object.assign({}, e, { label: ' ' })),
+      terminals: (layout.terminals || []).map(x => Object.assign({}, x, { label: '' }))
+    });
+    plainDraw(canvas, rest, Object.assign({}, opts, { labels: {} }));
     // the engine leaves its context scaled into layout units, so the devices
     // land exactly where their pins were laid out
     const ctx = canvas.getContext('2d');
-    const t = (opts && opts.tokens) || {};
+    const t = opts.tokens || {};
+    const k = Math.min((canvas.clientWidth - 32) / layout.w, (canvas.clientHeight - 32) / layout.h);
+    const u = 1 / Math.max(1e-6, k);             // layout units per screen pixel
+    const px = LABEL_PX * u;
+    const font = t.font || 'sans-serif';
     for (const el of special) {
       ctx.save();
       ctx.translate(el.at[0], el.at[1]);
       ctx.strokeStyle = t.wire || '#444';
       ctx.lineWidth = 1.6;
-      DEVICE[el.kind](ctx);
+      ctx._labelFont = font; ctx._labelInk = t.ink;
+      DEVICE[el.kind](ctx, u);
       ctx.restore();
-      if (el.label) {
-        ctx.fillStyle = t.ink || '#111';
-        ctx.font = '13px ' + (t.font || 'sans-serif');
+    }
+    // every label upright, where the engine would have put it
+    for (const el of layout.elements) {
+      const text = el.label === undefined ? el.name : el.label;
+      if (!text || !String(text).trim()) continue;
+      const hot = opts.highlight && opts.highlight.has(el.name);
+      const own = el.type === 'R' ? t.r : el.type === 'L' ? t.l
+                : (el.type === 'C' || el.type === 'CP') ? t.c : t.ink;
+      ctx.fillStyle = hot ? (own || '#111') : (t.ink || '#111');
+      ctx.font = (hot ? '700 ' : '600 ') + px + 'px ' + font;
+      const [x, y] = el.at;
+      if (el.type === 'Q') {
         ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-        ctx.fillText(el.label, el.at[0] + 26, el.at[1]);
+        ctx.fillText(text, x + 26, y);
+        continue;
       }
+      const vertical = (el.rot || 0) % 180 !== 0;
+      if (vertical) {
+        const off = (el.type === 'M' || el.type === 'N') ? 24 : 20;
+        const left = el.labelAt === 'left';
+        ctx.textAlign = left ? 'right' : 'left'; ctx.textBaseline = 'middle';
+        ctx.fillText(text, x + (left ? -off : off), y);
+      } else if (el.labelAt === 'below') {
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.fillText(text, x, y + 16);
+      } else {
+        ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        ctx.fillText(text, x, y - 20);
+      }
+    }
+    for (const term of (layout.terminals || [])) {
+      ctx.fillStyle = t.soft || '#666';
+      ctx.font = '600 ' + px + 'px ' + font;
+      ctx.textAlign = term.align || 'left'; ctx.textBaseline = 'middle';
+      ctx.fillText(term.label, term.at[0] + (term.align === 'right' ? -8 : 8), term.at[1]);
     }
   };
   withDevices.withDevices = true;
@@ -2232,7 +2884,7 @@ function dualGateLayout() {
       { name: 'R1', type: 'R', at: [40, 48], rot: 270, label: 'R1', labelAt: 'left', flow: '-' },
       { name: 'R2', type: 'R', at: [40, 150], rot: 90, label: 'R2', labelAt: 'left', flow: '-' },
       { name: 'CG', type: 'C', at: [g2[0], 90], rot: 270, label: 'CG', labelAt: 'left', flow: '-' },
-      { name: 'RG', type: 'R', at: [180, 190], rot: 90, label: 'RG' },
+      { name: 'RG', type: 'R', at: [180, 190], rot: 90, label: 'RG', labelAt: 'left' },
       { name: 'C1', type: 'C', at: [150, 160], label: 'C1', flow: 'RIN' },
       { name: 'RD', type: 'R', at: [252, 48], rot: 90, label: 'RD' },
       { name: 'C2', type: 'C', at: [300, 100], label: 'C2', flow: '-' },
@@ -2348,7 +3000,8 @@ function classLayout(kind) {
     lay.elements = lay.elements.filter(e => e.name !== 'RC' && e.name !== 'C2').concat([
       { name: 'LT', type: 'L', at: [192, 48], rot: 90, label: 'L', labelAt: 'left' },
       { name: 'CT', type: 'C', at: [244, 48], rot: 90, label: 'C' },
-      { name: 'C2', type: 'C', at: [250, 108], label: 'C2', flow: 'RLD' },
+      // labelled below, clear of the tank above it
+      { name: 'C2', type: 'C', at: [250, 108], label: 'C2', labelAt: 'below', flow: 'RLD' },
       { name: 'RLD', type: 'R', at: [280, 138], rot: 90, label: 'load' }
     ]);
     lay.wires = lay.wires.filter(w => !(w[0] === 192 && w[1] === 78) && w[4] !== '-')
@@ -2483,6 +3136,11 @@ function oscillatorLoop(v) {
     } else {
       const gm0 = b.ic / VT;
       const room = Math.max(0, vcc - VSAT - b.ve);    // emitter's distance to the rail
+      // The base cannot swing more than a junction drop above the collector,
+      // which sits on the rail: there the collector junction conducts and
+      // the transistor saturates. So the base swing is held below baseRoom,
+      // and past it what comes back can be no larger, whatever the loop.
+      const baseRoom = Math.max(1e-3, vcc + VBE - b.vb);
       const curve = [];
       // swept by the base to emitter swing, which gives the base swing directly
       for (let i = 0; i <= 32; i++) {
@@ -2493,7 +3151,10 @@ function oscillatorLoop(v) {
         // past the rail the transistor saturates and clamps the swing, so
         // from there on it behaves as a limiter: what comes back stops growing
         const k = DC.fundamentalGain(s.A * vb, room, room);
-        curve.push({ vb: vb, T: s.T * k, A: s.A * k, N: s.N, f: s.f, qL: s.qL, gm: gm });
+        // the clamp at the base, put down to the follower, which is what
+        // has saturated
+        const c = Math.min(1, baseRoom / Math.max(1e-12, s.T * k * vb));
+        curve.push({ vb: vb, T: s.T * k * c, A: s.A * k * c, N: s.N, f: s.f, qL: s.qL, gm: gm });
       }
       const Tss = curve[0].T;
       let settle = 0;
@@ -2507,7 +3168,13 @@ function oscillatorLoop(v) {
           }
         }
       }
-      o = { state: 'active', b: b, curve: curve, Tss: Tss, settle: settle, gm0: gm0 };
+      // settled at the clamp, rather than where the current runs out (the
+      // curve is sampled, so a settling point read off it can overshoot the
+      // clamp by a hair)
+      const clamped = settle > 0 && settle > 0.97 * baseRoom;
+      if (settle > baseRoom) settle = baseRoom;
+      o = { state: 'active', b: b, curve: curve, Tss: Tss, settle: settle, gm0: gm0,
+            baseRoom: baseRoom, clamped: clamped };
     }
     oscCache[key] = o;
   }
@@ -2603,49 +3270,65 @@ function diodeOperating(vsupply, r, opts) {
   return { i: i, vd: window.DC.diodeVoltage(i, opts), vr: i * r };
 }
 
-/* The diode in the circuit the questions describe: supply, resistor, diode. */
 /*
  * The varicap as it is actually used: a coil with the diode across it, fed
  * with a control voltage through a resistor big enough not to damp the tuned
  * circuit. Reverse bias widens the depletion layer, the capacitance falls,
- * and the resonant frequency rises.
+ * and the resonant frequency rises. The coil is a short circuit to DC, so it
+ * reaches the diode through a blocking capacitor, CB; without it the coil
+ * would hold the diode at 0 V whatever the control said. CB is large beside
+ * the varicap, so it barely moves the tuning, but it is in the sum.
  */
 const VARICAP_C0 = 62e-12;    // capacitance with no reverse voltage on it
 const VARICAP_VJ = 0.7;       // the junction voltage it scales against
 const VARICAP_L = 4.7e-6;     // the coil we tune, held fixed so one thing moves
+const VARICAP_CB = 100e-9;    // blocks DC from the coil, a short at RF
 
 function varicapC(vr) {
   return VARICAP_C0 / Math.sqrt(1 + Math.max(0, vr) / VARICAP_VJ);
 }
 
 function varicapF(vr) {
-  return 1 / (2 * Math.PI * Math.sqrt(VARICAP_L * varicapC(vr)));
+  const c = varicapC(vr), cTank = c * VARICAP_CB / (c + VARICAP_CB);
+  return 1 / (2 * Math.PI * Math.sqrt(VARICAP_L * cTank));
 }
 
+/*
+ * The tank as a signal sees it. The control supply is steady, so it carries
+ * no signal and is signal ground; R1 runs from the tank to it. What sets the
+ * tank ringing is not drawn, a small current fed in at its top, so the
+ * charge drawn is the current circulating between the coil and the diode.
+ */
 function varicapNetlist(c) {
   const F = window.Fmt;
-  return 'V1 in 0 1\nR1 in a 47000\nL1 a 0 ' + F.sci(VARICAP_L) +
-         '\nC1 a 0 ' + F.sci(c);
+  return 'I1 0 a 1m\nR1 a 0 47000\nCB a x ' + F.sci(VARICAP_CB) +
+         '\nL1 x 0 ' + F.sci(VARICAP_L) + '\nC1 a 0 ' + F.sci(c);
 }
 
-function varicapLayout(c) {
+function varicapLayout() {
   return {
-    w: 280, h: 200,
+    w: 290, h: 200,
     elements: [
       { name: 'V1', type: 'B', at: [30, 100], rot: 90, label: 'control' },
-      { name: 'R1', type: 'R', at: [90, 70], label: 'R' },
-      { name: 'L1', type: 'L', at: [170, 100], rot: 90, label: 'L', labelAt: 'left' },
+      // R1 is far larger than the tank's own impedance, so the little signal
+      // it takes is not drawn
+      { name: 'R1', type: 'R', at: [100, 40], label: 'R', flow: '-' },
+      { name: 'CB', type: 'C', at: [180, 70], rot: 90, label: 'CB', labelAt: 'left' },
+      { name: 'L1', type: 'L', at: [180, 130], rot: 90, label: 'L', labelAt: 'left' },
       // cathode up to the control voltage: the varicap is reverse biased
-      { name: 'D1', type: 'DV', at: [240, 100], rot: 270, label: 'varicap',
+      { name: 'D1', type: 'DV', at: [250, 100], rot: 270, label: 'varicap',
         labelAt: 'left', flow: 'C1', flowReversed: true }
     ],
-    wires: [[30, 70, 60, 70, 'R1'], [120, 70, 170, 70, 'L1'],
-            [170, 70, 240, 70, 'C1'], [240, 130, 170, 130, 'C1'],
-            [170, 130, 30, 130, 'L1']],
-    grounds: [[100, 130]]
+    wires: [[30, 40, 70, 40, '-'], [30, 70, 30, 40, '-'],
+            [130, 40, 180, 40, '-'],
+            [180, 40, 250, 40, 'C1'], [250, 40, 250, 70, 'C1'],
+            [250, 130, 250, 160, 'C1'], [250, 160, 180, 160, 'C1'],
+            [180, 160, 30, 160, '-'], [30, 160, 30, 130, '-']],
+    grounds: [[110, 160]]
   };
 }
 
+/* The diode in the circuit the questions describe: supply, resistor, diode. */
 function diodeLayout(zener) {
   return {
     w: 250, h: 200,
@@ -2654,8 +3337,9 @@ function diodeLayout(zener) {
       { name: 'RC', type: 'R', at: [110, 70], label: 'R' },
       // the plain diode points down, forward biased; the Zener points up,
       // cathode to the positive side, because it is used reverse biased
+      // one current round the loop; the Zener, cathode up, carries it downward
       { name: 'D1', type: zener ? 'DZ' : 'D', at: [190, 100], rot: zener ? 270 : 90,
-        label: zener ? 'Zener' : 'D' }
+        label: zener ? 'Zener' : 'D', flow: 'RC', flowReversed: !!zener }
     ],
     wires: [[30, 70, 80, 70, 'RC'], [140, 70, 190, 70, 'RC'],
             [190, 130, 30, 130, 'RC']],
@@ -2677,6 +3361,8 @@ const BENCH = {
            'Full session 13 (Transmitters 3: power amplifiers and a clean signal)']
   },
   circuitBased: true,
+  // a wider circuit column, so the circuits draw near full size (sizeStage)
+  circuitColumn: 420,
 
   /** Every circuit this bench draws, for the layout checker. */
   allLayouts: () => {
@@ -2704,9 +3390,11 @@ const BENCH = {
     })).concat([
       { name: 'Colpitts', layout: colpittsLayout(),
         netlist: oscNetlist(d, d.osc.b, d.osc.gm || 1e-3, d.drive) },
-      { name: 'diode', layout: diodeLayout(false), netlist: 'series' },
-      { name: 'zener', layout: diodeLayout(true), netlist: 'series' },
-      { name: 'varicap', layout: varicapLayout(60e-12), netlist: varicapNetlist(60e-12) }
+      { name: 'diode', layout: diodeLayout(false), netlist: 'series',
+        flow: { mode: 'dc', currents: { RC: diodeOperating(d.vcc, d.rc, {}).i } } },
+      { name: 'zener', layout: diodeLayout(true), netlist: 'series',
+        flow: { mode: 'dc', currents: { RC: zenerOperating(d.vcc, d.rc, ZENER_V).i } } },
+      { name: 'varicap', layout: varicapLayout(), netlist: varicapNetlist(60e-12) }
     ]);
   },
   bank: {
@@ -2722,8 +3410,8 @@ const BENCH = {
       'Move them and watch the operating point travel, because where a device sits before the signal arrives decides what it does to the signal when it turns up.'
     ],
     full: [
-      'Where you bias a device is the single most consequential decision you make about it. Sit it halfway up and it reproduces the signal faithfully and wastes half the supply doing so. Sit it lower and it starts switching off for part of every cycle, which is more efficient and less faithful.',
-      'That trade is what amplifier classes are. They are not four different circuits, they are one bias setting moved, and this bench lets you move it and watch A become AB, then B, then C.',
+      'Where you bias a device decides how it behaves. Sit it halfway up and it reproduces the signal faithfully, and at least half the power it draws becomes heat. Sit it lower and it starts switching off for part of every cycle, which is more efficient and less faithful.',
+      'That trade is what amplifier classes are. Each class is a bias setting; the page also draws the circuit usually built for each. Move the bias and watch A become AB, then B, then C.',
       'The controls along the top are the parts of that circuit, and it is drawn beside every panel: R1 and R2 set the base voltage between them, RE fixes the current, RC turns it back into voltage, and beta is the device.'
     ]
   },
@@ -2779,7 +3467,7 @@ const BENCH = {
   },
 
   controls: [
-    { id: 'vcc', label: 'Supply', unit: 'V', range: [5, 24], start: 12, linear: true,
+    { id: 'vcc', label: 'Supply', unit: 'V', range: [5, 24], start: 12, linear: true, integer: true,
       desc: 'The rail the stage runs from. Worked designs often use 10 V' },
     { id: 'r1', label: 'R1', unit: 'Ω', range: [10e3, 470e3], start: 47e3,
       desc: 'Upper bias resistor, from the supply to the base' },
@@ -2886,7 +3574,7 @@ const BENCH = {
             applies: d => d.device === 'jfet',
             eq: 'V<sub>GS</sub> = V<sub>G</sub> &minus; V<sub>S</sub>',
             work: d => ['<b>' + FI.trim(d.fet.vg, 3) + ' V</b> &minus; <b>' + FI.trim(d.fet.vs, 3) + ' V</b>',
-                        FI.trim(d.fet.vgs, 3) + ' V' + (d.fet.vgs < 0
+                        FI.trimText(d.fet.vgs, 3) + ' V' + (d.fet.vgs < 0
                           ? ', the gate below the source, as a depletion FET needs'
                           : ', the gate above the source: too far for a JFET')] },
     theta: { given: false, name: 'How much of the cycle it conducts for',
@@ -2952,13 +3640,14 @@ const BENCH = {
      */
     transfer(ctx) {
       const { p, d, t, level, Plot, swatch, ro, Fmt } = ctx;
-      const { eng, trim } = Fmt;
+      const { eng, trimText: trim } = Fmt;
       // the device toggle is a Full level control; below Full it is always NPN
       const dev = level === 'full' ? (p.topology || 'npn') : 'npn';
       if (dev === 'jfet') return BENCH.panels.fetBias(ctx);
       if (dev === 'dualgate') return BENCH.panels.dualGateBias(ctx);
+      sizeStage(p, dev === 'pnp' ? pnpLayout() : configLayout('ce'));
 
-      const iMax = d.icSat;                            // most the circuit can pass
+      const iMax = d.icSat;                           // most the circuit can pass
       const ibFull = iMax / d.beta;                    // base current that gets there
       const ibMax = Math.max(ibFull * 1.6, d.ib * 1.3);
 
@@ -2968,21 +3657,25 @@ const BENCH = {
         pts.push({ x: ib, y: Math.min(d.beta * ib, iMax) });
         ideal.push({ x: ib, y: d.beta * ib });
       }
+      // both lines are collector current: the one beta alone would give is
+      // the same orange, dashed and thin, under the one the circuit allows
       const spec = {
         xRange: [0, ibMax], xFmt: x => eng(x, 'A', 2), tokens: t,
         left: { max: iMax * 1.15, fmt: y => eng(y, 'A', 2) },
-        traces: [{ pts: ideal, colour: t.faint, axis: 'left', width: 1.2 },
-                 { pts: pts, colour: t.trace, fill: t.fill, axis: 'left', width: 2.4 }],
-        marks: [{ x: ibFull, colour: t.marker }],
-        cursor: { x: Math.min(d.ib, ibMax), colour: t.phase,
+        traces: dashTrace({ pts: ideal.filter(q => q.y <= iMax * 1.15), colour: t.i,
+                            axis: 'left', width: 1.4 },
+                          p.graph, [0, ibMax])
+          .concat([{ pts: pts, colour: t.i, fill: t.iFill, axis: 'left', width: 2.4 }]),
+        marks: [{ x: ibFull, colour: t.mark }],
+        cursor: { x: Math.min(d.ib, ibMax), colour: t.mark,
                   dot: { y: d.ic, axis: 'left' },
                   label: 'where it is biased' }
       };
       Plot.draw(p.graph, spec);
-      p.legend.innerHTML = swatch(t.trace, 'Collector current') +
-        swatch(t.faint, 'What beta alone would give') +
-        swatch(t.marker, 'Saturated beyond here') +
-        swatch(t.phase, 'The operating point');
+      p.legend.innerHTML = swatch(t.i, 'Collector current') +
+        swatch(dashed(t.i), 'What beta alone would give') +
+        swatch(dashed(t.mark), 'Saturated beyond here') +
+        swatch(t.mark, 'The operating point');
 
       const state = d.state === 'cut off' ? 'cut off, no current at all'
         : (d.saturated ? 'saturated, a closed switch' : 'amplifying, on the straight part');
@@ -3014,17 +3707,24 @@ const BENCH = {
     /*
      * The JFET, worked the way it is drawn graphically: the device's own
      * curve of drain current against gate voltage, and the line the source
-     * resistor imposes, vgs = vg - id rs. Where they cross is where it sits.
+     * resistor imposes, vgs = vg - id rs. Where they cross is where it sits,
+     * provided the drain has voltage to spare. When it has not (the ohmic
+     * region, as at the starting values) the device passes less than that
+     * curve says, so the curve it really sits on, the same device with only
+     * the drain to source voltage it actually has, is drawn dashed.
      */
     fetBias(ctx) {
       const { p, d, t, Plot, swatch, ro, Fmt } = ctx;
-      const { eng, trim } = Fmt;
+      const { eng, trimText: trim } = Fmt;
+      sizeStage(p, jfetLayout());
       const f = d.fet;
-      const curve = [], line = [];
+      const ohmic = f.region === 'ohmic';
+      const curve = [], line = [], short = [];
       const xLo = FET_VP - 0.5, xHi = 0.6;
       for (let i = 0; i <= 300; i++) {
         const vgs = xLo + (xHi - xLo) * i / 300;
         curve.push({ x: vgs, y: DC.jfetCurrent(vgs, 1e9, FET_IDSS, FET_VP) });
+        if (ohmic) short.push({ x: vgs, y: DC.jfetCurrent(vgs, f.vds, FET_IDSS, FET_VP) });
         // the source resistor's line: id = (vg - vgs) / rs
         line.push({ x: vgs, y: (f.vg - vgs) / d.re });
       }
@@ -3032,20 +3732,28 @@ const BENCH = {
       Plot.draw(p.graph, {
         xRange: [xLo, xHi], xFmt: x => trim(x, 2) + ' V', tokens: t,
         left: { min: 0, max: top, fmt: y => eng(y, 'A', 2) },
-        traces: [{ pts: curve, colour: t.trace, fill: t.fill, axis: 'left', width: 2.4 },
-                 { pts: line.filter(q => q.y >= 0 && q.y <= top), colour: t.phase, axis: 'left', width: 1.6 }],
-        marks: [{ x: FET_VP, colour: t.marker }, { x: 0, colour: t.faint }],
-        cursor: { x: Math.max(xLo, Math.min(xHi, f.vgs)), colour: t.phase,
+        traces: [{ pts: curve, colour: t.i, fill: t.iFill, axis: 'left', width: 2.4 }]
+          .concat(ohmic ? dashTrace({ pts: short, colour: t.i, axis: 'left', width: 1.8 },
+                                    p.graph, [xLo, xHi]) : [])
+          .concat([{ pts: line.filter(q => q.y >= 0 && q.y <= top), colour: t.r, axis: 'left', width: 1.8 }]),
+        marks: [{ x: FET_VP, colour: t.mark }, { x: 0, colour: t.faint }],
+        cursor: { x: Math.max(xLo, Math.min(xHi, f.vgs)), colour: t.mark,
                   dot: { y: f.id, axis: 'left' }, label: 'where it sits' }
       });
-      p.legend.innerHTML = swatch(t.trace, 'Drain current against gate to source voltage') +
-        swatch(t.phase, 'What the source resistor allows') +
-        swatch(t.marker, 'Pinch off, ' + FET_VP + ' V');
+      p.legend.innerHTML = swatch(t.i, 'Drain current against gate to source voltage, drain voltage to spare') +
+        (ohmic ? swatch(dashed(t.i), 'The same, with only the ' + trim(f.vds, 2) +
+                        ' V from drain to source it has') : '') +
+        swatch(t.r, 'What the source resistor allows') +
+        swatch(dashed(t.mark), 'Pinch off, ' + trim(FET_VP, 2) + ' V') +
+        swatch(dashed(t.faint), '0 V: gate at the source voltage') +
+        swatch(t.mark, 'Where it sits');
       const region = f.vgs > 0
         ? 'gate above the source: a real JFET’s gate junction would conduct, so this is no way to bias one'
         : { 'cut off': 'pinched right off, no current',
             'pinched off': 'amplifying: the drain current follows the gate',
-            'ohmic': 'ohmic: the drain has run out of voltage, like a saturated transistor' }[f.region];
+            'ohmic': 'ohmic: RD drops so much that only ' + trim(f.vds, 2) +
+                     ' V is left from drain to source, so it sits below the full curve, ' +
+                     'on the dashed one, like a saturated transistor' }[f.region];
       p.readouts.innerHTML = ro([
         ['Gate, from the divider', trim(f.vg, 3) + ' V, and no gate current pulls it down'],
         ['Source', trim(f.vs, 3) + ' V'],
@@ -3068,7 +3776,8 @@ const BENCH = {
      */
     dualGateBias(ctx) {
       const { p, d, t, Plot, swatch, ro, Fmt } = ctx;
-      const { eng, trim } = Fmt;
+      const { eng, trimText: trim } = Fmt;
+      sizeStage(p, dualGateLayout());
       const g = d.dg, vg2 = d.vcc * d.r2 / (d.r1 + d.r2);
       const hi = Math.max(4, Math.min(d.vcc, vg2 * 1.5));
       const pts = [];
@@ -3082,13 +3791,14 @@ const BENCH = {
       Plot.draw(p.graph, {
         xRange: [-2.5, hi], xFmt: x => trim(x, 2) + ' V', tokens: t,
         left: { min: 0, max: top, fmt: y => eng(y, 'A', 2) },
-        traces: [{ pts: pts, colour: t.trace, fill: t.fill, axis: 'left', width: 2.4 }],
+        traces: [{ pts: pts, colour: t.i, fill: t.iFill, axis: 'left', width: 2.4 }],
         marks: [{ x: 0, colour: t.faint }],
-        cursor: { x: vg2, colour: t.phase, dot: { y: g.id, axis: 'left' },
+        cursor: { x: vg2, colour: t.mark, dot: { y: g.id, axis: 'left' },
                   label: 'gate 2 here' }
       });
-      p.legend.innerHTML = swatch(t.trace, 'Drain current against the voltage on gate 2') +
-        swatch(t.phase, 'Where R1 and R2 hold gate 2');
+      p.legend.innerHTML = swatch(t.i, 'Drain current against the voltage on gate 2') +
+        swatch(dashed(t.faint), '0 V on gate 2') +
+        swatch(t.mark, 'Where R1 and R2 hold gate 2');
       // gain from gate 1 with the source bypassed, against its most
       const gmOf = vg2v => {
         const vs = DC.dualGateBias({ vcc: d.vcc, vg1: 0, vg2: vg2v, rd: d.rc, rs: d.re,
@@ -3098,21 +3808,23 @@ const BENCH = {
         return (at(1e-3) - at(-1e-3)) / 2e-3;
       };
       const gmHere = gmOf(vg2), gmFull = gmOf(Math.max(vg2, 6));
-      // Gate 2 is only throttling if raising it would let more current
-      // through. If it would not, and the lower half is still short of
-      // voltage, it is the drain resistor that has starved the device.
-      const idHigh = DC.dualGateBias({ vcc: d.vcc, vg1: 0, vg2: Math.max(vg2, 6, d.vcc), rd: d.rc,
-                                       rs: d.re, idss: DG_IDSS, vp: DG_VP }).id;
-      const gate2Limits = g.id < 0.97 * idHigh;
+      // Gate 2 is limiting if raising it would give more gain. A low gate 2
+      // holds the middle of the channel low and leaves the lower half short
+      // of voltage, in its ohmic region, which can cost gain long before it
+      // costs much current. If raising it would not help, and the lower half
+      // is still short of voltage, it is the drain resistor that has starved
+      // the device.
+      const gate2Limits = gmHere < 0.97 * gmFull;
       p.readouts.innerHTML = ro([
         ['Gate 2, from R1 and R2', trim(vg2, 3) + ' V'],
         ['Gate 1', '0 V, returned to ground through RG'],
-        ['Source', trim(g.vs, 3) + ' V, so gate 1 is ' + trim(g.vg1s, 3) + ' V on it'],
+        ['Source', trim(g.vs, 3) + ' V, so gate 1 sits ' + trim(Math.abs(g.vg1s), 3) + ' V ' +
+          (g.vg1s <= 0 ? 'below' : 'above') + ' the source'],
         ['Drain current', eng(g.id, 'A', 3)],
         ['Gain from gate 1', trim(100 * gmHere / Math.max(1e-12, gmFull), 3) +
           '% of what this stage can give', gate2Limits],
         ['Gate 2 is', g.id < 1e-7 ? 'low enough to turn the device off'
-          : (gate2Limits ? 'throttling the current: turning the gain down'
+          : (gate2Limits ? 'low enough to throttle: the lower half is left short of voltage, and the gain falls'
             : (g.throttled ? 'out of the way, but RD drops so much that the device is short of voltage'
                            : 'high enough to stay out of the way')), true]
       ]);
@@ -3132,7 +3844,8 @@ const BENCH = {
     amp(ctx) {
       if (ctx.p.topology === 'classes') return BENCH.panels.classes(ctx);
       const { p, d, t, Plot, swatch, ro, Fmt } = ctx;
-      const { eng, trim } = Fmt;
+      const { eng, trimText: trim } = Fmt;
+      sizeStage(p, configLayout(p.topology), true);
       const cfg = measure(p.topology, d);
 
       /*
@@ -3150,9 +3863,11 @@ const BENCH = {
       // How far the output can actually swing before it runs into the supply
       // at one end or saturation at the other. A small signal model does not
       // know about either, so it will cheerfully report 39 V from a 12 V rail.
+      // The collector sits VCE above the emitter, so it can fall to about
+      // 0.2 V above the emitter and rise to the rail.
       const limit = p.topology === 'cc'
         ? Math.max(0.05, Math.min(d.ve, d.vcc - d.ve))
-        : Math.max(0.05, Math.min(Math.max(0, d.vce - 0.2), d.vcc - d.vce));
+        : Math.max(0.05, Math.min(Math.max(0, d.vce - 0.2), d.vcc - d.vce - d.ve));
       const clipped = vout > limit;
       const span = Math.min(vout, limit);
       const inPts = [], outPts = [];
@@ -3167,7 +3882,11 @@ const BENCH = {
       // between these three configurations really shows
       const iin = vin / Math.max(1e-9, cfg.zin);
       if (notAmp) cfg.ai = 0;
-      const iout = iin * cfg.ai;
+      // the output current flattens with the output voltage: it is that
+      // voltage across the load, so it can be no more than the swing allows
+      const iLimit = limit / (p.topology === 'cc' ? d.re : d.rc);
+      const ioutWanted = iin * cfg.ai;
+      const iout = Math.min(ioutWanted, iLimit);
       const inI = [], outI = [];
       for (let i = 0; i <= 400; i++) {
         const cyc = 2 * i / 400;
@@ -3176,7 +3895,7 @@ const BENCH = {
         // base and collector current rise and fall together. It is the
         // collector voltage that inverts, because more current means more
         // drop across the load.
-        outI.push({ x: cyc, y: iout * sn });
+        outI.push({ x: cyc, y: Math.max(-iLimit, Math.min(iLimit, ioutWanted * sn)) });
       }
 
       /*
@@ -3185,41 +3904,51 @@ const BENCH = {
         * of nearly two hundred it was a flat line on the zero, so the
         * inversion had nothing to be seen against.
         */
-      const vOutSpan = Math.max(span, 1e-9) * 1.2;
       const vInSpan = Math.max(vin, 1e-9) * 1.2;
+      // with nothing coming out, the output shares the input's scale rather
+      // than inventing one around zero
+      const vOutSpan = notAmp ? vInSpan : Math.max(span, 1e-9) * 1.2;
       Plot.draw(p.graph, {
         xRange: [0, 2], xFmt: x => trim(x, 2) + ' cyc', tokens: t,
-        band: [0, 0.46], hideX: true,
+        band: [0, 0.43], hideX: true,
         left: { min: -vOutSpan, max: vOutSpan, fmt: y => eng(y, 'V', 2) },
         right: { min: -vInSpan, max: vInSpan, fmt: y => eng(y, 'V', 2) },
-        traces: [{ pts: outPts, colour: t.trace, axis: 'left', width: 2.6 },
-                 { pts: inPts, colour: t.phase, axis: 'right', width: 1.3 }],
+        // the same quantity in and out, so the same colour: the input a wide
+        // translucent band underneath, the output a solid line on top, so that where
+        // the two coincide (a gain of one, or two currents in step) both show
+        traces: [{ pts: inPts, colour: tint(t.v, 0.45), axis: 'right', width: 7 },
+                 { pts: outPts, colour: t.v, axis: 'left', width: 2.2 }],
         cursor: null
       });
-      const iOutSpan = Math.max(iout, 1e-12) * 1.2;
       const iInSpan = Math.max(iin, 1e-12) * 1.2;
+      const iOutSpan = notAmp ? iInSpan : Math.max(iout, 1e-12) * 1.2;
       Plot.draw(p.graph, {
         xRange: [0, 2], xFmt: x => trim(x, 2) + ' cyc', tokens: t,
-        band: [0.54, 1], append: true,
+        band: [0.57, 1], append: true,
         left: { min: -iOutSpan, max: iOutSpan, fmt: y => eng(y, 'A', 2) },
         right: { min: -iInSpan, max: iInSpan, fmt: y => eng(y, 'A', 2) },
-        traces: [{ pts: outI, colour: t.trace, axis: 'left', width: 2.6 },
-                 { pts: inI, colour: t.phase, axis: 'right', width: 1.3 }],
+        traces: [{ pts: inI, colour: tint(t.i, 0.45), axis: 'right', width: 7 },
+                 { pts: outI, colour: t.i, axis: 'left', width: 2.2 }],
         cursor: null
       });
       const sameV = Math.abs(cfg.av - 1) < 0.15;
       const sameI = Math.abs(cfg.ai - 1) < 0.15;
       // name the scale on each channel, so that two traces the same height on
       // screen are read as the gain figure they are and not as the same size
-      p.legend.innerHTML =
-        swatch(t.phase, 'In, right scale: \u00b1' + eng(vin, 'V', 2) +
-               ' and \u00b1' + eng(iin, 'A', 2)) +
-        swatch(t.trace, 'Out, left scale: \u00b1' + eng(span, 'V', 2) +
-               ' and \u00b1' + eng(iout, 'A', 2)) +
-        '<span>upper: volts &nbsp; lower: amps &nbsp; each trace on its own scale</span>' +
-        (cfg.phase > 90 ? swatch(t.marker, 'Output inverted, it falls as the input rises') : '') +
-        (sameV ? '<span>the two voltage traces sit on each other: gain of one</span>' : '') +
-        (sameI ? '<span>the two current traces sit on each other: gain of one</span>' : '');
+      // Not amplifying, there is no output and no scale worth naming.
+      p.legend.innerHTML = notAmp
+        ? swatch(tint(t.v, 0.45), 'Voltage in: ±' + eng(vin, 'V', 2)) +
+          swatch(t.v, 'Voltage out: none') +
+          '<span>upper: volts &nbsp; lower: amps &nbsp; nothing comes out: the transistor is ' +
+          (d.saturated ? 'saturated' : 'cut off') + '</span>'
+        : swatch(tint(t.v, 0.45), 'Voltage in, right scale: ±' + eng(vin, 'V', 2)) +
+          swatch(t.v, 'Voltage out, left scale: ±' + eng(span, 'V', 2)) +
+          swatch(tint(t.i, 0.45), 'Current in, right scale: ±' + eng(iin, 'A', 2)) +
+          swatch(t.i, 'Current out, left scale: ±' + eng(iout, 'A', 2)) +
+          '<span>upper: volts &nbsp; lower: amps &nbsp; wide band in, line out, each on its own scale</span>' +
+          (cfg.phase > 90 ? '<span>output voltage inverted: it falls as the input rises</span>' : '') +
+          (sameV ? '<span>the two voltage traces sit on each other: gain of one</span>' : '') +
+          (sameI ? '<span>the two current traces sit on each other: gain of one</span>' : '');
 
       if (notAmp) {
         p.readouts.innerHTML = ro([
@@ -3252,7 +3981,8 @@ const BENCH = {
         ['Phase change', cfg.phase + '°, ' +
           (cfg.phase > 90 ? 'inverted' : 'in phase'), cfg.phase > 90],
         ['Signal current in', eng(iin, 'A', 3)],
-        ['Signal current out', eng(iout, 'A', 3)],
+        ['Signal current out', eng(iout, 'A', 3) + (ioutWanted > iLimit
+          ? ', all the swing allows: ' + eng(ioutWanted, 'A', 3) + ' wanted' : '')],
         ['Output swing', eng(vout, 'V', 3) + ' wanted, ' + eng(limit, 'V', 3) +
          ' available' + (clipped ? ', so it flattens' : ''), clipped]
       ]);
@@ -3263,8 +3993,15 @@ const BENCH = {
     /** Diode curve, with the operating point where the cursor is. */
     diode(ctx) {
       const { p, d, t, level, Plot, swatch, ro, Fmt } = ctx;
-      const { eng, trim } = Fmt;
+      const { eng, trimText: trim } = Fmt;
       const zener = level === 'full' ? 5.1 : null;
+      sizeStage(p, diodeLayout(zener));
+      // where it really sits when fed from the supply through R
+      // reverse biased for the Zener, forward biased for the plain diode
+      const op = zener ? zenerOperating(d.vcc, d.rc, zener)
+                       : diodeOperating(d.vcc, d.rc, {});
+      // the axis reaches past the current the circuit sets, whatever it is
+      const top = Math.max(0.03, Math.ceil(op.i * 1.2 / 0.01) * 0.01);
       const pts = [];
       const vLo = zener ? -7 : -1, vHi = 0.9;
       // Past the knee the Zener is drawn with the same 5 Ω slope the
@@ -3274,27 +4011,23 @@ const BENCH = {
       for (let i = 0; i <= 500; i++) {
         const v = vLo + (vHi - vLo) * i / 500;
         const i_ = current(v);
-        pts.push({ x: v, y: Math.max(-0.03, Math.min(0.03, i_)) });
+        pts.push({ x: v, y: Math.max(-top, Math.min(top, i_)) });
       }
-      // where it really sits when fed from the supply through R
-      // reverse biased for the Zener, forward biased for the plain diode
-      const op = zener ? zenerOperating(d.vcc, d.rc, zener)
-                       : diodeOperating(d.vcc, d.rc, {});
       const sits = zener ? -op.vd : op.vd;
       const fc = p.cursor === null ? sits : vLo + (vHi - vLo) * p.cursor;
       const ic = current(fc);
       const spec = {
         xRange: [vLo, vHi], xFmt: v => trim(v, 2) + ' V', tokens: t,
-        left: { min: -0.03, max: 0.03, fmt: y => eng(y, 'A', 2) },
-        traces: [{ pts: pts, colour: t.trace, axis: 'left', width: 2.2 }],
-        marks: zener ? [{ x: -zener, colour: t.marker }] : [],
-        cursor: { x: fc, colour: t.marker, label: trim(fc, 3) + ' V' }
+        left: { min: -top, max: top, fmt: y => eng(y, 'A', 2) },
+        traces: [{ pts: pts, colour: t.i, axis: 'left', width: 2.2 }],
+        marks: zener ? [{ x: -zener, colour: t.mark }] : [],
+        cursor: { x: fc, colour: t.mark, label: trim(fc, 3) + ' V' }
       };
       Plot.draw(p.graph, spec);
-      p.legend.innerHTML = swatch(t.trace, 'Current through the diode') +
-        swatch(t.marker, zener ? 'Breakdown, ' + zener + ' V' : 'Where the circuit puts it');
-      if (p.schemNote) {
-        p.schemNote.textContent = zener
+      p.legend.innerHTML = swatch(t.i, 'Current through the diode') +
+        (zener ? swatch(dashed(t.mark), 'Breakdown, ' + zener + ' V') : '') +
+        swatch(t.mark, 'The cursor: where the circuit puts it, or drag it');
+      const note = zener
           ? (op.i > 0
             ? 'R here is the RC slider. It sets the current through the Zener, ' +
               'and the Zener holds close to its rated 5.1 V: the little it rises ' +
@@ -3304,7 +4037,7 @@ const BENCH = {
           : 'R here is the RC slider. With the supply, it is all that changes ' +
             'anything on this panel: together they set the current, and the ' +
             'diode takes whatever voltage goes with it.';
-      }
+      if (p.schemNote) p.schemNote.textContent = note;
       p.readouts.innerHTML = ro(zener ? [
         ['Supply', trim(d.vcc, 3) + ' V'],
         ['Across the resistor', trim(op.vr, 3) + ' V'],
@@ -3313,17 +4046,17 @@ const BENCH = {
         ['Power in the Zener', eng(op.p, 'W', 3) +
           (op.p > 0.4 ? ', more than a 400 mW diode will take' : ', within a 400 mW diode'),
          op.p > 0.4],
-        ['At the cursor', trim(fc, 3) + ' V, ' +
-          eng(Math.max(-0.03, Math.min(0.03, ic)), 'A', 3)]
+        ['At the cursor', trim(fc, 3) + ' V, ' + eng(ic, 'A', 3)]
       ] : [
         ['Supply', trim(d.vcc, 3) + ' V'],
         ['Across the resistor', trim(op.vr, 3) + ' V'],
         ['Across the diode', trim(op.vd, 3) + ' V'],
         ['Current through both', eng(op.i, 'A', 3), true],
-        ['At the cursor', trim(fc, 3) + ' V, ' +
-          eng(Math.max(-0.03, Math.min(0.03, ic)), 'A', 3)]
+        ['At the cursor', trim(fc, 3) + ' V, ' + eng(ic, 'A', 3)]
       ]);
-      return { layout: diodeLayout(zener) };
+      // one steady current round the loop, the one the readouts give
+      return { layout: diodeLayout(zener),
+               flow: { mode: 'dc', currents: { RC: op.i }, note: note } };
     },
 
     /**
@@ -3333,7 +4066,8 @@ const BENCH = {
      */
     varicap(ctx) {
       const { p, t, Plot, swatch, ro, Fmt } = ctx;
-      const { eng, trim } = Fmt;
+      const { eng, trimText: trim } = Fmt;
+      sizeStage(p, varicapLayout(), true);
       // a real varicap is swept well into the tens of volts, which is
       // where most of the capacitance change happens
       const vLo = 0, vHi = 40;
@@ -3347,29 +4081,30 @@ const BENCH = {
       }
       const common = {
         xRange: [vLo, vHi], xFmt: v => trim(v, 2) + ' V', tokens: t,
-        cursor: { x: vr, colour: t.marker, label: trim(vr, 3) + ' V' }
+        cursor: { x: vr, colour: t.mark, label: trim(vr, 3) + ' V' }
       };
       const capMax = varicapC(vLo) * 1e12;
       const fMax = varicapF(vHi) / 1e6;
       Plot.draw(p.graph, Object.assign({
-        band: [0, 0.46], hideX: true,
+        band: [0, 0.43], hideX: true,
         left: { min: 0, max: capMax * 1.1, fmt: y => trim(y, 3) + ' pF' },
-        traces: [{ pts: cap, colour: t.trace, axis: 'left', width: 2.2 }]
+        traces: [{ pts: cap, colour: t.c, axis: 'left', width: 2.2 }]
       }, common));
+      // frequency has no colour of its own in the scheme, so it is drawn in ink
       Plot.draw(p.graph, Object.assign({
-        band: [0.54, 1], append: true,
+        band: [0.57, 1], append: true,
         left: { min: 0, max: fMax * 1.1, fmt: y => trim(y, 3) + ' MHz' },
-        traces: [{ pts: freq, colour: t.phase, axis: 'left', width: 2.2 }]
+        traces: [{ pts: freq, colour: t.ink, axis: 'left', width: 2.2 }]
       }, common));
 
       p.legend.innerHTML =
-        swatch(t.trace, 'Capacitance of the diode') +
-        swatch(t.phase, 'What it tunes a 4.7&nbsp;µH coil to') +
-        swatch(t.marker, 'The control voltage, drag it');
+        swatch(t.c, 'Capacitance of the diode') +
+        swatch(t.ink, 'What it tunes a 4.7&nbsp;µH coil to') +
+        swatch(t.mark, 'The control voltage, drag it');
       if (p.schemNote) {
         p.schemNote.textContent = 'R is large enough to feed the control ' +
-          'voltage in without damping the tuned circuit. Drag the marker to ' +
-          'change the control voltage.';
+          'voltage in without damping the tuned circuit, and CB stops the coil ' +
+          'shorting it to ground. Drag the marker to change the control voltage.';
       }
       p.readouts.innerHTML = ro([
         ['Control voltage', trim(vr, 3) + ' V'],
@@ -3383,14 +4118,15 @@ const BENCH = {
       // the charge moves at the frequency this setting actually tunes to, so
       // winding the control voltage up visibly speeds the circuit up
       p.fAnim = varicapF(vr);
-      return { layout: varicapLayout(varicapC(vr)),
+      return { layout: varicapLayout(),
                circuit: window.MNA.parseNetlist(varicapNetlist(varicapC(vr))) };
     },
 
     /** The load line, with the operating point on it. */
     loadline(ctx) {
       const { p, d, t, Plot, swatch, ro, Fmt } = ctx;
-      const { eng, trim } = Fmt;
+      const { eng, trimText: trim } = Fmt;
+      sizeStage(p, configLayout('ce'));
       const line = [{ x: 0, y: d.iMax }, { x: d.vcc, y: 0 }];
 
       // One curve per base current, the way these are conventionally drawn.
@@ -3415,33 +4151,43 @@ const BENCH = {
       const step = nice(d.ib / 2);
       const family = [1, 2, 3, 4].map(k => k * step);
 
+      // every curve is collector current: the family a paler orange behind
+      const family_i = tint(t.i, 0.45);
       const traces = family.map(ib => ({
-        pts: curve(ib), colour: t.rule || t.muted || t.phase, axis: 'left', width: 1.1
+        pts: curve(ib), colour: family_i, axis: 'left', width: 1.2
       }));
-      // the curve the bias has actually landed on, and the load across them
-      traces.push({ pts: curve(d.ib), colour: t.trace, axis: 'left', width: 2 });
-      traces.push({ pts: line, colour: t.phase, axis: 'left', width: 2 });
+      // the curve the bias has actually landed on, and the load across them,
+      // which is the collector resistor's own line
+      traces.push({ pts: curve(d.ib), colour: t.i, axis: 'left', width: 2.2 });
+      traces.push({ pts: line, colour: t.r, axis: 'left', width: 2 });
 
       const top = Math.max(d.iMax, d.beta * family[family.length - 1]) * 1.1;
       Plot.draw(p.graph, {
         xRange: [0, d.vcc], xFmt: v => trim(v, 3) + ' V', tokens: t,
         left: { max: top, fmt: y => eng(y, 'A', 2) },
         traces: traces,
-        marks: [{ x: d.vcc / 2, colour: t.marker }],
-        labels: family.map(ib => ({
-          x: d.vcc * 0.97, y: d.beta * ib * (1 + d.vcc * 0.97 / 100) /
-            (1 + Math.max(0, d.vceq) / 100),
-          axis: 'left', text: eng(ib, 'A', 2), colour: t.rule || t.muted
-        })),
-        cursor: { x: Math.max(0, d.vceq), colour: t.trace,
+        marks: [{ x: d.vcc / 2, colour: t.mark }],
+        // each curve named by its base current, written in current's ink. A
+        // name the bias curve would run through is left off: that curve is
+        // all but the bias curve, and the base current is in the readouts.
+        labels: family.map(ib => {
+          const at = k => d.beta * k * (1 + d.vcc * 0.97 / 100) /
+            (1 + Math.max(0, d.vceq) / 100);
+          const tall = top * 20 / Math.max(60, p.graph.clientHeight - 52);
+          const gap = at(d.ib) - at(ib);
+          return gap > -2 * top / 100 && gap < tall ? null
+            : { x: d.vcc * 0.97, y: at(ib), axis: 'left', text: eng(ib, 'A', 2), colour: t.iInk };
+        }).filter(Boolean),
+        cursor: { x: Math.max(0, d.vceq), colour: t.mark,
                   dot: { y: d.icq, axis: 'left' }, label: 'operating point' }
       });
 
       p.legend.innerHTML =
-        swatch(t.rule || t.muted || t.phase, 'One curve per base current') +
-        swatch(t.trace, 'The curve this bias sits on') +
-        swatch(t.phase, 'Every point the collector load allows') +
-        swatch(t.marker, 'Half the supply');
+        swatch(family_i, 'One curve per base current') +
+        swatch(t.i, 'The curve this bias sits on') +
+        swatch(t.r, 'Every point the collector load allows') +
+        swatch(dashed(t.mark), 'Half the supply') +
+        swatch(t.mark, 'The operating point');
 
       const clipping = d.vceq < 1 || d.vceq > d.vcc - 1;
       // the usual rule: the divider has to carry well more than the base
@@ -3450,7 +4196,7 @@ const BENCH = {
       const ratio = dividerI / Math.max(1e-12, d.ib);
       p.readouts.innerHTML = ro([
         ['Collector current', eng(d.icq, 'A', 3)],
-        ['Collector voltage', trim(Math.max(0, d.vceq), 3) + ' V',
+        ['Collector to emitter', trim(Math.max(0, d.vceq), 3) + ' V',
          Math.abs(d.vceq - d.vcc / 2) > d.vcc * 0.12],
         ['Base current needed', eng(d.ib, 'A', 3)],
         ['Current down the divider', eng(dividerI, 'A', 3)],
@@ -3478,51 +4224,73 @@ const BENCH = {
      */
     classes(ctx) {
       const { p, d, t, Plot, swatch, ro, Fmt } = ctx;
-      const { eng, trim } = Fmt;
+      const { eng, trimText: trim } = Fmt;
       const kind = classKind(d.cls);
+      // Cut off by the bias with the drive too small to reach turn on, there
+      // is no class and so no typical circuit: draw the stage as it is biased.
+      const off = d.cls === 'off';
+      sizeStage(p, classLayout(off ? 'A' : kind), true);
 
-      // the current pulse the device passes, over two cycles
+      /*
+       * The current pulse the device passes, over two cycles, in amperes: the
+       * base voltage above turn on, across the unbypassed RE. The base voltage
+       * is on its own scale on the right, the two scales in the same ratio,
+       * so in class A the two traces lie together, and both zeros are on one
+       * grid line, so the current is seen to stop exactly where the base
+       * falls below turn on.
+       */
       const N = 1024;
-      // headroom and drive are both in volts, so the pulse comes out in volts
-      const wave = DC.collectorWave(d.headroom, d.drive, N);
-      // Cut off, the pulse is nothing at all, so scale to the base voltage
-      // instead: it then shows plainly that the drive never reaches turn on.
-      const peak = d.cls === 'off' ? Math.max(1e-6, Math.abs(d.headroom) + d.drive)
-                                   : Math.max(1e-6, d.headroom + d.drive);
+      const wave = DC.collectorWave(d.headroom, d.drive, N);   // volts above turn on
+      const vHi = Math.max(0, d.headroom + d.drive), vLo = Math.min(0, d.headroom - d.drive);
+      let grid = null;
+      for (let k = 0; k <= 3; k++) {
+        if (vLo < 0 && k === 0) continue;
+        const step = 1.08 * Math.max(vHi / (4 - k), k ? -vLo / k : 0, 1e-9);
+        if (!grid || step < grid.step) grid = { step: step, k: k };
+      }
+      const vMin = -grid.k * grid.step, vMax = (4 - grid.k) * grid.step;
+      const zeroed = (unit, span) => y => Math.abs(y) < span * 1e-6 ? '0 ' + unit : eng(y, unit, 2);
       const pts = [], drivePts = [];
       for (let i = 0; i < N * 2; i++) {
-        pts.push({ x: i / N, y: d.saturated ? 1 : wave[i % N] / peak });
-        drivePts.push({ x: i / N, y: (d.headroom + d.drive * Math.sin(2 * Math.PI * i / N)) / peak });
+        pts.push({ x: i / N, y: d.saturated ? d.ic : wave[i % N] / d.re });
+        drivePts.push({ x: i / N, y: d.headroom + d.drive * Math.sin(2 * Math.PI * i / N) });
       }
       Plot.draw(p.graph, {
         xRange: [0, 2], xFmt: x => trim(x, 2) + ' cyc', tokens: t,
-        band: [0, 0.46], hideX: true,
-        left: { min: -1.1, max: 1.15, fmt: y => trim(y * peak, 2) + ' V' },
-        traces: [{ pts: drivePts, colour: t.phase, axis: 'left', width: 1.4 },
-                 { pts: pts, colour: t.trace, fill: t.fill, axis: 'left', width: 2 }],
+        band: [0, 0.43], hideX: true,
+        left: { min: vMin / d.re, max: vMax / d.re, fmt: zeroed('A', vMax / d.re) },
+        right: { min: vMin, max: vMax, fmt: zeroed('V', vMax) },
+        // the current first and thicker, the drive on top: in class A the two
+        // coincide, and the thin blue still shows along the orange
+        traces: [{ pts: pts, colour: t.i, fill: t.iFill, fillTo: 0, axis: 'left', width: 2.6 },
+                 { pts: drivePts, colour: t.v, axis: 'right', width: 1.4 }],
         cursor: null
       });
 
-      // and what that pulse contains
-      const rep = new Float64Array(8192);
-      for (let i = 0; i < 8192; i++) rep[i] = wave[(i * 16) % N];
-      const sp = DSPI.spectrum(rep, N, { floor: -70 });
+      // and what that pulse contains, against its own fundamental. The wave
+      // is resampled at 64 points a cycle, so the sample rate is 64 per cycle.
       const fpts = [];
-      for (let i = 1; i < sp.bins && sp.freq[i] <= 6; i++) {
-        fpts.push({ x: sp.freq[i], y: sp.db[i] + 70 });
+      if (!d.saturated && !off) {
+        const rep = new Float64Array(8192);
+        for (let i = 0; i < 8192; i++) rep[i] = wave[(i * 16) % N];
+        const sp = DSPI.spectrum(rep, N / 16, { floor: -300 });
+        const fund = sp.db[Math.round(1 / sp.binWidth)];
+        for (let i = 1; i < sp.bins && sp.freq[i] <= 6; i++) {
+          fpts.push({ x: sp.freq[i], y: Math.max(0, sp.db[i] - fund + 70) });
+        }
       }
       Plot.draw(p.graph, {
         xRange: [0, 6], xFmt: x => trim(x, 2) + 'f', tokens: t,
-        band: [0.54, 1], append: true,
-        left: { max: 75, fmt: y => Math.round(y - 70) + ' dB' },
-        traces: [{ pts: d.saturated ? [] : fpts, colour: t.trace, fill: t.fill, axis: 'left', width: 1.4 }],
-        marks: [1, 2, 3, 4, 5].map(k => ({ x: k, colour: t.marker })),
+        band: [0.57, 1], append: true,
+        left: { max: 80, fmt: y => trim(Math.round(y - 70), 3) + ' dB' },
+        traces: [{ pts: fpts, colour: t.i, fill: t.iFill, axis: 'left', width: 1.4 }],
+        marks: [1, 2, 3, 4, 5].map(k => ({ x: k, colour: t.mark })),
         cursor: null
       });
-      p.legend.innerHTML = swatch(t.phase, 'Base voltage above turn on') +
-        swatch(t.trace, 'Current one device passes') +
-        '<span>upper: two cycles &nbsp; lower: what that current contains</span>' +
-        swatch(t.marker, 'Fundamental and its harmonics');
+      p.legend.innerHTML = swatch(t.v, 'Base voltage above turn on, right scale') +
+        swatch(t.i, 'Current one device passes, left scale') +
+        '<span>upper: two cycles &nbsp; lower: what that current contains, against its fundamental</span>' +
+        swatch(dashed(t.mark), 'Fundamental and its harmonics');
 
       const circuitName = { A: 'one device, its collector load a resistor',
         AB: 'two devices in push pull, two diodes holding each just on',
@@ -3536,12 +4304,20 @@ const BENCH = {
         ['Which is class', d.cls === 'off' ? 'none: the drive never reaches turn on' : d.cls, true],
         ['Efficiency at best', d.cls === 'off' ? 'none: no current flows'
           : trim(d.eff * 100, 3) + '%, with the output swinging the full supply'],
-        ['Typical circuit, drawn', circuitName],
+        ['Typical circuit, drawn', off ? 'none, as there is no class: this is the stage as biased'
+          : circuitName],
         ['Needs a tuned load?', d.cls === 'off' ? 'nothing to load: no current flows'
           : d.cls === 'C' ? 'yes, essential'
           : (d.cls === 'B' || d.cls === 'AB' ? 'one device alone would; two in push pull do not' : 'no'),
          d.cls === 'C']
       ]);
+      if (off) {
+        if (p.schemNote) {
+          p.schemNote.textContent = 'The drive never reaches turn on, so the device never ' +
+            'conducts and nothing moves. With no class there is no typical circuit to draw.';
+        }
+        return { layout: classLayout('A') };
+      }
       if (p.schemNote) {
         p.schemNote.textContent = {
           A: 'RE is left unbypassed: the current then follows the base above 0.6 V in a straight line.',
@@ -3560,9 +4336,13 @@ const BENCH = {
     /** Feedback around a stage, and the two conditions for oscillation. */
     oscillator(ctx) {
       const { p, d, t, Plot, swatch, ro, Fmt } = ctx;
-      const { trim, eng } = Fmt;
+      const { trimText: trim, eng } = Fmt;
       const o = d.osc;
       const off = o.state !== 'active';
+      // Intermediate asks for the idea and the frequency; the loop gain and
+      // the phase are Full material, so only the swing is drawn there
+      const full = ctx.level === 'full';
+      sizeStage(p, colpittsLayout(), full);
 
       /*
        * How the amplitude moves from cycle to cycle. Each trip round the loop
@@ -3574,7 +4354,9 @@ const BENCH = {
       const env = [d.drive];
       for (let n = 0; n < cycles; n++) {
         const a = env[n], here = oscAtSwing(o, a);
-        env.push(off ? 0 : a * Math.exp(Math.PI * (here.T - 1) / here.qL));
+        // and never past the clamp: the base cannot swing beyond it at all
+        env.push(off ? 0 : Math.min(o.baseRoom || Infinity,
+                                    a * Math.exp(Math.PI * (here.T - 1) / here.qL)));
       }
       const pts = [];
       for (let i = 0; i <= cycles * perCycle; i++) {
@@ -3585,11 +4367,34 @@ const BENCH = {
       const top = Math.max(1e-6, ...env) * 1.15;
       Plot.draw(p.graph, {
         xRange: [0, cycles], xFmt: x => trim(x, 2) + ' cyc', tokens: t,
-        band: [0, 0.46], hideX: true,
+        band: full ? [0, 0.43] : [0, 1], hideX: full,
         left: { min: -top, max: top, fmt: y => eng(y, 'V', 2) },
-        traces: [{ pts: pts, colour: t.trace, axis: 'left', width: 1.6 }],
+        traces: [{ pts: pts, colour: t.v, axis: 'left', width: 1.6 }],
         cursor: null
       });
+      const growing = o.T >= 1;
+      const swingWords = off ? 'nothing, the transistor is not amplifying'
+        : growing ? 'growing, the loop makes more than it loses'
+          : (o.Tss > 1 ? 'shrinking back towards where it settles'
+                       : 'dying away, the loop cannot replace what is lost');
+      if (!full) {
+        p.legend.innerHTML = swatch(t.v, 'Swing at the base over ' + cycles +
+          ' cycles, starting from the Drive setting: ' + swingWords);
+        p.readouts.innerHTML = ro(off ? [
+          ['Will it start', 'no: the transistor is not biased to amplify, so nothing tops the tuned circuit up', true]
+        ] : [
+          ['Frequency', eng(o.f, 'Hz', 4), true],
+          ['Set by', 'the coil, ' + eng(OSC_L, 'H', 2) + ', with CA and CB in series, ' + eng(OSC_CSER, 'F', 3)]
+        ]);
+        if (p.schemNote) {
+          p.schemNote.textContent = 'The transistor tops up the tuned circuit, the coil with CA ' +
+            'and CB, on every cycle. The coil and capacitors are fixed, so the frequency is too.';
+        }
+        p.fAnim = o.f || OSC_F0;
+        if (off) return { layout: colpittsLayout() };
+        return { layout: colpittsLayout(),
+                 circuit: MI.parseNetlist(oscNetlist(d, o.b, o.gm, Math.max(1e-6, d.drive))) };
+      }
 
       // and the reason: the loop gain against the size of the swing, on a
       // logarithmic scale of swing from 1 mV to 10 V at the base
@@ -3604,24 +4409,23 @@ const BENCH = {
       const at10 = lx => Math.max(lx0, Math.min(lx1, lx));
       Plot.draw(p.graph, {
         xRange: [lx0, lx1], xFmt: x => eng(Math.pow(10, x), 'V', 1), tokens: t,
-        band: [0.54, 1], append: true,
+        band: [0.57, 1], append: true,
         left: { min: 0, max: gTop, fmt: y => trim(y, 2) },
-        traces: [{ pts: unity, colour: t.faint, axis: 'left', width: 1.2 },
-                 { pts: gainPts, colour: t.phase, axis: 'left', width: 2.2 }],
-        marks: o.settle > 0 ? [{ x: at10(Math.log10(o.settle)), colour: t.marker }] : [],
-        cursor: { x: at10(Math.log10(d.drive)), colour: t.trace,
+        // loop gain is a plain ratio, with no colour of its own: ink, and
+        // the line of one a neutral dash
+        traces: dashTrace({ pts: unity, colour: t.faint, axis: 'left', width: 1.2 },
+                          p.graph, [lx0, lx1])
+          .concat([{ pts: gainPts, colour: t.ink, axis: 'left', width: 2.2 }]),
+        marks: o.settle > 0 ? [{ x: at10(Math.log10(o.settle)), colour: t.mark }] : [],
+        cursor: { x: at10(Math.log10(d.drive)), colour: t.mark,
                   dot: { y: o.T, axis: 'left' }, label: 'Drive' }
       });
-      const growing = o.T >= 1;
-      p.legend.innerHTML = swatch(t.trace, 'Swing at the base over ' + cycles +
-        ' cycles, starting from the Drive setting: ' +
-        (off ? 'nothing, the transistor is not amplifying'
-          : growing ? 'growing, the loop makes more than it loses'
-            : (o.Tss > 1 ? 'shrinking back towards where it settles'
-                         : 'dying away, the loop cannot replace what is lost'))) +
-        swatch(t.phase, 'Loop gain against the swing at the base, 1 mV to 10 V') +
-        swatch(t.faint, 'A loop gain of one') +
-        (o.settle > 0 ? swatch(t.marker, 'Where it settles') : '') +
+      p.legend.innerHTML = swatch(t.v, 'Swing at the base over ' + cycles +
+        ' cycles, starting from the Drive setting: ' + swingWords) +
+        swatch(t.ink, 'Loop gain against the swing at the base, 1 mV to 10 V') +
+        swatch(dashed(t.faint), 'A loop gain of one') +
+        (o.settle > 0 ? swatch(dashed(t.mark), 'Where it settles') : '') +
+        swatch(t.mark, 'The Drive setting') +
         '<span>upper: the swing, cycle by cycle &nbsp; lower: why it grows or shrinks</span>';
 
       p.readouts.innerHTML = ro(off ? [
@@ -3636,7 +4440,9 @@ const BENCH = {
         ['So the follower needs at least', trim(1 / Math.max(1e-9, o.N), 3)],
         ['Loop gain at this swing', trim(o.T, 3) + (growing ? ', at least one: it grows' : ', under one: it shrinks'), true],
         ['Loop gain for a tiny swing', trim(o.Tss, 3) + (o.Tss > 1 ? ', so it starts from noise' : ', so it will never start')],
-        ['Settles at', o.settle > 0 ? eng(o.settle, 'V', 3) + ' peak at the base, where the loop gain has fallen to one'
+        ['Settles at', o.settle > 0 ? eng(o.settle, 'V', 3) + ' peak at the base, ' +
+          (o.clamped ? 'where it meets the supply: a junction drop above the rail the transistor saturates, and the loop gain falls to one'
+                     : 'where the loop gain has fallen to one')
                                     : 'nothing: it dies away'],
         ['The other condition', 'the feedback has to arrive in phase, 0° round the loop']
       ]);
@@ -3707,7 +4513,7 @@ const BENCH = {
       heading: { intermediate: 'A small current controlling a large one',
                  full: 'Biasing, and how far the device can be pushed' },
       lead: { intermediate: 'A transistor is a tap. A little current into the base lets a lot through the collector, and the ratio between them is fixed.',
-              full: 'Biasing is not a detail of the circuit, it is the decision that determines everything else about it.' },
+              full: 'The bias sets what the device does with any signal.' },
       headline: {
         intermediate: 'A small base current steers a much larger collector current. That is where the gain comes from.',
         full: 'Biasing bipolar transistors and FETs so they sit where you want them.'
@@ -3735,7 +4541,7 @@ const BENCH = {
           'The curve shows what that means across the whole range. Over most of it the collector current follows the base current in a straight line at beta times the size, and a small wiggle at the base comes out as a large wiggle at the collector. That is amplification, and the marked point is where the bias has put it.',
           'The two capacitors at the ends are there to keep the outside world out of it. Whatever is connected to the input or the output has its own resistances and voltages, and if it were joined straight on it would pull the divider about and undo the biasing. The capacitors pass the signal and block the steady voltages, so the bias inside stays where it was set.',
           'Keep increasing the base current and the line stops rising. The collector current can never exceed what the supply and the resistors allow, so it flattens off. There the transistor is saturated and behaving like a closed switch. Take the base current away entirely and it is cut off, an open one.',
-          'Amplifier and switch are not two different devices. They are the same curve used in different places: the straight middle for amplifying, the two flat ends for switching.'
+          'An amplifier uses the straight middle of the curve; a switch uses its two flat ends.'
         ],
         full: [
           'For a signal to swing both ways without running out of room, the operating point wants to sit on the straight part with space either side of it. That is what the exam means by biasing the collector midway between the supply and zero.',
@@ -3779,7 +4585,7 @@ const BENCH = {
       },
       heading: { intermediate: 'The common emitter amplifier',
                  full: 'Three configurations, and the classes they can be biased into' },
-      lead: { intermediate: 'Now put a signal into the stage you have just biased.',
+      lead: { intermediate: 'Now see where the stage you have just biased sits on its load line.',
               full: 'Two separate questions about one transistor: which way round it is wired, and where it is biased.' },
       headline: {
         intermediate: 'Recognising the common emitter amplifier, and why it has to be biased.',
@@ -3801,15 +4607,15 @@ const BENCH = {
           'The bias is what makes this work. R1 and R2 give the base its steady voltage, so the transistor sits part way up its curve with room to swing both ways. Without it, half of every waveform would be cut off.'
         ],
         full: [
-          'There are three ways to wire one transistor as an amplifier, and the difference is simply which terminal the signal goes in at and which it comes out of. Switch between the first three views and watch all five figures move.',
-          'Common emitter is the general purpose one: in at the base, out at the collector. It gives both voltage gain and current gain, and it inverts, because more base current means more drop across the collector resistor. Its input and output impedances are middling, which makes it awkward to match at high frequencies.',
+          'There are three ways to wire one transistor as an amplifier, and the difference is simply which terminal the signal goes in at and which it comes out of. Switch between the first three views and watch the input and output impedance, the two gains and the phase change move.',
+          'Common emitter is the general purpose one: in at the base, out at the collector. It gives both voltage gain and current gain, and it inverts, because more base current means more drop across the collector resistor. Its input and output impedances are moderate; at high frequencies the collector to base capacitance carries some of the output back to the input, and that limits it. The common source stage is its FET equivalent and behaves the same way; it is drawn on the 2I3 panel above, with FET picked.',
           'The emitter follower takes its output from the emitter instead. Voltage gain is just under one, so it makes nothing larger, but the input impedance is high and the output impedance is low, which is exactly what you want for driving something demanding without loading whatever is feeding you.',
           'Its current gain is the one to read carefully. The transistor itself passes beta + 1 times its base current out of the emitter, and that is the figure the questions mean. The stage figure is far lower, because R1 and R2 sit across the input and take most of the input current before the base sees it. The two readouts show both.',
           'Common base drives the emitter and takes the output from the collector. Current gain is about one, voltage gain is high, and the input impedance is very low indeed. It stays stable at VHF and above, where a common emitter stage will happily oscillate instead of amplifying.',
           'Now switch to the classes view, because the second half of this item is a different question about the same transistor: not how it is wired, but where it is biased.',
-          'Now lower the base voltage step by step, by raising R1 or lowering R2, and watch the readouts and the circuit beside them. With the base well up the device conducts for the whole 360 degrees: that is class A, faithful and at best 50% efficient, because it draws the same current whether a signal is present or not. The typical class A circuit is the single stage with a resistor for its load.',
+          'Turn Drive up to about 0.3 V first, so the drive is wide enough to show every class. Then lower the base voltage step by step, by raising R1 or lowering R2, and watch the readouts and the circuit beside them. With the base well up the device conducts for the whole 360 degrees: that is class A, faithful and at best 50% efficient, because it draws the same current whether a signal is present or not. The typical class A circuit is the single stage with a resistor for its load.',
           'Class A is therefore the one least likely to produce harmonics of the input, because every part of the waveform is amplified alike. That is what the exam means by lowest distortion.',
-          'Keep going and it starts switching off for part of the cycle. Somewhere below halfway you are in class AB, the usual compromise for SSB. At cut off exactly, with the base held right at the point of conduction, it conducts for 180 degrees, which is class B and tops out at 78.5%. One device then only reproduces half the waveform, so the typical circuit is two devices in push pull, an NPN for the positive half and a PNP for the negative. Join their bases and each waits for its own 0.6 V, which leaves a dead band, crossover distortion, where neither conducts. The class AB circuit adds two diodes between the bases to hold each device just on, so the handover is smooth.',
+          'Keep going and it starts switching off for part of the cycle. Once the troughs of the drive dip below turn on, it is class AB, the usual compromise for SSB. At cut off exactly, with the base held right at the point of conduction, it conducts for 180 degrees, which is class B and tops out at 78.5%. One device then only reproduces half the waveform, so the typical circuit is two devices in push pull, an NPN for the positive half and a PNP for the negative. Join their bases and each waits for its own 0.6 V, which leaves a dead band, crossover distortion, where neither conducts. The class AB circuit adds two diodes between the bases to hold each device just on, so the handover is smooth.',
           'Below that is class C. Take the bias low enough and there is no collector current at all until a signal arrives, so it draws nothing when idle. It relies on a strong drive to turn it on, and its output depends heavily on that drive: more drive widens and heightens every pulse. It is thoroughly non-linear.',
           'The spectrum shows what that costs: the output is full of harmonics. A tuned circuit in the collector rings at the fundamental and ignores the rest, which is the only reason class C is usable at all, and it is what the typical class C circuit shows in place of the load resistor. It follows that class C suits modes carrying no information in their amplitude, which means CW and FM. Anything relying on amplitude, AM and SSB above all, needs a linear stage. Many data modes change level at each symbol and need linearity too.'
         ]
@@ -3838,14 +4644,14 @@ const BENCH = {
         intermediate: [
           'Take the output of an amplifier, feed a little of it back to the input, and if what returns is in step with what is already there it reinforces it. Do that around a tuned circuit and the result oscillates at the frequency the tuned circuit favours.',
           'The tuned circuit decides the frequency. A variable one lets you move about the band; a crystal is far more stable but sits where it was ground.',
-          'That is the trade in a nutshell. A VFO tunes and drifts, a crystal holds and does not tune.'
+          'So a VFO tunes but drifts; a crystal holds but cannot tune.'
         ],
         full: [
           'Two conditions, both necessary. The gain round the whole loop must be at least unity, meaning the amplifier makes up everything the feedback network throws away. And the phase round the whole loop must come back to zero, so the returning signal reinforces rather than cancels.',
           'This is a Colpitts oscillator, the one the exam draws, with the transistor as an emitter follower. A follower\u2019s voltage gain is always a little under one, so the voltage gain has to come from somewhere else: from the tuned circuit. Its two capacitors in series act as a step up transformer. The emitter drives the tap between them, and the top of the coil, which feeds the base, swings (CA + CB) / CA times as far, twice here. The loss is the energy the coil\u2019s resistance and the bias resistors take out of the tank each cycle; the transistor replaces it by supplying current, beta + 1 times what its base draws.',
           'So the loop gain is the follower\u2019s gain times what the tap gives back, and it has to reach one. Starve the transistor of current, with a low supply and a large RE, and its gain falls until the loop is short of one: the trace dies away and it will never start. That is what the questions mean by the losses exceeding the gain.',
           'The amplitude looks after itself. A small swing sees the full gain and grows. As it grows the transistor starts cutting off on the troughs, less of the fundamental comes out, and the loop gain falls. It settles where the loop gain is exactly one, marked on the lower plot. With the controls as they start that is about 2 V at the base, above the top of the Drive control, so across Drive’s range the loop gain hardly moves: the transistor is still working in proportion. Take the stage closer to the edge, with less supply or a larger RE, and the settling point comes down into range. Then wind Drive up past it and the loop gain drops below one and the swing shrinks back; wind it down and it grows again.',
-          'The neatest way to hold the phase condition is this: either both stages shift by nothing, or both shift by 180 degrees. A common emitter stage inverts, so its feedback network must invert as well to bring the total back to zero. An emitter follower does not invert, so its network must not either.'
+          'The neatest way to hold the phase condition is this: the amplifier and the network each shift 0°, or each 180°. A common emitter stage inverts, so its feedback network must invert as well to bring the total back to zero. An emitter follower does not invert, so its network must not either.'
         ]
       }
     },
@@ -3934,8 +4740,9 @@ const BENCH = {
       source: { eq: ['vgs'], from: ['2I3'] },
       // figures chosen to land on the diagram's 18 V rail, 4.5 V source and
       // 14 V drain; the question gives no resistor values
-      seed: { vcc: 18, r1: 101.8e3, r2: 22e3, rc: 1556, re: 1751, beta: 200, drive: 0.01 },
-      seedNote: 'Pick FET above the 2I3 panel, then set the bench: it puts the source at 4.5 V and the drain at 14 V on an 18 V rail, as the diagram does, and the gate comes out near 3.2 V.'
+      seed: { vcc: 18, r1: 101.8e3, r2: 22e3, rc: 1556, re: 1751, beta: 200, drive: 0.01,
+              toggle: 'jfet', item: '2I3' },
+      seedNote: 'This sets the FET stage on the 2I3 panel: it puts the source at 4.5 V and the drain at 14 V on an 18 V rail, as the diagram does, and the gate comes out near 3.2 V.'
     },
     '2025-Full679': {
       why: 'The diagram gives the emitter voltage, and the base has to sit about 0.6 V above it. R1 and R2 divide the supply down to that, so what the answer really turns on is the ratio of the two resistors rather than any one value.',
@@ -3945,7 +4752,7 @@ const BENCH = {
                 'the nearest of the four options is 78 k&Omega;'],
       source: { eq: ['divider', 'emitter'], from: ['2I3'] },
       seed: { vcc: 10, r1: 78e3, r2: 22e3, rc: 3900, re: 1200, beta: 200, drive: 0.01 },
-      seedNote: 'The bench is set to this divider on the diagram&rsquo;s 10 V rail. With 78 k the divider alone gives 2.2 V; the base current pulls the base down a little, and the emitter lands at the 1.5 V the diagram marks. The diagram gives no collector or emitter resistor values; those chosen here put the collector near mid rail.'
+      seedNote: 'The bench is set to this divider on the diagram&rsquo;s 10 V rail. With 78 k the divider alone gives 2.2 V; the base current pulls the base down a little, and the emitter lands at the 1.5 V the diagram marks. The diagram gives no collector or emitter resistor values; those chosen here put the collector near mid rail.'
     },
     '2025-Full321': {
       why: 'Common emitter. The collector resistor turns a large collector current change into a large voltage change, so the gain is well above one, and the collector moves the opposite way to the base, so the output is inverted.',
@@ -3964,11 +4771,12 @@ const BENCH = {
       why: 'Class A conducts for the whole cycle, so the device never switches off and never has to be pieced back together. That is what makes it the most faithful, and it is also why it is the least efficient.',
       working: ['conduction angle = 360&deg;, the whole cycle',
                 'efficiency at best = 50%',
-                'nothing of the waveform is missing, and half the supply is heat',
+                'nothing of the waveform is missing, and at least half the DC power drawn becomes heat',
                 'lowest distortion of the four, which is Class A'],
       source: { eq: ['theta', 'eff'], from: ['2I4'] },
-      seed: { vcc: 12, r1: 78e3, r2: 22e3, rc: 2200, re: 1000, beta: 200, drive: 0.01 },
-      seedNote: 'This sets a stage biased well into class A, about half the supply between its collector and emitter. Switch the 2I4 view to Classes A to C and look at the spectrum: almost nothing but the fundamental.'
+      seed: { vcc: 12, r1: 78e3, r2: 22e3, rc: 2200, re: 1000, beta: 200, drive: 0.01,
+              toggle: 'classes' },
+      seedNote: 'This sets a stage biased well into class A, about half the supply between its collector and emitter, and shows the 2I4 Classes A to C view. Look at the spectrum: nothing but the fundamental.'
     },
     '2025-Full325': {
       why: 'Amplifying only one half of the waveform means conducting for half the cycle, which is 180 degrees, and that is class B. Class A takes the whole cycle, class AB rather more than half, class C rather less.',
@@ -3976,14 +4784,16 @@ const BENCH = {
                 '360&deg; / 2 = 180&deg;',
                 'which is class B, at best 78.5% efficient'],
       source: { eq: ['theta'], from: ['2I4'] },
-      seed: { vcc: 12, r1: 190e3, r2: 10e3, rc: 2200, re: 1000, beta: 200, drive: 0.3 },
-      seedNote: 'The divider puts the base at exactly 0.6 V, the cut off point. In the Classes A to C view the device conducts for 180\u00b0, only while the signal is positive: class B.'
+      seed: { vcc: 12, r1: 190e3, r2: 10e3, rc: 2200, re: 1000, beta: 200, drive: 0.3,
+              toggle: 'classes' },
+      seedNote: 'The divider puts the base at exactly 0.6 V, the cut off point. In the Classes A to C view, shown now, the device conducts for 180\u00b0, only while the signal is positive: class B.'
     },
     '2025-Full3404': {
       why: 'Class C conducts for so little of the cycle that what comes out is a series of pulses rather than a waveform, so a tuned load is needed to ring at the fundamental and put the sine wave back. Its supply current is lower rather than higher, because it draws nothing at all until a signal arrives. Its distortion is worse rather than better. And push pull, where each device takes half the waveform, is a class B arrangement rather than a class C one.',
       source: { eq: ['theta', 'eff'], from: ['2I4'] },
-      seed: { vcc: 12, r1: 400e3, r2: 10e3, rc: 2200, re: 1000, beta: 200, drive: 0.5 },
-      seedNote: 'This biases the base below cut off. In the Classes A to C view, look at the harmonics in the lower plot and the tuned circuit drawn in the collector: that is what removes them.'
+      seed: { vcc: 12, r1: 400e3, r2: 10e3, rc: 2200, re: 1000, beta: 200, drive: 0.5,
+              toggle: 'classes' },
+      seedNote: 'This biases the base below cut off and shows the Classes A to C view. Look at the harmonics in the lower plot and the tuned circuit drawn in the collector: that is what removes them.'
     },
     '2025-Full7635': {
       why: 'Oscillation builds only if each trip round the loop returns at least as much as it started with. Gain has to exceed the losses, not match half of them or fall short.',
@@ -4009,7 +4819,7 @@ const BENCH = {
       why: 'If the feedback network loses more than the amplifier can replace, each trip round the loop is smaller than the last and the oscillation dies out. It will not start at all.',
       source: { from: ['2I5'] },
       seed: { vcc: 5, r1: 47e3, r2: 7.5e3, rc: 4700, re: 4700, beta: 200, drive: 0.01 },
-      seedNote: 'Compare the follower gain with the least it needs on the oscillator panel. Here it falls short, the loop gain is under one, and the trace decays. Put RE back to 1 k and the supply to 12 V and it builds.'
+      seedNote: 'Compare the follower gain with the least it needs on the oscillator panel. Here it falls short, the loop gain is under one, and the trace decays. Put RE back to 1 k and the supply to 12 V and it builds.'
     },
     '2025-Full7766': {
       why: 'An emitter follower does not invert, so the signal arrives back at the input already in phase. The feedback network therefore has to add nothing. A common emitter stage inverts, and its network has to supply the other 180 degrees.',
@@ -4020,11 +4830,11 @@ const BENCH = {
   outro: {
     intermediate: [
       'A diode passes current one way. A transistor lets a small current steer a large one. Bias decides where the device sits before the signal arrives, and feedback turns an amplifier into an oscillator.',
-      'That is the whole toolkit. Everything in the transmitter and receiver sections is built from these parts arranged differently.'
+      'The transmitter and receiver sections use these same parts.'
     ],
     full: [
       'The through line here is bias. It sets the operating point, the operating point sets the conduction angle, and the conduction angle sets both the class and the efficiency.',
-      'It also sets what you have to do about the consequences. Class A needs no help and wastes half the supply. Class C is efficient and unusable without a tuned circuit to put the waveform back together. Everything between is a judgement about which of those matters more for the mode you are running.'
+      'It also sets what you have to do about the consequences. Class A needs no help, and at least half the power it draws becomes heat. Class C is efficient and unusable without a tuned circuit to put the waveform back together. Everything between is a judgement about which of those matters more for the mode you are running.'
     ]
   }
 };
@@ -4045,6 +4855,8 @@ const QUESTIONS = [{"code": "2I1", "ref": "2025-Full300", "q": "A zener diode is
   // 'A', 'A and B', 'A, B and C'
   const listed = xs => xs.length < 2 ? xs.join('')
     : xs.slice(0, -1).join(', ') + ' and ' + xs[xs.length - 1];
+  // a page covering several syllabus groups lists them as BENCH.groups
+  const GROUPS = BENCH.groups || [BENCH.group];
   const values = {};
   BENCH.controls.forEach(c => { values[c.id] = c.start; });
 
@@ -4070,8 +4882,16 @@ const QUESTIONS = [{"code": "2I1", "ref": "2025-Full300", "q": "A zener diode is
     const s = getComputedStyle(document.documentElement);
     const g = n => s.getPropertyValue(n).trim();
     return {
+      // quantities, the same colour for the same thing everywhere
+      v: g('--q-v'), i: g('--q-i'), iInk: g('--q-i-ink'), r: g('--q-r'),
+      p: g('--q-p'), l: g('--q-l'), c: g('--q-c'), z: g('--q-z'),
+      note: g('--q-note'), noteInk: g('--q-note-ink'), mark: g('--q-mark'),
+      vFill: g('--q-v-fill'), iFill: g('--q-i-fill'), pFill: g('--q-p-fill'),
+      accent: g('--accent'),
+      // deprecated: aliases of the above until every page is recoloured
       trace: g('--trace'), fill: g('--trace-fill'), phase: g('--phase'),
-      marker: g('--marker'), grid: g('--rule-soft'), wire: g('--wire'),
+      marker: g('--marker'),
+      grid: g('--rule-soft'), wire: g('--wire'),
       ink: g('--ink'), soft: g('--ink-soft'), faint: g('--ink-faint'),
       surface: g('--surface'),
       panelFont: '"Saira Semi Condensed", sans-serif',
@@ -4116,6 +4936,7 @@ const QUESTIONS = [{"code": "2I1", "ref": "2025-Full300", "q": "A zener diode is
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let animating = !reduceMotion;
   let phase = 0;
+  let clock = 0;          // seconds of animation, for steady drift and time series
 
   const rail = $('rail');
   const stepsOf = c => (c.integer && c.linear) ? Math.round(c.range[1] - c.range[0]) : 1000;
@@ -4124,29 +4945,55 @@ const QUESTIONS = [{"code": "2I1", "ref": "2025-Full300", "q": "A zener diode is
     : logUnmap(v, c.range));
   // every calculation on a whole-number control uses the whole number, so the
   // value held and shown is that number too
-  const settle = (c, v) => c.integer ? Math.round(v) : round4(v);
-  BENCH.controls.forEach(c => {
+  // a control may snap to the values that exist, such as preferred resistor values
+  const settle = (c, v) => c.snap ? c.snap(v) : c.integer ? Math.round(v) : round4(v);
+
+  /*
+   * An item can list the controls it uses, as item.controls: a list, or one
+   * list per level. It then gets them as its own strip of sliders above its
+   * instrument, so a page with many circuits does not stack every slider at
+   * the top. A control that any item lists leaves the shared rail and the
+   * rest stay in it, so a page that lists none keeps the rail as it was.
+   * Every copy of a control moves the same value, so two items using the
+   * same control can never disagree about it.
+   */
+  const ctrlById = {};
+  BENCH.controls.forEach(c => { ctrlById[c.id] = c; });
+  const ctrlsAt = item => !item.controls ? null
+    : Array.isArray(item.controls) ? item.controls : (item.controls[level] || []);
+  const ctrlsAny = item => !item.controls ? []
+    : Array.isArray(item.controls) ? item.controls
+    : [].concat(...Object.keys(item.controls).map(k => item.controls[k]));
+  const claimed = new Set();
+  BENCH.items.forEach(it => ctrlsAny(it).forEach(id => claimed.add(id)));
+  const copies = {};      // control id -> every slider showing it
+
+  function makeCtrl(c, parent, suffix) {
     const d = document.createElement('div');
     d.className = 'ctrl';
     d.innerHTML =
-      '<div class="ctrl-head"><label class="ctrl-name" for="s_' + c.id + '">' + c.label +
-      '</label><span class="ctrl-val" id="v_' + c.id + '"></span></div>' +
-      '<input type="range" id="s_' + c.id + '" min="0" max="1000" step="1">' +
+      '<div class="ctrl-head"><label class="ctrl-name" for="s_' + c.id + suffix + '">' + c.label +
+      '</label><span class="ctrl-val" id="v_' + c.id + suffix + '"></span></div>' +
+      '<input type="range" id="s_' + c.id + suffix + '" min="0" max="1000" step="1">' +
       (c.desc ? '<p class="ctrl-desc">' + c.desc + '</p>' : '');
-    rail.appendChild(d);
+    parent.appendChild(d);
     const input = d.querySelector('input');
     // a whole-number linear control, such as bit depth, moves one unit a step
     const steps = stepsOf(c);
     input.max = String(steps);
-    input.value = sliderPos(c, c.start);
+    input.value = sliderPos(c, values[c.id]);
     const toValue = t => c.linear
       ? c.range[0] + (c.range[1] - c.range[0]) * t / steps
       : logMap(t, c.range);
     input.addEventListener('input', () => {
       values[c.id] = settle(c, toValue(+input.value));
+      copies[c.id].forEach(k => { if (k.input !== input) k.input.value = input.value; });
       renderAll();
     });
-  });
+    (copies[c.id] = copies[c.id] || []).push({ input: input, val: d.querySelector('.ctrl-val'), box: d });
+    return d;
+  }
+  BENCH.controls.forEach(c => { if (!claimed.has(c.id)) makeCtrl(c, rail, ''); });
 
   // charge animation control, in the rail beside the component sliders; a
   // bench with no circuit has no charge to move, so it gets no button
@@ -4165,6 +5012,8 @@ const QUESTIONS = [{"code": "2I1", "ref": "2025-Full300", "q": "A zener diode is
       renderAll();
     });
   })();
+  // every control moved into its item and no charge to move: no rail at all
+  if (!rail.children.length) rail.parentElement.hidden = true;
 
   /* ---- level switch ---- */
   BENCH.levels.forEach(lv => {
@@ -4194,6 +5043,8 @@ const QUESTIONS = [{"code": "2I1", "ref": "2025-Full300", "q": "A zener diode is
         '<div class="presets"></div>' +
         '<p class="item-headline"></p>' +
       '</div>' +
+      (item.controls ? '<div class="item-ctrls" role="group" aria-label="Controls for ' +
+                       item.code + '"></div>' : '') +
       '<div class="stage" data-stage="' + item.code + '">' +
         (item.noSchematic === true ? '' :
         '<div class="schem"><canvas></canvas><div class="schem-note"></div></div>') +
@@ -4216,8 +5067,14 @@ const QUESTIONS = [{"code": "2I1", "ref": "2025-Full300", "q": "A zener diode is
       lead: sec.querySelector('.item-lead'),
       presets: sec.querySelector('.presets'),
       topology: item.circuit,
-      cursor: null
+      cursor: null,
+      ctrls: sec.querySelector('.item-ctrls')
     };
+    if (p.ctrls) {
+      ctrlsAny(item).filter((id, i, all) => all.indexOf(id) === i).forEach(id => {
+        if (ctrlById[id]) makeCtrl(ctrlById[id], p.ctrls, '_' + item.code).dataset.ctrl = id;
+      });
+    }
     if (item.toggle) {
       sec.querySelectorAll('.toggle button').forEach(b => {
         b.addEventListener('click', () => { p.topology = b.dataset.k; p.cursor = null; render(p); });
@@ -4244,13 +5101,15 @@ const QUESTIONS = [{"code": "2I1", "ref": "2025-Full300", "q": "A zener diode is
       '</span><span class="ro-v">' + v + '</span></div>').join('');
     const marked = list.some(r => r[2]);
     return rows + (marked
-      ? '<p class="ro-note">The figure in colour is the one this panel is about.</p>'
+      ? '<p class="ro-note">The marked figure is the one this panel is about.</p>'
       : '');
   }
 
 
+  // the label has its own element, so a label with a subscript in it stays
+  // one run of text inside the flex box rather than splitting at the <sub>
   const swatch = (c, label) =>
-    '<span><i style="background:' + c + '"></i>' + label + '</span>';
+    '<span><i style="background:' + c + '"></i><span class="sw-l">' + label + '</span></span>';
 
 
 
@@ -4288,6 +5147,96 @@ const QUESTIONS = [{"code": "2I1", "ref": "2025-Full300", "q": "A zener diode is
   }
 
 
+  /*
+   * Every current a layout draws, so the animation can be scaled to the
+   * largest current actually on the page. Some of the biggest currents in a
+   * circuit are inside the device and never appear: the transistor's
+   * controlled source and its own output resistance. Normalising to those
+   * left the largest visible branch at a fraction of full swing and made
+   * every setting where they dominate look sluggish for no reason the reader
+   * could see.
+   */
+  function drawnCurrents(lay) {
+    const shown = new Set();
+    if (lay) {
+      for (const el of (lay.elements || [])) {
+        const nm = el.flow === undefined ? el.name : el.flow;
+        // a transformer names one current per winding
+        (Array.isArray(nm) ? nm : [nm]).forEach(n => { if (n && n !== '-') shown.add(n); });
+      }
+      for (const w of (lay.wires || [])) if (w[4] && w[4] !== '-') shown.add(w[4]);
+    }
+    return shown;
+  }
+
+  /*
+   * The charge animation for a panel. With no flow of its own, a panel that
+   * returns a circuit gets AC: currents taken at whichever frequency it is
+   * drawing attention to, so the cursor changes what you see. A panel can
+   * instead return flow: { mode, currents, ... } (see engine/flow.js):
+   *   mode 'dc'   steady drift. currents { name: amperes }, or left out to
+   *               solve the circuit at 0 Hz
+   *   mode 'time' currents t => ({ name: amperes }) over duration seconds
+   *   mode 'ac'   its own phasors in place of the solved ones
+   * and iMax, compress, loop, note and label as it needs them.
+   */
+  function flowFor(spec, p, d, t) {
+    const fl = spec.flow;
+    if (!fl && !spec.circuit) return null;
+    const mode = (fl && fl.mode) || 'ac';
+    const shown = drawnCurrents(spec.layout);
+    if (mode === 'time') {
+      if (typeof fl.currents !== 'function' || !(fl.duration > 0)) {
+        throw new Error("a 'time' flow needs currents as a function of time, and a duration");
+      }
+      return { mode: mode, currents: fl.currents, duration: fl.duration, loop: fl.loop,
+               iMax: fl.iMax || window.Flow.peakOf(fl.currents, fl.duration, shown),
+               compress: !!fl.compress, note: fl.note, label: fl.label, colour: t.i };
+    }
+    let currents = {};
+    if (fl && fl.currents) {
+      // numbers are accepted on AC too, as phasors at zero phase
+      for (const nm of Object.keys(fl.currents)) {
+        const I = fl.currents[nm];
+        currents[nm] = mode === 'dc' ? window.Flow.realOf(I)
+                     : typeof I === 'number' ? { re: I, im: 0 } : I;
+      }
+    } else {
+      if (!spec.circuit) throw new Error('a flow with no currents needs a circuit to solve');
+      const sol = M.solveAt(spec.circuit, mode === 'dc' ? 0 : (p.fAnim || d.f0));
+      for (const el of spec.circuit.elements) {
+        if (el.type === 'V') continue;
+        const I = M.currentThrough(sol, el.name);
+        currents[el.name] = mode === 'dc' ? I.re : I;
+      }
+    }
+    let iMax = (fl && fl.iMax) || 0;
+    if (!iMax) {
+      for (const nm of Object.keys(currents)) {
+        if (shown.size && !shown.has(nm)) continue;
+        iMax = Math.max(iMax, mode === 'dc' ? Math.abs(currents[nm]) : M.abs(currents[nm]));
+      }
+    }
+    if (!fl) return { currents, iMax, colour: t.i };
+    return { mode: mode, currents, iMax, compress: !!fl.compress, note: fl.note, colour: t.i };
+  }
+
+  /*
+   * What moment a time series is showing, and how much it has been slowed
+   * down. A panel can say the moment in its own terms with flow.label(t),
+   * for instance in time constants after the switch closes.
+   */
+  function timeNote(flow) {
+    const at = window.Flow.timeOf(Object.assign({}, flow, { time: clock }));
+    const when = flow.label ? flow.label(at.tau) : 't = ' + eng(at.tau, 's', 2);
+    const k = at.loop / flow.duration;    // screen seconds per circuit second
+    // two figures: the eye cannot tell 6,471,578 times from 6,500,000
+    const by = x => Number(x.toPrecision(2)).toLocaleString('en-GB');
+    return 'charge at ' + when + ', ' +
+      (k > 1.05 ? 'slowed ' + by(k) + ' times'
+       : k < 0.95 ? 'sped up ' + by(1 / k) + ' times' : 'at real speed');
+  }
+
   function render(p) {
     const d = derived(), t = tokens();
     const item = p.item;
@@ -4313,8 +5262,16 @@ const QUESTIONS = [{"code": "2I1", "ref": "2025-Full300", "q": "A zener diode is
           esc(list[0].note) + '</span>' : '');
       p.presets.hidden = !list.length;
       p.presets.querySelectorAll('button').forEach(b => {
-        b.addEventListener('click', () => applySeed(list[+b.dataset.i].values));
+        b.addEventListener('click', () => applySeed(list[+b.dataset.i].values, p));
       });
+    }
+    // the item's own sliders, only the ones this level uses
+    if (p.ctrls) {
+      const want = ctrlsAt(item) || [];
+      p.ctrls.querySelectorAll('.ctrl').forEach(box => {
+        box.hidden = want.indexOf(box.dataset.ctrl) < 0;
+      });
+      p.ctrls.hidden = !want.length;
     }
     // the left slot holds a circuit, or a second display, or nothing
     const hideSchem = item.noSchematic === true ||
@@ -4341,48 +5298,23 @@ const QUESTIONS = [{"code": "2I1", "ref": "2025-Full300", "q": "A zener diode is
       build: build, sweep: sweep, swatch: swatch, ro: ro
     });
 
-    // currents for the charge animation, taken at whichever frequency this
-    // panel is drawing attention to, so the cursor changes what you see
-    if (spec.circuit) {
-      const sol = M.solveAt(spec.circuit, p.fAnim || d.f0);
-      const currents = {};
-      for (const el of spec.circuit.elements) {
-        if (el.type === 'V') continue;
-        currents[el.name] = M.currentThrough(sol, el.name);
-      }
-      /*
-       * Scale the animation to the largest current that is actually drawn.
-       * Some of the biggest currents in the circuit are inside the device and
-       * never appear on the page: the transistor's controlled source and its
-       * own output resistance. Normalising to those left the largest visible
-       * branch at a fraction of full swing and made every setting where they
-       * dominate look sluggish for no reason the reader could see.
-       */
-      const shown = new Set();
-      const lay = spec.layout;
-      if (lay) {
-        for (const el of (lay.elements || [])) {
-          const nm = el.flow === undefined ? el.name : el.flow;
-          if (nm && nm !== '-') shown.add(nm);
-        }
-        for (const w of (lay.wires || [])) if (w[4] && w[4] !== '-') shown.add(w[4]);
-      }
-      let iMax = 0;
-      for (const nm of Object.keys(currents)) {
-        if (shown.size && !shown.has(nm)) continue;
-        iMax = Math.max(iMax, M.abs(currents[nm]));
-      }
-      p.flow = { currents, iMax, colour: t.trace };
-    } else {
-      p.flow = null;
-    }
+    p.flow = flowFor(spec, p, d, t);
     p.layout = spec.layout || null;
     if (p.schemNote && p.flow) {
-      const f = p.fAnim || d.f0;
-      p.schemNote.textContent = animating
-        ? 'charge at ' + eng(f, 'Hz', 4) + ', slowed ' +
-          Math.round(f / animRate()).toLocaleString('en-GB') + ' times'
-        : 'charge held still';
+      const mode = p.flow.mode || 'ac';
+      if (mode === 'ac') {
+        const f = p.fAnim || d.f0;
+        p.schemNote.textContent = animating
+          ? 'charge at ' + eng(f, 'Hz', 4) + ', slowed ' +
+            Number((f / animRate()).toPrecision(2)).toLocaleString('en-GB') + ' times'
+          : 'charge held still';
+      } else if (p.flow.note !== false) {
+        // a panel that writes its own note under the circuit passes note: false
+        p.schemNote.textContent = !animating ? 'charge held still'
+          : mode === 'time' ? timeNote(p.flow)
+          : (p.flow.note || 'steady current: the charge drifts one way, ' +
+                            'faster in a branch that carries more');
+      }
     }
     p.labels = BENCH.labels ? BENCH.labels(p, d, values) : {};
     p.highlight = new Set(Array.isArray(item.highlight)
@@ -4417,7 +5349,7 @@ const QUESTIONS = [{"code": "2I1", "ref": "2025-Full300", "q": "A zener diode is
       '<div class="prose-work">' + wk + '</div>' +
       '<div class="prose-text">' + termsBlock(item) + paras + '</div>' +
       '<div class="prose-qs">' + questionsFor(item.code) + '</div>';
-    wireQuestions(p.prose);
+    wireQuestions(p.prose, p);
 
     if (item.toggle) {
       const box = p.sec.querySelector('.toggle');
@@ -4435,6 +5367,8 @@ const QUESTIONS = [{"code": "2I1", "ref": "2025-Full300", "q": "A zener diode is
    */
   const esc = s => String(s).replace(/[&<>"]/g,
     c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  /* bank references like 2025-Full439 read as dated; show the bank and the question number instead */
+  const refLabel = r => { const m = /^\d{4}-([A-Za-z]+?)(\d+)$/.exec(r || ''); return m ? 'RSGB ' + m[1] + ' question bank (syllabus v1.6b) · question ' + m[2] : r; };
 
   function questionsFor(code) {
     if (level !== 'full') {
@@ -4450,7 +5384,7 @@ const QUESTIONS = [{"code": "2I1", "ref": "2025-Full300", "q": "A zener diode is
     const body = qs.map((q, i) =>
       '<div class="q" data-answer="' + q.answer + '">' +
         '<p class="q-text">' + esc(q.q) + '</p>' +
-        (q.image ? '<img class="q-img" alt="Diagram for question ' + esc(q.ref) +
+        (q.image ? '<img class="q-img" alt="Diagram for ' + esc(refLabel(q.ref)) +
                    '" src="' + q.image + '">' : '') +
         '<ul class="q-opts">' +
           q.options.map((o, k) =>
@@ -4458,7 +5392,7 @@ const QUESTIONS = [{"code": "2I1", "ref": "2025-Full300", "q": "A zener diode is
             '<span>' + esc(o) + '</span></li>').join('') +
         '</ul>' +
         '<div class="q-foot"><button type="button">Show answer</button>' +
-        '<span class="q-ref">' + esc(q.ref) + '</span></div>' +
+        '<span class="q-ref">' + esc(refLabel(q.ref)) + '</span></div>' +
         answerBlock(q) +
       '</div>').join('');
     return '<div class="qs"><div class="qs-head">' + qs.length +
@@ -4515,19 +5449,45 @@ const QUESTIONS = [{"code": "2I1", "ref": "2025-Full300", "q": "A zener diode is
     return body ? '<div class="q-src"><b>Where this comes from</b>' + body + '</div>' : '';
   }
 
-  /** Put the sliders where a question's values say, then redraw everything. */
-  function applySeed(seed) {
+  /*
+   * Put the sliders where a question's values say, then redraw everything.
+   * A seed is { control id: value, ... } and may also carry
+   *   toggle: 'key'    set the item's toggle to that option
+   *   item: '2H2'      the item the seed belongs to, when it is not the one
+   *                    the question or preset sits in
+   * Returns the panel the seed belongs to.
+   */
+  function applySeed(seed, p) {
     BENCH.controls.forEach(c => {
       if (!(c.id in seed)) return;
       const v = Math.min(c.range[1], Math.max(c.range[0], seed[c.id]));
       values[c.id] = settle(c, v);
-      const input = $('s_' + c.id);
-      if (input) input.value = sliderPos(c, v);
+      (copies[c.id] || []).forEach(k => { k.input.value = sliderPos(c, v); });
     });
+    const target = seed.item ? panels.find(q => q.item.code === seed.item) : p;
+    if (target && seed.toggle !== undefined && target.item.toggle &&
+        target.item.toggle.options.some(o => o[0] === seed.toggle)) {
+      target.topology = seed.toggle;
+      target.cursor = null;
+    }
     renderAll();
+    return target;
   }
 
-  function wireQuestions(root) {
+  /*
+   * Bring an item's instrument into view, clear of the sticky rail. A seed
+   * that changes a toggle, names an item, or moves sliders that live in the
+   * item has changed something the reader cannot see from the question, so
+   * it goes there.
+   */
+  function scrollToItem(p) {
+    if (!p || p.sec.hidden) return;
+    const railBox = document.querySelector('.rail-wrap');
+    const clear = (railBox && !railBox.hidden ? railBox.offsetHeight : 0) + 14;
+    window.scrollTo({ top: p.sec.getBoundingClientRect().top + window.scrollY - clear });
+  }
+
+  function wireQuestions(root, p) {
     root.querySelectorAll('.q').forEach(q => {
       const btn = q.querySelector('.q-foot button');
       if (!btn) return;
@@ -4541,8 +5501,12 @@ const QUESTIONS = [{"code": "2I1", "ref": "2025-Full300", "q": "A zener diode is
       if (seedBtn) {
         seedBtn.addEventListener('click', () => {
           const seed = JSON.parse(seedBtn.dataset.seed);
-          applySeed(seed);
-          q.scrollIntoView({ block: 'nearest' });
+          const target = applySeed(seed, p);
+          if (target && (seed.item || seed.toggle !== undefined || target.ctrls)) {
+            scrollToItem(target);
+          } else {
+            q.scrollIntoView({ block: 'nearest' });
+          }
         });
       }
     });
@@ -4570,8 +5534,12 @@ const QUESTIONS = [{"code": "2I1", "ref": "2025-Full300", "q": "A zener diode is
       tokens: tokens(),
       highlight: p.highlight,
       labels: p.labels,
-      flow: p.flow ? Object.assign({ phase: phase }, p.flow) : null
+      flow: p.flow ? Object.assign({ phase: phase, time: clock }, p.flow) : null
     });
+    // a time series says which moment the dots are showing, as they show it
+    if (p.flow && p.flow.mode === 'time' && animating && p.schemNote && p.flow.note !== false) {
+      p.schemNote.textContent = timeNote(p.flow);
+    }
   }
 
   // Only animate what is on screen. Five panels redrawing at 60 frames a
@@ -4608,6 +5576,7 @@ const QUESTIONS = [{"code": "2I1", "ref": "2025-Full300", "q": "A zener diode is
     const dt = lastTs ? Math.min(0.05, (ts - lastTs) / 1000) : 0;
     lastTs = ts || 0;
     phase += dt * 2 * Math.PI * animRate();
+    clock += dt;
     panels.forEach(p => { if (!p.sec.hidden && onScreen.has(p.sec)) drawSchematic(p); });
     requestAnimationFrame(tick);
   }
@@ -4616,15 +5585,19 @@ const QUESTIONS = [{"code": "2I1", "ref": "2025-Full300", "q": "A zener diode is
     const para = xs => (xs || []).map(x => '<p>' + x + '</p>').join('');
     $('intro').innerHTML = para(BENCH.intro && (BENCH.intro[level] || BENCH.intro.all));
     $('outro').innerHTML = para(BENCH.outro && (BENCH.outro[level] || BENCH.outro.all));
+    renderStandfirst();
     // a dimensionless quantity gets no SI prefix: a bias of -0.25 is not -250 m
     BENCH.controls.forEach(c => {
-      $('v_' + c.id).textContent = c.unit ? eng(values[c.id], c.unit, 3) : trim(values[c.id], 3);
+      const shownValue = c.unit ? eng(values[c.id], c.unit, 3)
+                                : trim(values[c.id], 3).replace(/^-/, '−');
+      (copies[c.id] || []).forEach(k => { k.val.textContent = shownValue; });
     });
     $('levels').querySelectorAll('button').forEach((b, i) =>
       b.setAttribute('aria-pressed', String(BENCH.levels[i] === level)));
     const shown = BENCH.items.filter(i => i.levels.includes(level));
     $('grpItems').textContent = 'RSGB ' + LEVEL_NAME[level] + ': ' +
-      shown.length + ' of the ' + BENCH.items.length + ' items in group ' + BENCH.group;
+      shown.length + ' of the ' + BENCH.items.length + ' items in ' +
+      (GROUPS.length > 1 ? 'groups ' + listed(GROUPS) : 'group ' + GROUPS[0]);
     renderColophon();
     // One panel throwing used to take out every item after it, leaving a page
     // of blank frames with nothing to say what had happened. Contain it, and
@@ -4645,17 +5618,47 @@ const QUESTIONS = [{"code": "2I1", "ref": "2025-Full300", "q": "A zener diode is
     });
   }
 
-  $('grpTag').textContent = BENCH.group;
+  $('grpTag').textContent = BENCH.group || GROUPS.join(' ');
   $('grpTitle').textContent = BENCH.title;
   // The default words describe a circuit bench. A bench with no circuit on it
-  // says what its displays are computed from instead.
-  if (BENCH.standfirst) $('standfirst').textContent = BENCH.standfirst;
+  // says what its displays are computed from instead. One string, or one per
+  // level ({ foundation: ..., full: ..., all: ... }), set again by renderAll
+  // when the level changes.
+  function renderStandfirst() {
+    const s = BENCH.standfirst;
+    const text = typeof s === 'function' ? s(level)
+      : s && typeof s === 'object' ? (s[level] || s.all || '') : s;
+    if (text) $('standfirst').textContent = text;
+  }
+  renderStandfirst();
+  // A page whose circuits need more room than the default 300 px column
+  // names its width, so a network can be drawn at a readable scale.
+  if (BENCH.circuitColumn) {
+    const st = document.createElement('style');
+    st.textContent = '@media (min-width:900px){#items .stage:not(.wide){grid-template-columns:' +
+      Math.round(BENCH.circuitColumn) + 'px 1fr}' +
+      // and, if it names one, a taller canvas for the circuit and the graph
+      // beside it, so a network fills the wider column at a readable scale
+      (BENCH.circuitHeight ? '#items .stage:not(.wide) .schem canvas,#items .stage:not(.wide) .graph canvas{height:' +
+        Math.round(BENCH.circuitHeight) + 'px}' : '') + '}';
+    document.head.appendChild(st);
+  }
   /*
    * The way back to the course. Each bench lists the sessions that send
    * learners to it, by level, so a learner who arrived from a deck can find
    * the session again; at Full it also points to the formula sheet.
    */
   const EX309 = 'https://rsgb.services/public/exams/exam-forms/260218_EX309_Full_2026_v1.pdf';
+  // A page's own note on how it is solved: one string, or one per level
+  // ({ foundation: ..., full: ... }, falling back to `all`), or a function of
+  // the level.
+  function colophonNote() {
+    const n = BENCH.colophonNote;
+    if (typeof n === 'function') return n(level);
+    if (n && typeof n === 'object') return n[level] || n.all || '';
+    return n || '';
+  }
+
   function renderColophon() {
     const used = (BENCH.sessions && BENCH.sessions[level]) || [];
     const course = used.length
@@ -4667,7 +5670,7 @@ const QUESTIONS = [{"code": "2I1", "ref": "2025-Full300", "q": "A zener diode is
       '<span class="home"><a href="../index.html">All the Bench Test pages</a>' +
       ' &middot; built by Ian Henry, G0LFT, ' +
       '<a href="https://g0lft.org/">g0lft.org</a></span>' + course +
-      (BENCH.colophonNote ||
+      (colophonNote() ||
        'Every curve is solved by a general complex nodal analysis engine, verified against ' +
        'closed form results. Circuit symbols follow the RSGB specification.') + ' ' +
       'Item descriptions are original wording. Questions are held by the RSGB and used under the terms ' +

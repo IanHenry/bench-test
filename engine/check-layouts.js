@@ -14,20 +14,11 @@
  */
 const path = require('path');
 
-const SPAN = 60;
-
-// three terminals, and they do not sit along an axis like the passives do
-const TRANSISTOR_PINS = [[-30, 0], [12, -32], [12, 32]];
-
-function pinsOf(el) {
-  if (el.type === 'Q') {
-    return TRANSISTOR_PINS.map(([dx, dy]) => [el.at[0] + dx, el.at[1] + dy]);
-  }
-  const rad = (el.rot || 0) * Math.PI / 180;
-  const dx = Math.round(Math.cos(rad) * SPAN / 2);
-  const dy = Math.round(Math.sin(rad) * SPAN / 2);
-  return [[el.at[0] - dx, el.at[1] - dy], [el.at[0] + dx, el.at[1] + dy]];
-}
+// Terminal positions come from the schematic engine itself, so the checker
+// and the drawing cannot disagree about where a lead ends: two terminals
+// along the axis for the passives, three for a transistor, four for a
+// transformer.
+const { pins: pinsOf } = require('./schematic.js');
 
 const key = (x, y) => x + ',' + y;
 
@@ -99,4 +90,6 @@ function main() {
   console.log(`${layouts.length} layouts, all joined up`);
 }
 
-main();
+// run as a command, or required by the tests for its checks
+if (require.main === module) main();
+else module.exports = { checkLayout };

@@ -1,41 +1,75 @@
 <title>{{TITLE}}</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex, nofollow">
-<!-- Kept out of search for now. Delete the robots line when it should be found. -->
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Saira+Semi+Condensed:wght@400;500;600;700&family=Inter:ital,wght@0,400;0,600;1,400&display=swap">
 
 <style>
+  /*
+   * One colour scheme across the course and Bench.
+   * Quantities (--q-*) always mean the same thing: the course's colours from
+   * cdarc-course/parts/style.txt. Chrome follows g0lft.org: site blue for
+   * anything you press, white panels, near-black text. Dark mode keeps every
+   * meaning with a lighter variant, each at least 4.5:1 on the dark panels.
+   * Keep the values as six digit hex: pages read --surface to tell dark mode.
+   */
   :root {
-    --paper:#E4E9EE; --surface:#FBFCFD; --surface-2:#EEF2F6;
-    --ink:#0F1A22; --ink-soft:#4B5C69; --ink-faint:#7E8E9B;
-    --rule:#C3CFD9; --rule-soft:#DCE4EB;
-    --trace:#B26B0C; --trace-fill:rgba(178,107,12,.13);
-    --phase:#16697F; --marker:#A62463; --wire:#54646F;
-    --shadow:0 1px 2px rgba(15,26,34,.06),0 8px 24px rgba(15,26,34,.07);
+    /* quantities */
+    --q-v:#0D6EFD;              /* voltage */
+    --q-i:#FD7E14;              /* current: lines, fills, moving charge */
+    --q-i-ink:#C2410C;          /* current as text */
+    --q-r:#343A40;              /* resistance, and resistors drawn */
+    --q-p:#DC3545;              /* power */
+    --q-l:#198754;              /* inductance, inductive reactance */
+    --q-c:#6F42C1;              /* capacitance, capacitive reactance */
+    --q-z:#0A3D7A;              /* impedance */
+    --q-note:#FFC107;           /* notices and warnings: fills and rules only */
+    --q-note-ink:#856404;       /* notices and warnings as text */
+    --q-mark:#495057;           /* cursors and marks that are not a quantity */
+    --q-v-fill:rgba(13,110,253,.10); --q-i-fill:rgba(253,126,20,.14);
+    --q-p-fill:rgba(220,53,69,.10);
+    /* chrome */
+    --accent:#1F6AE1; --accent-hover:#1F4DB6; --accent-tint:#EAF1FC; --on-accent:#FFFFFF;
+    --paper:#FAFBFC; --surface:#FFFFFF; --surface-2:#FAFBFC;
+    --ink:#1A1A1A; --ink-soft:#495057; --ink-faint:#6C757D;
+    --rule:#DEE2E6; --rule-soft:#E9ECEF; --wire:#6C757D;
+    --shadow:0 1px 2px rgba(26,26,26,.05),0 6px 18px rgba(26,26,26,.05);
     --f-panel:"Saira Semi Condensed","Helvetica Neue",Arial,sans-serif;
     --f-text:Inter,"Segoe UI",system-ui,sans-serif;
     --f-data:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+    /* Deprecated: the old names, kept until every page is recoloured. Each
+       follows its new name into dark mode. README says what each page must
+       map them to; do not use them in new work. */
+    --trace:var(--q-i-ink); --trace-fill:var(--q-i-fill);
+    --phase:var(--q-v); --marker:var(--q-p);
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
+      --q-v:#6EA8FE; --q-i:#FD9843; --q-i-ink:#FD9843; --q-r:#CED4DA;
+      --q-p:#F08A93; --q-l:#5DC593; --q-c:#B79CF0; --q-z:#9DB8E8;
+      --q-note:#FFC107; --q-note-ink:#FFD45E; --q-mark:#AEBBC6;
+      --q-v-fill:rgba(110,168,254,.16); --q-i-fill:rgba(253,152,67,.16);
+      --q-p-fill:rgba(240,138,147,.14);
+      --accent:#6FA0F2; --accent-hover:#9DBDF6; --accent-tint:rgba(111,160,242,.16); --on-accent:#0F1A22;
       --paper:#10171D; --surface:#19222B; --surface-2:#212C36;
-      --ink:#DEE7EE; --ink-soft:#9BABB8; --ink-faint:#6B7C89;
-      --rule:#33424E; --rule-soft:#26333D;
-      --trace:#F0B450; --trace-fill:rgba(240,180,80,.15);
-      --phase:#4FC4DA; --marker:#EC74AC; --wire:#93A4B1;
+      --ink:#DEE7EE; --ink-soft:#AEBBC6; --ink-faint:#93A3B0;
+      --rule:#33424E; --rule-soft:#26333D; --wire:#93A4B1;
       --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.34);
     }
   }
   :root[data-theme="dark"] {
+    --q-v:#6EA8FE; --q-i:#FD9843; --q-i-ink:#FD9843; --q-r:#CED4DA;
+    --q-p:#F08A93; --q-l:#5DC593; --q-c:#B79CF0; --q-z:#9DB8E8;
+    --q-note:#FFC107; --q-note-ink:#FFD45E; --q-mark:#AEBBC6;
+    --q-v-fill:rgba(110,168,254,.16); --q-i-fill:rgba(253,152,67,.16);
+    --q-p-fill:rgba(240,138,147,.14);
+    --accent:#6FA0F2; --accent-hover:#9DBDF6; --accent-tint:rgba(111,160,242,.16); --on-accent:#0F1A22;
     --paper:#10171D; --surface:#19222B; --surface-2:#212C36;
-    --ink:#DEE7EE; --ink-soft:#9BABB8; --ink-faint:#6B7C89;
-    --rule:#33424E; --rule-soft:#26333D;
-    --trace:#F0B450; --trace-fill:rgba(240,180,80,.15);
-    --phase:#4FC4DA; --marker:#EC74AC; --wire:#93A4B1;
+    --ink:#DEE7EE; --ink-soft:#AEBBC6; --ink-faint:#93A3B0;
+    --rule:#33424E; --rule-soft:#26333D; --wire:#93A4B1;
     --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.34);
   }
 
@@ -58,7 +92,7 @@
   .eyebrow { font-family:var(--f-panel); font-size:15px; font-weight:600;
              letter-spacing:.14em; text-transform:uppercase; color:var(--ink-faint);
              display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
-  .eyebrow .tag { color:var(--marker); border:1px solid currentColor;
+  .eyebrow .tag { color:var(--accent); border:1px solid currentColor;
                   border-radius:2px; padding:1px 6px; letter-spacing:.1em; }
   h1 { font-family:var(--f-panel); font-size:clamp(28px,5vw,42px); font-weight:700;
        letter-spacing:-.01em; margin:0; text-wrap:balance; }
@@ -72,8 +106,9 @@
                    padding:8px 16px; border:0; border-right:1px solid var(--rule);
                    background:transparent; color:var(--ink-soft); cursor:pointer; }
   .levels button:last-child { border-right:0; }
-  .levels button[aria-pressed="true"] { background:var(--marker); color:var(--surface); }
-  .levels button:focus-visible { outline:2px solid var(--marker); outline-offset:-2px; }
+  .levels button[aria-pressed="true"] { background:var(--accent); color:var(--on-accent); }
+  .levels button:not([aria-pressed="true"]):hover { color:var(--accent-hover); }
+  .levels button:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
 
   /* sticky control rail */
   .rail-wrap { position:sticky; top:0; z-index:5; padding-top:4px;
@@ -98,12 +133,12 @@
   input[type=range]::-moz-range-track { height:3px; background:var(--rule); border-radius:2px; }
   input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; appearance:none;
       width:16px; height:16px; margin-top:-6.5px; border-radius:50%;
-      background:var(--trace); border:2px solid var(--surface); cursor:grab;
+      background:var(--accent); border:2px solid var(--surface); cursor:grab;
       box-shadow:0 1px 3px rgba(0,0,0,.3); }
   input[type=range]::-moz-range-thumb { width:16px; height:16px; border-radius:50%;
-      background:var(--trace); border:2px solid var(--surface); cursor:grab;
+      background:var(--accent); border:2px solid var(--surface); cursor:grab;
       box-shadow:0 1px 3px rgba(0,0,0,.3); }
-  input[type=range]:focus-visible { outline:2px solid var(--marker); outline-offset:3px; border-radius:3px; }
+  input[type=range]:focus-visible { outline:2px solid var(--accent); outline-offset:3px; border-radius:3px; }
 
   /* item panels */
   .item { background:var(--surface); border:1px solid var(--rule); border-radius:4px;
@@ -121,7 +156,7 @@
   .item-code { font-family:var(--f-panel); font-size:15px; font-weight:600;
                letter-spacing:.13em; text-transform:uppercase; color:var(--ink-faint);
                display:flex; gap:8px; align-items:center; }
-  .item-code b { color:var(--marker); font-weight:700; }
+  .item-code b { color:var(--accent); font-weight:700; }
   .item-heading { font-family:var(--f-panel); font-size:25px; font-weight:700;
                   letter-spacing:-.01em; margin:0; text-wrap:balance; }
   .item-lead { margin:0; font-size:17.5px; color:var(--ink); }
@@ -129,7 +164,9 @@
   .preset { font:inherit; font-size:15px; padding:5px 11px; cursor:pointer;
             border:1px solid var(--rule); border-radius:999px;
             background:var(--surface); color:var(--ink); }
-  .preset:hover { border-color:var(--marker); color:var(--marker); }
+  .preset:hover { border-color:var(--accent-hover); color:var(--accent-hover); }
+  .preset[aria-pressed="true"] { border-color:var(--accent); color:var(--accent); background:var(--accent-tint); font-weight:600; }
+  .preset:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
   .preset-note { font-size:15px; color:var(--ink-faint); }
   .item-headline { font-family:var(--f-text); font-size:15.5px; font-style:italic;
                    color:var(--ink-soft); margin:0; }
@@ -153,9 +190,10 @@
                  letter-spacing:.09em; text-transform:uppercase; cursor:pointer;
                  padding:6px 12px; border:1px solid var(--rule); border-radius:3px;
                  background:transparent; color:var(--ink-soft); }
-  .anim button[aria-pressed="true"] { background:var(--trace); color:var(--surface);
-                                      border-color:var(--trace); }
-  .anim button:focus-visible { outline:2px solid var(--marker); outline-offset:2px; }
+  .anim button[aria-pressed="true"] { background:var(--accent); color:var(--on-accent);
+                                      border-color:var(--accent); }
+  .anim button:not([aria-pressed="true"]):hover { color:var(--accent-hover); border-color:var(--accent-hover); }
+  .anim button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
 
   .stage { display:grid; grid-template-columns:1fr; gap:0; }
   @media (min-width:820px) { .stage { grid-template-columns:300px 1fr; } }
@@ -170,6 +208,12 @@
             letter-spacing:.02em; color:var(--ink-soft); }
   .legend span { display:inline-flex; align-items:center; gap:6px; }
   .legend i { width:15px; height:3px; border-radius:2px; }
+  .legend span.sw-l { display:inline; }
+
+  /* an item that shows its own sliders rather than sharing the rail */
+  .item-ctrls { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+                border-bottom:1px solid var(--rule); background:var(--surface); }
+  .item-ctrls .ctrl { border-bottom:1px solid var(--rule-soft); margin-bottom:-1px; }
 
   .toggle { display:flex; flex-wrap:wrap; gap:0; border-top:1px solid var(--rule-soft);
             background:var(--surface-2); }
@@ -177,8 +221,9 @@
                    letter-spacing:.09em; text-transform:uppercase;
                    padding:9px 15px; border:0; border-right:1px solid var(--rule-soft);
                    background:transparent; color:var(--ink-soft); cursor:pointer; }
-  .toggle button[aria-pressed="true"] { color:var(--trace); box-shadow:inset 0 -2px 0 var(--trace); }
-  .toggle button:focus-visible { outline:2px solid var(--marker); outline-offset:-3px; }
+  .toggle button[aria-pressed="true"] { color:var(--accent); box-shadow:inset 0 -2px 0 var(--accent); }
+  .toggle button:not([aria-pressed="true"]):hover { color:var(--accent-hover); }
+  .toggle button:focus-visible { outline:2px solid var(--accent); outline-offset:-3px; }
 
   .readouts { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
               border-top:1px solid var(--rule); }
@@ -189,12 +234,15 @@
           letter-spacing:.12em; text-transform:uppercase; color:var(--ink-faint); }
   .ro-v { font-family:var(--f-data); font-size:17px; font-weight:500;
           font-variant-numeric:tabular-nums; }
-  .ro.hot .ro-v { color:var(--marker); }
+  /* the figure a panel is about: marked, not recoloured, so a current stays
+     a current and a voltage a voltage whatever the page draws them in */
+  .ro.hot { background:var(--accent-tint); box-shadow:inset 3px 0 0 var(--accent); }
+  .ro.hot .ro-v { font-weight:600; }
   .ro-note { margin:6px 0 0; font-size:15px; color:var(--ink-faint);
              font-style:italic; }
   .panel-failed { margin:0 0 10px; padding:8px 10px; font-size:15px;
-                  border:1px solid var(--marker); border-radius:4px;
-                  color:var(--marker); }
+                  border:1px solid var(--q-p); border-radius:4px;
+                  color:var(--q-p); }
 
   .prose { padding:18px 20px 20px; border-top:1px solid var(--rule);
            display:grid; grid-template-columns:1fr; gap:14px 30px; align-items:start; }
@@ -207,7 +255,7 @@
     .prose-work { grid-column:2; grid-row:1; }
   }
   .prose p { margin:0; max-width:62ch; }
-  .work { background:var(--surface-2); border:1px solid var(--rule-soft);
+  .work { background:var(--surface); border:1px solid var(--rule-soft);
           border-radius:3px; padding:4px 14px 8px; overflow-x:auto; }
   .work-row { display:grid; grid-template-columns:1fr; gap:2px;
               padding:11px 0; border-bottom:1px solid var(--rule-soft); }
@@ -217,19 +265,25 @@
                display:flex; gap:9px; align-items:center; flex-wrap:wrap; }
   .given { border:1px solid currentColor; border-radius:2px; padding:0 5px;
            font-size:15px; letter-spacing:.09em; }
-  .given.yes { color:var(--phase); }
-  .given.no  { color:var(--marker); }
+  .given.yes { color:var(--accent); }
+  .given.no  { color:var(--q-note-ink); }
   .given.int { color:var(--ink-faint); }
   .work-eq { font-family:var(--f-data); font-size:15.5px; font-weight:500; }
   .work-sub { font-family:var(--f-data); font-size:15px; color:var(--ink-soft);
               font-variant-numeric:tabular-nums; }
-  .work-sub b { color:var(--phase); font-weight:500; }
-  .work-out { color:var(--marker); font-weight:600; }
+  .work-sub b { color:var(--ink); font-weight:600; }
+  .work-out { color:var(--ink); font-weight:700; }
   .work-note { font-size:15px; color:var(--ink-soft); margin:9px 0 0; max-width:62ch; }
   .work .lhs { color:var(--ink-faint); }
-  .work .sub { color:var(--phase); }
-  .work .out { color:var(--marker); font-weight:600; }
+  .work .sub { color:var(--ink); font-weight:600; }
+  .work .out { color:var(--ink); font-weight:700; }
   .work .rad { font-family:var(--f-text); font-size:1.06em; }
+  /* the browser's own subscript is 0.83 of the text, 12.5 px in the working:
+     nothing on the page is smaller than 15 px, subscripts and superscripts included */
+  .work sub, .work-lead sub, .work-note sub, .q-work sub,
+  .work sup, .work-lead sup, .work-note sup, .q-work sup { font-size:15px; line-height:0; }
+  /* and everywhere else in the items: readout labels, legends and the prose */
+  #items sub, #items sup { font-size:15px; line-height:0; }
 
   .qlink { display:flex; flex-wrap:wrap; align-items:baseline; gap:8px;
            font-size:15px; color:var(--ink-soft);
@@ -245,7 +299,7 @@
   .q:last-child { border-bottom:none; }
   .q-text { margin:0; font-size:16.5px; max-width:68ch; }
   .q-opts li { max-width:68ch; }
-  .q-img { max-width:100%; align-self:flex-start; background:#fff;
+  .q-img { max-width:min(100%,480px); align-self:flex-start; background:#fff;
            border:1px solid var(--rule-soft); border-radius:3px; padding:6px; }
   .q-opts { list-style:none; margin:0; padding:0; display:flex;
             flex-direction:column; gap:5px; }
@@ -253,7 +307,7 @@
                font-size:15.5px; align-items:baseline; }
   .q-opts .k { font-family:var(--f-panel); font-weight:700; font-size:15px;
                letter-spacing:.08em; color:var(--ink-faint); }
-  .q.shown .q-opts li.right .k { color:var(--e-right,var(--phase)); }
+  .q.shown .q-opts li.right .k { color:var(--e-right,var(--accent)); }
   .q.shown .q-opts li.right { color:var(--ink); font-weight:600; }
   .q.shown .q-opts li.right .k::after { content:' \2713'; }
   .q-foot { display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
@@ -261,22 +315,24 @@
                    letter-spacing:.09em; text-transform:uppercase; cursor:pointer;
                    padding:5px 11px; border:1px solid var(--rule); border-radius:3px;
                    background:transparent; color:var(--ink-soft); }
-  .q-foot button:focus-visible { outline:2px solid var(--marker); outline-offset:2px; }
+  .q-foot button:hover { color:var(--accent-hover); border-color:var(--accent-hover); }
+  .q-foot button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
   .q-ref { font-family:var(--f-data); font-size:15px; color:var(--ink-faint); }
   .q-attrib { font-size:15px; color:var(--ink-faint); padding:10px 15px;
               background:var(--surface-2); border-top:1px solid var(--rule); }
   .q-why { display:none; flex-direction:column; gap:9px;
-           border-left:3px solid var(--phase); padding:2px 0 2px 14px; }
+           border-left:3px solid var(--accent); padding:2px 0 2px 14px; }
   .q.shown .q-why { display:flex; }
   .q-why p { margin:0; font-size:16px; }
   .q-work { font-family:var(--f-data); font-size:15px; line-height:1.75;
             font-variant-numeric:tabular-nums; color:var(--ink-soft); }
-  .q-work div:last-child { color:var(--marker); font-weight:600; }
+  .q-work div:last-child { color:var(--ink); font-weight:700; }
   .q-seed { align-self:flex-start; font-family:var(--f-panel); font-size:15px;
             font-weight:600; letter-spacing:.09em; text-transform:uppercase;
             cursor:pointer; padding:6px 12px; border-radius:3px;
-            border:1px solid var(--trace); background:transparent; color:var(--trace); }
-  .q-seed:focus-visible { outline:2px solid var(--marker); outline-offset:2px; }
+            border:1px solid var(--accent); background:transparent; color:var(--accent); }
+  .q-seed:hover { background:var(--accent); color:var(--on-accent); }
+  .q-seed:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
   /* not upper case: these carry units, and mA, µH or Hz must not become MA, MH or HZ */
   .schem-note { font-family:var(--f-panel); font-size:15px; font-weight:600;
                 letter-spacing:.02em; color:var(--ink-faint);
@@ -290,24 +346,27 @@
                 padding:9px 0 7px; }
   .terms dl { margin:0; display:flex; flex-direction:column; gap:9px; }
   .terms dt { font-family:var(--f-panel); font-size:15px; font-weight:700;
-              letter-spacing:.02em; color:var(--phase); }
+              letter-spacing:.02em; color:var(--accent); }
   .terms dd { margin:2px 0 0; font-size:15.5px; color:var(--ink); max-width:60ch; }
-  .term { border-bottom:1px dotted var(--phase); cursor:help; }
+  .term { border-bottom:1px dotted var(--accent); cursor:help; }
   .q-src { font-size:15.5px; color:var(--ink-soft); border-top:1px dotted var(--rule);
            padding-top:9px; }
   .q-src b { font-family:var(--f-panel); font-size:15px; font-weight:700;
              letter-spacing:.11em; text-transform:uppercase; color:var(--ink-faint);
              display:block; margin-bottom:4px; }
-  .q-src a { color:var(--phase); }
+  .q-src a { color:var(--accent); }
   .q-src code { font-family:var(--f-data); font-size:15px; background:var(--surface);
                 padding:1px 5px; border-radius:3px; }
-  .qlink a { color:var(--phase); }
+  .qlink a { color:var(--accent); }
   .qlink code { font-family:var(--f-data); font-size:15px; background:var(--surface-2);
                 padding:1px 5px; border-radius:3px; }
 
   .colophon { font-size:15px; color:var(--ink-faint); border-top:1px solid var(--rule);
               padding-top:16px; max-width:72ch; }
-  .colophon a { color:var(--phase); }
+  .colophon a { color:var(--accent); }
+  .wrap a { color:var(--accent); }
+  .wrap a:hover { color:var(--accent-hover); }
+  a:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:2px; }
   .colophon .home { display:block; margin-bottom:10px; font-size:15px;
                     color:var(--ink); }
 
@@ -359,6 +418,8 @@
   // 'A', 'A and B', 'A, B and C'
   const listed = xs => xs.length < 2 ? xs.join('')
     : xs.slice(0, -1).join(', ') + ' and ' + xs[xs.length - 1];
+  // a page covering several syllabus groups lists them as BENCH.groups
+  const GROUPS = BENCH.groups || [BENCH.group];
   const values = {};
   BENCH.controls.forEach(c => { values[c.id] = c.start; });
 
@@ -384,8 +445,16 @@
     const s = getComputedStyle(document.documentElement);
     const g = n => s.getPropertyValue(n).trim();
     return {
+      // quantities, the same colour for the same thing everywhere
+      v: g('--q-v'), i: g('--q-i'), iInk: g('--q-i-ink'), r: g('--q-r'),
+      p: g('--q-p'), l: g('--q-l'), c: g('--q-c'), z: g('--q-z'),
+      note: g('--q-note'), noteInk: g('--q-note-ink'), mark: g('--q-mark'),
+      vFill: g('--q-v-fill'), iFill: g('--q-i-fill'), pFill: g('--q-p-fill'),
+      accent: g('--accent'),
+      // deprecated: aliases of the above until every page is recoloured
       trace: g('--trace'), fill: g('--trace-fill'), phase: g('--phase'),
-      marker: g('--marker'), grid: g('--rule-soft'), wire: g('--wire'),
+      marker: g('--marker'),
+      grid: g('--rule-soft'), wire: g('--wire'),
       ink: g('--ink'), soft: g('--ink-soft'), faint: g('--ink-faint'),
       surface: g('--surface'),
       panelFont: '"Saira Semi Condensed", sans-serif',
@@ -430,6 +499,7 @@
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let animating = !reduceMotion;
   let phase = 0;
+  let clock = 0;          // seconds of animation, for steady drift and time series
 
   const rail = $('rail');
   const stepsOf = c => (c.integer && c.linear) ? Math.round(c.range[1] - c.range[0]) : 1000;
@@ -438,29 +508,55 @@
     : logUnmap(v, c.range));
   // every calculation on a whole-number control uses the whole number, so the
   // value held and shown is that number too
-  const settle = (c, v) => c.integer ? Math.round(v) : round4(v);
-  BENCH.controls.forEach(c => {
+  // a control may snap to the values that exist, such as preferred resistor values
+  const settle = (c, v) => c.snap ? c.snap(v) : c.integer ? Math.round(v) : round4(v);
+
+  /*
+   * An item can list the controls it uses, as item.controls: a list, or one
+   * list per level. It then gets them as its own strip of sliders above its
+   * instrument, so a page with many circuits does not stack every slider at
+   * the top. A control that any item lists leaves the shared rail and the
+   * rest stay in it, so a page that lists none keeps the rail as it was.
+   * Every copy of a control moves the same value, so two items using the
+   * same control can never disagree about it.
+   */
+  const ctrlById = {};
+  BENCH.controls.forEach(c => { ctrlById[c.id] = c; });
+  const ctrlsAt = item => !item.controls ? null
+    : Array.isArray(item.controls) ? item.controls : (item.controls[level] || []);
+  const ctrlsAny = item => !item.controls ? []
+    : Array.isArray(item.controls) ? item.controls
+    : [].concat(...Object.keys(item.controls).map(k => item.controls[k]));
+  const claimed = new Set();
+  BENCH.items.forEach(it => ctrlsAny(it).forEach(id => claimed.add(id)));
+  const copies = {};      // control id -> every slider showing it
+
+  function makeCtrl(c, parent, suffix) {
     const d = document.createElement('div');
     d.className = 'ctrl';
     d.innerHTML =
-      '<div class="ctrl-head"><label class="ctrl-name" for="s_' + c.id + '">' + c.label +
-      '</label><span class="ctrl-val" id="v_' + c.id + '"></span></div>' +
-      '<input type="range" id="s_' + c.id + '" min="0" max="1000" step="1">' +
+      '<div class="ctrl-head"><label class="ctrl-name" for="s_' + c.id + suffix + '">' + c.label +
+      '</label><span class="ctrl-val" id="v_' + c.id + suffix + '"></span></div>' +
+      '<input type="range" id="s_' + c.id + suffix + '" min="0" max="1000" step="1">' +
       (c.desc ? '<p class="ctrl-desc">' + c.desc + '</p>' : '');
-    rail.appendChild(d);
+    parent.appendChild(d);
     const input = d.querySelector('input');
     // a whole-number linear control, such as bit depth, moves one unit a step
     const steps = stepsOf(c);
     input.max = String(steps);
-    input.value = sliderPos(c, c.start);
+    input.value = sliderPos(c, values[c.id]);
     const toValue = t => c.linear
       ? c.range[0] + (c.range[1] - c.range[0]) * t / steps
       : logMap(t, c.range);
     input.addEventListener('input', () => {
       values[c.id] = settle(c, toValue(+input.value));
+      copies[c.id].forEach(k => { if (k.input !== input) k.input.value = input.value; });
       renderAll();
     });
-  });
+    (copies[c.id] = copies[c.id] || []).push({ input: input, val: d.querySelector('.ctrl-val'), box: d });
+    return d;
+  }
+  BENCH.controls.forEach(c => { if (!claimed.has(c.id)) makeCtrl(c, rail, ''); });
 
   // charge animation control, in the rail beside the component sliders; a
   // bench with no circuit has no charge to move, so it gets no button
@@ -479,6 +575,8 @@
       renderAll();
     });
   })();
+  // every control moved into its item and no charge to move: no rail at all
+  if (!rail.children.length) rail.parentElement.hidden = true;
 
   /* ---- level switch ---- */
   BENCH.levels.forEach(lv => {
@@ -508,6 +606,8 @@
         '<div class="presets"></div>' +
         '<p class="item-headline"></p>' +
       '</div>' +
+      (item.controls ? '<div class="item-ctrls" role="group" aria-label="Controls for ' +
+                       item.code + '"></div>' : '') +
       '<div class="stage" data-stage="' + item.code + '">' +
         (item.noSchematic === true ? '' :
         '<div class="schem"><canvas></canvas><div class="schem-note"></div></div>') +
@@ -530,8 +630,14 @@
       lead: sec.querySelector('.item-lead'),
       presets: sec.querySelector('.presets'),
       topology: item.circuit,
-      cursor: null
+      cursor: null,
+      ctrls: sec.querySelector('.item-ctrls')
     };
+    if (p.ctrls) {
+      ctrlsAny(item).filter((id, i, all) => all.indexOf(id) === i).forEach(id => {
+        if (ctrlById[id]) makeCtrl(ctrlById[id], p.ctrls, '_' + item.code).dataset.ctrl = id;
+      });
+    }
     if (item.toggle) {
       sec.querySelectorAll('.toggle button').forEach(b => {
         b.addEventListener('click', () => { p.topology = b.dataset.k; p.cursor = null; render(p); });
@@ -558,13 +664,15 @@
       '</span><span class="ro-v">' + v + '</span></div>').join('');
     const marked = list.some(r => r[2]);
     return rows + (marked
-      ? '<p class="ro-note">The figure in colour is the one this panel is about.</p>'
+      ? '<p class="ro-note">The marked figure is the one this panel is about.</p>'
       : '');
   }
 
 
+  // the label has its own element, so a label with a subscript in it stays
+  // one run of text inside the flex box rather than splitting at the <sub>
   const swatch = (c, label) =>
-    '<span><i style="background:' + c + '"></i>' + label + '</span>';
+    '<span><i style="background:' + c + '"></i><span class="sw-l">' + label + '</span></span>';
 
 
 
@@ -602,6 +710,96 @@
   }
 
 
+  /*
+   * Every current a layout draws, so the animation can be scaled to the
+   * largest current actually on the page. Some of the biggest currents in a
+   * circuit are inside the device and never appear: the transistor's
+   * controlled source and its own output resistance. Normalising to those
+   * left the largest visible branch at a fraction of full swing and made
+   * every setting where they dominate look sluggish for no reason the reader
+   * could see.
+   */
+  function drawnCurrents(lay) {
+    const shown = new Set();
+    if (lay) {
+      for (const el of (lay.elements || [])) {
+        const nm = el.flow === undefined ? el.name : el.flow;
+        // a transformer names one current per winding
+        (Array.isArray(nm) ? nm : [nm]).forEach(n => { if (n && n !== '-') shown.add(n); });
+      }
+      for (const w of (lay.wires || [])) if (w[4] && w[4] !== '-') shown.add(w[4]);
+    }
+    return shown;
+  }
+
+  /*
+   * The charge animation for a panel. With no flow of its own, a panel that
+   * returns a circuit gets AC: currents taken at whichever frequency it is
+   * drawing attention to, so the cursor changes what you see. A panel can
+   * instead return flow: { mode, currents, ... } (see engine/flow.js):
+   *   mode 'dc'   steady drift. currents { name: amperes }, or left out to
+   *               solve the circuit at 0 Hz
+   *   mode 'time' currents t => ({ name: amperes }) over duration seconds
+   *   mode 'ac'   its own phasors in place of the solved ones
+   * and iMax, compress, loop, note and label as it needs them.
+   */
+  function flowFor(spec, p, d, t) {
+    const fl = spec.flow;
+    if (!fl && !spec.circuit) return null;
+    const mode = (fl && fl.mode) || 'ac';
+    const shown = drawnCurrents(spec.layout);
+    if (mode === 'time') {
+      if (typeof fl.currents !== 'function' || !(fl.duration > 0)) {
+        throw new Error("a 'time' flow needs currents as a function of time, and a duration");
+      }
+      return { mode: mode, currents: fl.currents, duration: fl.duration, loop: fl.loop,
+               iMax: fl.iMax || window.Flow.peakOf(fl.currents, fl.duration, shown),
+               compress: !!fl.compress, note: fl.note, label: fl.label, colour: t.i };
+    }
+    let currents = {};
+    if (fl && fl.currents) {
+      // numbers are accepted on AC too, as phasors at zero phase
+      for (const nm of Object.keys(fl.currents)) {
+        const I = fl.currents[nm];
+        currents[nm] = mode === 'dc' ? window.Flow.realOf(I)
+                     : typeof I === 'number' ? { re: I, im: 0 } : I;
+      }
+    } else {
+      if (!spec.circuit) throw new Error('a flow with no currents needs a circuit to solve');
+      const sol = M.solveAt(spec.circuit, mode === 'dc' ? 0 : (p.fAnim || d.f0));
+      for (const el of spec.circuit.elements) {
+        if (el.type === 'V') continue;
+        const I = M.currentThrough(sol, el.name);
+        currents[el.name] = mode === 'dc' ? I.re : I;
+      }
+    }
+    let iMax = (fl && fl.iMax) || 0;
+    if (!iMax) {
+      for (const nm of Object.keys(currents)) {
+        if (shown.size && !shown.has(nm)) continue;
+        iMax = Math.max(iMax, mode === 'dc' ? Math.abs(currents[nm]) : M.abs(currents[nm]));
+      }
+    }
+    if (!fl) return { currents, iMax, colour: t.i };
+    return { mode: mode, currents, iMax, compress: !!fl.compress, note: fl.note, colour: t.i };
+  }
+
+  /*
+   * What moment a time series is showing, and how much it has been slowed
+   * down. A panel can say the moment in its own terms with flow.label(t),
+   * for instance in time constants after the switch closes.
+   */
+  function timeNote(flow) {
+    const at = window.Flow.timeOf(Object.assign({}, flow, { time: clock }));
+    const when = flow.label ? flow.label(at.tau) : 't = ' + eng(at.tau, 's', 2);
+    const k = at.loop / flow.duration;    // screen seconds per circuit second
+    // two figures: the eye cannot tell 6,471,578 times from 6,500,000
+    const by = x => Number(x.toPrecision(2)).toLocaleString('en-GB');
+    return 'charge at ' + when + ', ' +
+      (k > 1.05 ? 'slowed ' + by(k) + ' times'
+       : k < 0.95 ? 'sped up ' + by(1 / k) + ' times' : 'at real speed');
+  }
+
   function render(p) {
     const d = derived(), t = tokens();
     const item = p.item;
@@ -627,8 +825,16 @@
           esc(list[0].note) + '</span>' : '');
       p.presets.hidden = !list.length;
       p.presets.querySelectorAll('button').forEach(b => {
-        b.addEventListener('click', () => applySeed(list[+b.dataset.i].values));
+        b.addEventListener('click', () => applySeed(list[+b.dataset.i].values, p));
       });
+    }
+    // the item's own sliders, only the ones this level uses
+    if (p.ctrls) {
+      const want = ctrlsAt(item) || [];
+      p.ctrls.querySelectorAll('.ctrl').forEach(box => {
+        box.hidden = want.indexOf(box.dataset.ctrl) < 0;
+      });
+      p.ctrls.hidden = !want.length;
     }
     // the left slot holds a circuit, or a second display, or nothing
     const hideSchem = item.noSchematic === true ||
@@ -655,48 +861,23 @@
       build: build, sweep: sweep, swatch: swatch, ro: ro
     });
 
-    // currents for the charge animation, taken at whichever frequency this
-    // panel is drawing attention to, so the cursor changes what you see
-    if (spec.circuit) {
-      const sol = M.solveAt(spec.circuit, p.fAnim || d.f0);
-      const currents = {};
-      for (const el of spec.circuit.elements) {
-        if (el.type === 'V') continue;
-        currents[el.name] = M.currentThrough(sol, el.name);
-      }
-      /*
-       * Scale the animation to the largest current that is actually drawn.
-       * Some of the biggest currents in the circuit are inside the device and
-       * never appear on the page: the transistor's controlled source and its
-       * own output resistance. Normalising to those left the largest visible
-       * branch at a fraction of full swing and made every setting where they
-       * dominate look sluggish for no reason the reader could see.
-       */
-      const shown = new Set();
-      const lay = spec.layout;
-      if (lay) {
-        for (const el of (lay.elements || [])) {
-          const nm = el.flow === undefined ? el.name : el.flow;
-          if (nm && nm !== '-') shown.add(nm);
-        }
-        for (const w of (lay.wires || [])) if (w[4] && w[4] !== '-') shown.add(w[4]);
-      }
-      let iMax = 0;
-      for (const nm of Object.keys(currents)) {
-        if (shown.size && !shown.has(nm)) continue;
-        iMax = Math.max(iMax, M.abs(currents[nm]));
-      }
-      p.flow = { currents, iMax, colour: t.trace };
-    } else {
-      p.flow = null;
-    }
+    p.flow = flowFor(spec, p, d, t);
     p.layout = spec.layout || null;
     if (p.schemNote && p.flow) {
-      const f = p.fAnim || d.f0;
-      p.schemNote.textContent = animating
-        ? 'charge at ' + eng(f, 'Hz', 4) + ', slowed ' +
-          Math.round(f / animRate()).toLocaleString('en-GB') + ' times'
-        : 'charge held still';
+      const mode = p.flow.mode || 'ac';
+      if (mode === 'ac') {
+        const f = p.fAnim || d.f0;
+        p.schemNote.textContent = animating
+          ? 'charge at ' + eng(f, 'Hz', 4) + ', slowed ' +
+            Number((f / animRate()).toPrecision(2)).toLocaleString('en-GB') + ' times'
+          : 'charge held still';
+      } else if (p.flow.note !== false) {
+        // a panel that writes its own note under the circuit passes note: false
+        p.schemNote.textContent = !animating ? 'charge held still'
+          : mode === 'time' ? timeNote(p.flow)
+          : (p.flow.note || 'steady current: the charge drifts one way, ' +
+                            'faster in a branch that carries more');
+      }
     }
     p.labels = BENCH.labels ? BENCH.labels(p, d, values) : {};
     p.highlight = new Set(Array.isArray(item.highlight)
@@ -731,7 +912,7 @@
       '<div class="prose-work">' + wk + '</div>' +
       '<div class="prose-text">' + termsBlock(item) + paras + '</div>' +
       '<div class="prose-qs">' + questionsFor(item.code) + '</div>';
-    wireQuestions(p.prose);
+    wireQuestions(p.prose, p);
 
     if (item.toggle) {
       const box = p.sec.querySelector('.toggle');
@@ -749,6 +930,8 @@
    */
   const esc = s => String(s).replace(/[&<>"]/g,
     c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  /* bank references like 2025-Full439 read as dated; show the bank and the question number instead */
+  const refLabel = r => { const m = /^\d{4}-([A-Za-z]+?)(\d+)$/.exec(r || ''); return m ? 'RSGB ' + m[1] + ' question bank (syllabus v1.6b) · question ' + m[2] : r; };
 
   function questionsFor(code) {
     if (level !== 'full') {
@@ -764,7 +947,7 @@
     const body = qs.map((q, i) =>
       '<div class="q" data-answer="' + q.answer + '">' +
         '<p class="q-text">' + esc(q.q) + '</p>' +
-        (q.image ? '<img class="q-img" alt="Diagram for question ' + esc(q.ref) +
+        (q.image ? '<img class="q-img" alt="Diagram for ' + esc(refLabel(q.ref)) +
                    '" src="' + q.image + '">' : '') +
         '<ul class="q-opts">' +
           q.options.map((o, k) =>
@@ -772,7 +955,7 @@
             '<span>' + esc(o) + '</span></li>').join('') +
         '</ul>' +
         '<div class="q-foot"><button type="button">Show answer</button>' +
-        '<span class="q-ref">' + esc(q.ref) + '</span></div>' +
+        '<span class="q-ref">' + esc(refLabel(q.ref)) + '</span></div>' +
         answerBlock(q) +
       '</div>').join('');
     return '<div class="qs"><div class="qs-head">' + qs.length +
@@ -829,19 +1012,45 @@
     return body ? '<div class="q-src"><b>Where this comes from</b>' + body + '</div>' : '';
   }
 
-  /** Put the sliders where a question's values say, then redraw everything. */
-  function applySeed(seed) {
+  /*
+   * Put the sliders where a question's values say, then redraw everything.
+   * A seed is { control id: value, ... } and may also carry
+   *   toggle: 'key'    set the item's toggle to that option
+   *   item: '2H2'      the item the seed belongs to, when it is not the one
+   *                    the question or preset sits in
+   * Returns the panel the seed belongs to.
+   */
+  function applySeed(seed, p) {
     BENCH.controls.forEach(c => {
       if (!(c.id in seed)) return;
       const v = Math.min(c.range[1], Math.max(c.range[0], seed[c.id]));
       values[c.id] = settle(c, v);
-      const input = $('s_' + c.id);
-      if (input) input.value = sliderPos(c, v);
+      (copies[c.id] || []).forEach(k => { k.input.value = sliderPos(c, v); });
     });
+    const target = seed.item ? panels.find(q => q.item.code === seed.item) : p;
+    if (target && seed.toggle !== undefined && target.item.toggle &&
+        target.item.toggle.options.some(o => o[0] === seed.toggle)) {
+      target.topology = seed.toggle;
+      target.cursor = null;
+    }
     renderAll();
+    return target;
   }
 
-  function wireQuestions(root) {
+  /*
+   * Bring an item's instrument into view, clear of the sticky rail. A seed
+   * that changes a toggle, names an item, or moves sliders that live in the
+   * item has changed something the reader cannot see from the question, so
+   * it goes there.
+   */
+  function scrollToItem(p) {
+    if (!p || p.sec.hidden) return;
+    const railBox = document.querySelector('.rail-wrap');
+    const clear = (railBox && !railBox.hidden ? railBox.offsetHeight : 0) + 14;
+    window.scrollTo({ top: p.sec.getBoundingClientRect().top + window.scrollY - clear });
+  }
+
+  function wireQuestions(root, p) {
     root.querySelectorAll('.q').forEach(q => {
       const btn = q.querySelector('.q-foot button');
       if (!btn) return;
@@ -855,8 +1064,12 @@
       if (seedBtn) {
         seedBtn.addEventListener('click', () => {
           const seed = JSON.parse(seedBtn.dataset.seed);
-          applySeed(seed);
-          q.scrollIntoView({ block: 'nearest' });
+          const target = applySeed(seed, p);
+          if (target && (seed.item || seed.toggle !== undefined || target.ctrls)) {
+            scrollToItem(target);
+          } else {
+            q.scrollIntoView({ block: 'nearest' });
+          }
         });
       }
     });
@@ -884,8 +1097,12 @@
       tokens: tokens(),
       highlight: p.highlight,
       labels: p.labels,
-      flow: p.flow ? Object.assign({ phase: phase }, p.flow) : null
+      flow: p.flow ? Object.assign({ phase: phase, time: clock }, p.flow) : null
     });
+    // a time series says which moment the dots are showing, as they show it
+    if (p.flow && p.flow.mode === 'time' && animating && p.schemNote && p.flow.note !== false) {
+      p.schemNote.textContent = timeNote(p.flow);
+    }
   }
 
   // Only animate what is on screen. Five panels redrawing at 60 frames a
@@ -922,6 +1139,7 @@
     const dt = lastTs ? Math.min(0.05, (ts - lastTs) / 1000) : 0;
     lastTs = ts || 0;
     phase += dt * 2 * Math.PI * animRate();
+    clock += dt;
     panels.forEach(p => { if (!p.sec.hidden && onScreen.has(p.sec)) drawSchematic(p); });
     requestAnimationFrame(tick);
   }
@@ -930,15 +1148,19 @@
     const para = xs => (xs || []).map(x => '<p>' + x + '</p>').join('');
     $('intro').innerHTML = para(BENCH.intro && (BENCH.intro[level] || BENCH.intro.all));
     $('outro').innerHTML = para(BENCH.outro && (BENCH.outro[level] || BENCH.outro.all));
+    renderStandfirst();
     // a dimensionless quantity gets no SI prefix: a bias of -0.25 is not -250 m
     BENCH.controls.forEach(c => {
-      $('v_' + c.id).textContent = c.unit ? eng(values[c.id], c.unit, 3) : trim(values[c.id], 3);
+      const shownValue = c.unit ? eng(values[c.id], c.unit, 3)
+                                : trim(values[c.id], 3).replace(/^-/, '−');
+      (copies[c.id] || []).forEach(k => { k.val.textContent = shownValue; });
     });
     $('levels').querySelectorAll('button').forEach((b, i) =>
       b.setAttribute('aria-pressed', String(BENCH.levels[i] === level)));
     const shown = BENCH.items.filter(i => i.levels.includes(level));
     $('grpItems').textContent = 'RSGB ' + LEVEL_NAME[level] + ': ' +
-      shown.length + ' of the ' + BENCH.items.length + ' items in group ' + BENCH.group;
+      shown.length + ' of the ' + BENCH.items.length + ' items in ' +
+      (GROUPS.length > 1 ? 'groups ' + listed(GROUPS) : 'group ' + GROUPS[0]);
     renderColophon();
     // One panel throwing used to take out every item after it, leaving a page
     // of blank frames with nothing to say what had happened. Contain it, and
@@ -959,17 +1181,47 @@
     });
   }
 
-  $('grpTag').textContent = BENCH.group;
+  $('grpTag').textContent = BENCH.group || GROUPS.join(' ');
   $('grpTitle').textContent = BENCH.title;
   // The default words describe a circuit bench. A bench with no circuit on it
-  // says what its displays are computed from instead.
-  if (BENCH.standfirst) $('standfirst').textContent = BENCH.standfirst;
+  // says what its displays are computed from instead. One string, or one per
+  // level ({ foundation: ..., full: ..., all: ... }), set again by renderAll
+  // when the level changes.
+  function renderStandfirst() {
+    const s = BENCH.standfirst;
+    const text = typeof s === 'function' ? s(level)
+      : s && typeof s === 'object' ? (s[level] || s.all || '') : s;
+    if (text) $('standfirst').textContent = text;
+  }
+  renderStandfirst();
+  // A page whose circuits need more room than the default 300 px column
+  // names its width, so a network can be drawn at a readable scale.
+  if (BENCH.circuitColumn) {
+    const st = document.createElement('style');
+    st.textContent = '@media (min-width:900px){#items .stage:not(.wide){grid-template-columns:' +
+      Math.round(BENCH.circuitColumn) + 'px 1fr}' +
+      // and, if it names one, a taller canvas for the circuit and the graph
+      // beside it, so a network fills the wider column at a readable scale
+      (BENCH.circuitHeight ? '#items .stage:not(.wide) .schem canvas,#items .stage:not(.wide) .graph canvas{height:' +
+        Math.round(BENCH.circuitHeight) + 'px}' : '') + '}';
+    document.head.appendChild(st);
+  }
   /*
    * The way back to the course. Each bench lists the sessions that send
    * learners to it, by level, so a learner who arrived from a deck can find
    * the session again; at Full it also points to the formula sheet.
    */
   const EX309 = 'https://rsgb.services/public/exams/exam-forms/260218_EX309_Full_2026_v1.pdf';
+  // A page's own note on how it is solved: one string, or one per level
+  // ({ foundation: ..., full: ... }, falling back to `all`), or a function of
+  // the level.
+  function colophonNote() {
+    const n = BENCH.colophonNote;
+    if (typeof n === 'function') return n(level);
+    if (n && typeof n === 'object') return n[level] || n.all || '';
+    return n || '';
+  }
+
   function renderColophon() {
     const used = (BENCH.sessions && BENCH.sessions[level]) || [];
     const course = used.length
@@ -981,7 +1233,7 @@
       '<span class="home"><a href="../index.html">All the Bench Test pages</a>' +
       ' &middot; built by Ian Henry, G0LFT, ' +
       '<a href="https://g0lft.org/">g0lft.org</a></span>' + course +
-      (BENCH.colophonNote ||
+      (colophonNote() ||
        'Every curve is solved by a general complex nodal analysis engine, verified against ' +
        'closed form results. Circuit symbols follow the RSGB specification.') + ' ' +
       'Item descriptions are original wording. Questions are held by the RSGB and used under the terms ' +

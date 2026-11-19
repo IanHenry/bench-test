@@ -4,21 +4,37 @@
  * One linear x axis, up to two y axes, any number of traces, plus the
  * furniture a bench keeps needing: a shaded band (half-power points), dashed
  * markers, and a draggable cursor. Colours come from CSS custom properties so
- * the plot follows the page theme without the caller thinking about it.
+ * the plot follows the page theme without the caller thinking about it. A
+ * trace with no colour is drawn as a voltage (--q-v), as a scope would; a
+ * band, mark or cursor with none in the neutral --q-mark.
  */
 
-const PAD = { l: 70, r: 60, t: 14, b: 36 };   // room for 13 px axis labels
+const PAD = { l: 80, r: 70, t: 14, b: 38 };   // room for 15 px axis labels
+const LABEL_PX = 15;                           // nothing on a plot smaller than this
+// a tick label with a true minus sign rather than a hyphen
+const minus = v => String(v).replace(/^-/, '−');
+// words drawn over the traces get a halo of the background, so a curve
+// running through them does not cut the letters
+function haloText(ctx, text, x, y, surface) {
+  ctx.save();
+  ctx.lineWidth = 4;
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = surface || '#fff';
+  ctx.strokeText(text, x, y);
+  ctx.restore();
+  ctx.fillText(text, x, y);
+}
 
 /**
  * spec = {
  *   xRange: [a, b], xUnit: 'Hz',
  *   left:  { max, unit, sig },            // 0..max
  *   right: { min, max, fmt },             // optional second axis
- *   traces: [{ pts:[{x,y}], axis:'left'|'right', colour, fill }],
+ *   traces: [{ pts:[{x,y}], axis:'left'|'right', colour, fill, fillTo, width, dash:[on,off] }],
  *   bands:  [{ from, to, colour }],
  *   marks:  [{ x, colour, dashed, label }],
  *   cursor: { x, colour, label, dot:{axis,y} },
- *   tokens: { grid, faint, soft, surface, panelFont }
+ *   tokens: { grid, faint, soft, surface, panelFont, v, mark }
  * }
  */
 function draw(canvas, spec) {
@@ -58,17 +74,17 @@ function draw(canvas, spec) {
   /* grid and axis labels */
   ctx.strokeStyle = t.grid || '#ddd';
   ctx.lineWidth = 1;
-  ctx.font = '500 13px ' + font;
+  ctx.font = '500 ' + LABEL_PX + 'px ' + font;
   ctx.fillStyle = t.faint || '#888';
   for (let i = 0; i <= 4; i++) {
     const y = Math.round(PAD.t + yOff + H * i / 4) + 0.5;
     ctx.beginPath(); ctx.moveTo(PAD.l, y); ctx.lineTo(PAD.l + W, y); ctx.stroke();
     ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-    ctx.fillText(spec.left.fmt(spec.left.max - (spec.left.max - lmin) * i / 4), PAD.l - 9, y);
+    ctx.fillText(minus(spec.left.fmt(spec.left.max - (spec.left.max - lmin) * i / 4)), PAD.l - 9, y);
     if (spec.right) {
       ctx.textAlign = 'left';
       const v = spec.right.max - (spec.right.max - spec.right.min) * i / 4;
-      ctx.fillText(spec.right.fmt(v), PAD.l + W + 9, y);
+      ctx.fillText(minus(spec.right.fmt(v)), PAD.l + W + 9, y);
     }
   }
   for (let i = 0; i <= 4; i++) {
@@ -76,14 +92,14 @@ function draw(canvas, spec) {
     ctx.beginPath(); ctx.moveTo(x, PAD.t + yOff); ctx.lineTo(x, PAD.t + yOff + H); ctx.stroke();
     if (!spec.hideX) {
       ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-      ctx.fillText(spec.xFmt(v), x, PAD.t + yOff + H + 9);
+      ctx.fillText(minus(spec.xFmt(v)), x, PAD.t + yOff + H + 9);
     }
   }
 
   /* shaded bands, behind everything */
   for (const b of (spec.bands || [])) {
     if (b.to < xa || b.from > xb) continue;
-    ctx.fillStyle = b.colour;
+    ctx.fillStyle = b.colour || t.mark || '#495057';
     ctx.globalAlpha = 0.07;
     const a = Math.max(X(b.from), PAD.l), c = Math.min(X(b.to), PAD.l + W);
     ctx.fillRect(a, PAD.t + yOff, c - a, H);
@@ -94,7 +110,7 @@ function draw(canvas, spec) {
   ctx.setLineDash([3, 3]);
   for (const m of (spec.marks || [])) {
     if (m.x < xa || m.x > xb) continue;
-    ctx.strokeStyle = m.colour;
+    ctx.strokeStyle = m.colour || t.mark || '#495057';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(X(m.x), PAD.t + yOff); ctx.lineTo(X(m.x), PAD.t + yOff + H);
@@ -107,11 +123,11 @@ function draw(canvas, spec) {
     if (l.x < xa || l.x > xb) continue;
     const y = (l.axis === 'right' ? YR : YL)(l.y);
     if (y < PAD.t + yOff - 2 || y > PAD.t + yOff + H + 2) continue;
-    ctx.fillStyle = l.colour;
-    ctx.font = '13px ' + font;
+    ctx.fillStyle = l.colour || t.mark || '#495057';
+    ctx.font = LABEL_PX + 'px ' + font;
     ctx.textAlign = 'right';
     ctx.textBaseline = 'bottom';
-    ctx.fillText(l.text, X(l.x), y - 3);
+    haloText(ctx, l.text, X(l.x), y - 3, t.surface);
   }
   ctx.setLineDash([]);
 
@@ -119,7 +135,10 @@ function draw(canvas, spec) {
   for (const tr of spec.traces) {
     if (!tr.fill || !tr.pts.length) continue;
     ctx.beginPath();
-    const base = Math.min(PAD.t + yOff + H, Math.max(PAD.t + yOff, YL(lmin)));
+    // down to the foot of the axis, or to the value fillTo names (a current
+    // that is never negative, filled to its zero on an axis that goes below)
+    const base = Math.min(PAD.t + yOff + H, Math.max(PAD.t + yOff,
+      tr.fillTo === undefined ? YL(lmin) : Y(tr.fillTo, tr.axis)));
     ctx.moveTo(X(tr.pts[0].x), base);
     for (const p of tr.pts) ctx.lineTo(X(p.x), Y(p.y, tr.axis));
     ctx.lineTo(X(tr.pts[tr.pts.length - 1].x), base);
@@ -129,27 +148,31 @@ function draw(canvas, spec) {
   }
   for (const tr of spec.traces) {
     if (!tr.pts.length) continue;
-    ctx.strokeStyle = tr.colour;
+    ctx.strokeStyle = tr.colour || t.v || '#0D6EFD';
     ctx.lineWidth = tr.width || 2.2;
     ctx.lineJoin = 'round';
+    // a second trace of the same quantity is told apart by being dashed,
+    // not by being faded, so it keeps the colour's full contrast
+    ctx.setLineDash(tr.dash || []);
     ctx.beginPath();
     tr.pts.forEach((p, i) => {
       const x = X(p.x), y = Y(p.y, tr.axis);
       i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
     });
     ctx.stroke();
+    ctx.setLineDash([]);
   }
 
   /* cursor */
   const c = spec.cursor;
   if (c && c.x >= xa && c.x <= xb) {
-    ctx.strokeStyle = c.colour;
+    ctx.strokeStyle = c.colour || t.mark || '#495057';
     ctx.lineWidth = 1.4;
     ctx.beginPath();
     ctx.moveTo(X(c.x), PAD.t + yOff); ctx.lineTo(X(c.x), PAD.t + yOff + H);
     ctx.stroke();
     if (c.dot) {
-      ctx.fillStyle = c.colour;
+      ctx.fillStyle = c.colour || t.mark || '#495057';
       ctx.beginPath();
       ctx.arc(X(c.x), Y(c.dot.y, c.dot.axis), 4.5, 0, Math.PI * 2);
       ctx.fill();
@@ -159,11 +182,11 @@ function draw(canvas, spec) {
     }
     if (c.label) {
       ctx.fillStyle = t.soft || '#666';
-      ctx.font = '600 13px ' + font;
+      ctx.font = '600 ' + LABEL_PX + 'px ' + font;
       const nearRight = (xb - c.x) < (xb - xa) * 0.18;
       ctx.textAlign = nearRight ? 'right' : 'left';
       ctx.textBaseline = 'top';
-      ctx.fillText(c.label, X(c.x) + (nearRight ? -8 : 8), PAD.t + yOff + 4);
+      haloText(ctx, c.label, X(c.x) + (nearRight ? -8 : 8), PAD.t + yOff + 4, t.surface);
     }
   }
 }

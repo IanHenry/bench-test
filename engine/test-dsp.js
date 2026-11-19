@@ -94,6 +94,15 @@ console.log('\nquantisation');
     atMost(`${bits} bit error stays within half a step`, worst, D.quantStep(bits) / 2);
   }
 
+  // n bits hold 2^n values, so a sweep across full scale lands on exactly
+  // that many levels, not one more
+  for (const bits of [2, 3]) {
+    const ramp = new Float64Array(4001);
+    for (let i = 0; i < ramp.length; i++) ramp[i] = -1 + 2 * i / (ramp.length - 1);
+    const seen = new Set(Array.from(D.quantise(ramp, bits), v => v.toFixed(9)));
+    near(`${bits} bits give ${Math.pow(2, bits)} levels`, seen.size, Math.pow(2, bits), 0);
+  }
+
   // coarser quantising must raise the noise floor, and by about the right amount
   const f = 48000 * 0.07713, fs = 48000, n = 8192;
   const measure = bits => {

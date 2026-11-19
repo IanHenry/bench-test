@@ -119,13 +119,20 @@ function sampleSine(f, fs, n, phase) {
  * Round to the nearest of 2^bits levels over -1 .. +1.
  * The residue is the quantisation error the syllabus asks about, and it sets
  * the noise floor you can see on the spectrum.
+ *
+ * The levels sit at the middle of each step, at ±step/2, ±3·step/2 and so on
+ * out to ±(1 − step/2): exactly 2^bits of them, symmetrical about zero, and
+ * no sample from −1 to +1 is ever more than half a step from one. Rounding to
+ * whole steps instead gives 2^bits + 1 levels, one more than the bits can
+ * hold.
  */
 function quantise(x, bits) {
   const levels = Math.pow(2, bits);
   const step = 2 / levels;
+  const top = 1 - step / 2;
   const out = new Float64Array(x.length);
   for (let i = 0; i < x.length; i++) {
-    out[i] = Math.max(-1, Math.min(1, Math.round(x[i] / step) * step));
+    out[i] = Math.max(-top, Math.min(top, (Math.floor(x[i] / step) + 0.5) * step));
   }
   return out;
 }
