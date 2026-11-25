@@ -174,6 +174,9 @@ function peakOf(fn, duration, names) {
  *                           // t = 0, exact where the integral is known
  *   iMax,                   // largest current drawn, for scaling
  *   compress,               // dc and time: scale speed compressively
+ *   hideStill,              // time: a branch carrying nothing at this moment
+ *                           // draws no dots, so only what conducts is seen
+ *                           // (a rectifier's diodes); off by default
  *   colour
  * }
  * A wire carries the current of whichever element the layout names in its
@@ -218,6 +221,7 @@ function draw(ctx, layout, flow, span) {
       const m = Math.abs(realOf(now[name])) / flow.iMax;
       const q = passes * (qPass[name] || 0) + (qNow[name] || 0);
       if (!isFinite(m) || (m <= 0 && !q)) return null;
+      if (flow.hideStill && m <= 0) return null;
       // compress acts on the distance moved, which keeps the order of branches
       const off = flow.compress
         ? Math.sign(q) * DRIFT * loop * squash(Math.abs(q) / (flow.duration * flow.iMax))

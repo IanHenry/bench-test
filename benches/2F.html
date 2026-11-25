@@ -283,7 +283,7 @@
   .work sub, .work-lead sub, .work-note sub, .q-work sub,
   .work sup, .work-lead sup, .work-note sup, .q-work sup { font-size:15px; line-height:0; }
   /* and everywhere else in the items: readout labels, legends and the prose */
-  #items sub, #items sup { font-size:15px; line-height:0; }
+  #items sub, #items sup, .bench-intro sub, .bench-intro sup, .bench-outro sub, .bench-outro sup { font-size:15px; line-height:0; }
 
   .qlink { display:flex; flex-wrap:wrap; align-items:baseline; gap:8px;
            font-size:15px; color:var(--ink-soft);
@@ -529,6 +529,47 @@ if (typeof window !== 'undefined') window.Fmt = API;
  * Node '0' (or 'gnd') is ground. Value suffixes are p n u m k M G, and
  * unlike SPICE they are CASE SENSITIVE: 'm' is milli and 'M' is mega, which
  * is what a radio amateur expects when typing 7M1 rather than 7MEG.
+ *
+ * A T element is a length of transmission line, a feeder, between two ports:
+ *
+ *     T1 a b c d 50 len=20 vf=0.67 db=3.5 at=14M
+ *
+ * Port 1 is a (inner) to b (screen), port 2 is c to d. 50 is the
+ * characteristic impedance Z0 in ohms, len the physical length in metres, vf
+ * the velocity factor (1 if left out), db the loss in dB per 100 m at the
+ * frequency `at`. Conductor loss dominates in coax at HF and VHF, so the loss
+ * is scaled with the square root of frequency; with no `at` it is the same at
+ * every frequency. currentThrough gives the current flowing into port 1 at a.
+ *
+ * The line is stamped with two extra unknowns, the currents into each port,
+ * and two rows from its ABCD (chain) parameters:
+ *
+ *     V1 = A V2 + B I2',  I1 = C V2 + D I2'     (I2' leaves port 2)
+ *     A = D = cosh(gamma l),  B = Z0 sinh(gamma l),  C = sinh(gamma l) / Z0
+ *
+ * where gamma = alpha + j beta. These stay finite at every length, so a
+ * lossless half wave line, whose admittance matrix does not exist, still
+ * solves. Waves travel at vf times 3 x 10^8 m/s, the figure on the formula
+ * sheet, so the bench agrees with the working a candidate does by hand.
+ *
+ * A K element couples two inductors, the way an IF transformer's windings
+ * share one field:
+ *
+ *     L1 p 0 100u
+ *     L2 q 0 100u
+ *     K1 L1 L2 0.02     ; coupling coefficient k, from 0 to 1
+ *
+ * The mutual inductance is M = k sqrt(L1 L2). The dot of each winding is at
+ * its first node, so a current into p and a current into q make fields that
+ * add. A coupled inductor is stamped as a branch, with its current as an
+ * extra unknown and the row
+ *
+ *     V(a) - V(b) - jwL I - jwM I' = 0       (I' the other winding's current)
+ *
+ * rather than as an admittance, because the admittance form needs the
+ * inverse of the inductance matrix, which does not exist at k = 1. So a
+ * perfectly coupled pair still solves, and at DC each winding is a short.
+ * currentThrough gives a coupled inductor's branch current, a to b.
  */
 
 /* ---------- complex arithmetic ---------- */
@@ -572,8 +613,26 @@ function parseNetlist(text) {
     if (tok.length < 4) throw new Error('need "name nodeA nodeB value": ' + line);
     const name = tok[0];
     const type = name[0].toUpperCase();
-    if (!'RLCVIG'.includes(type)) throw new Error('unknown element type in: ' + name);
-    if (type === 'G') {
+    if (!'RLCVIGTK'.includes(type)) throw new Error('unknown element type in: ' + name);
+    if (type === 'K') {
+      // name inductor inductor k: the inductors are found once every line is read
+      const k = parseValue(tok[3]);
+      if (!(k >= 0 && k <= 1)) throw new Error('a coupling k must be from 0 to 1: ' + line);
+      elements.push({ name, type, l1: tok[1], l2: tok[2], value: k, a: -1, b: -1 });
+    } else if (type === 'T') {
+      // name p1+ p1- p2+ p2- Z0 len=.. [vf=..] [db=..] [at=..]
+      if (tok.length < 7) throw new Error('a line needs four nodes, Z0 and len=: ' + line);
+      const opt = {};
+      for (const kv of tok.slice(6)) {
+        const m = /^([a-z]+)=(.+)$/i.exec(kv);
+        if (!m) throw new Error('expected key=value, got ' + kv + ' in: ' + line);
+        opt[m[1].toLowerCase()] = parseValue(m[2]);
+      }
+      if (!(opt.len >= 0)) throw new Error('a line needs len= in metres: ' + line);
+      elements.push({ name, type, a: nodeOf(tok[1]), b: nodeOf(tok[2]),
+                      c: nodeOf(tok[3]), d: nodeOf(tok[4]), value: parseValue(tok[5]),
+                      len: opt.len, vf: opt.vf || 1, db: opt.db || 0, at: opt.at || 0 });
+    } else if (type === 'G') {
       // name out+ out- ctrl+ ctrl- gm
       if (tok.length < 6) throw new Error('a G element needs four nodes and a gain: ' + line);
       elements.push({ name, type, a: nodeOf(tok[1]), b: nodeOf(tok[2]),
@@ -586,7 +645,56 @@ function parseNetlist(text) {
 
   const sources = elements.filter(e => e.type === 'V');
   sources.forEach((e, k) => { e.row = nodeNames.length + k; });
-  return { elements, nodeNames, nSources: sources.length };
+  // each line adds two unknowns, the currents into its two ports
+  const lines = elements.filter(e => e.type === 'T');
+  lines.forEach((e, k) => {
+    e.row = nodeNames.length + sources.length + 2 * k;
+    e.row2 = e.row + 1;
+  });
+  // each coupled inductor adds one unknown, its own current
+  const inductor = nm => {
+    const el = elements.find(e => e.name.toLowerCase() === String(nm).toLowerCase());
+    if (!el || el.type !== 'L') throw new Error('a K element couples two inductors; no inductor named ' + nm);
+    return el;
+  };
+  const coupled = [];
+  for (const kel of elements.filter(e => e.type === 'K')) {
+    const p = inductor(kel.l1), q = inductor(kel.l2);
+    if (p === q) throw new Error(kel.name + ' couples ' + p.name + ' to itself');
+    kel.p = p; kel.q = q;
+    kel.m = kel.value * Math.sqrt(p.value * q.value);
+    for (const el of [p, q]) if (coupled.indexOf(el) < 0) coupled.push(el);
+  }
+  coupled.forEach((e, k) => { e.row = nodeNames.length + sources.length + 2 * lines.length + k; });
+  return { elements, nodeNames, nSources: sources.length, nLines: lines.length, nCoupled: coupled.length };
+}
+
+/* ---------- transmission lines ---------- */
+
+const C_LIGHT = 3e8;               // m/s, the formula sheet's figure
+const NEPER_DB = 20 / Math.LN10;   // 8.686 dB to the neper
+
+const cosh = z => cx(Math.cosh(z.re) * Math.cos(z.im), Math.sinh(z.re) * Math.sin(z.im));
+const sinh = z => cx(Math.sinh(z.re) * Math.cos(z.im), Math.cosh(z.re) * Math.sin(z.im));
+
+/** Loss of a line in dB per metre at a frequency. */
+function lineDbPerMetre(el, freqHz) {
+  const per = (el.db || 0) / 100;
+  return el.at ? per * Math.sqrt(Math.max(0, freqHz) / el.at) : per;
+}
+
+/** The propagation constant alpha + j beta, per metre, at a frequency. */
+function lineGamma(el, freqHz) {
+  return cx(lineDbPerMetre(el, freqHz) / NEPER_DB,
+            2 * Math.PI * freqHz / (C_LIGHT * (el.vf || 1)));
+}
+
+/** A, B, C, D of a line element (or of `len` metres of it) at a frequency. */
+function lineABCD(el, freqHz, len) {
+  const g = lineGamma(el, freqHz), l = len === undefined ? el.len : len;
+  const gl = cx(g.re * l, g.im * l);
+  const ch = cosh(gl), sh = sinh(gl), z0 = el.value;
+  return { A: ch, B: mul(sh, cx(z0)), C: div(sh, cx(z0)), D: ch };
 }
 
 /* ---------- admittance of a two-terminal element ---------- */
@@ -607,7 +715,7 @@ function admittance(el, w) {
 function solveAt(circuit, freqHz) {
   const { elements, nodeNames, nSources } = circuit;
   const n = nodeNames.length;
-  const N = n + nSources;
+  const N = n + nSources + 2 * (circuit.nLines || 0) + (circuit.nCoupled || 0);
   const w = 2 * Math.PI * freqHz;
 
   const A = Array.from({ length: N }, () => Array.from({ length: N }, () => cx(0, 0)));
@@ -635,6 +743,33 @@ function solveAt(circuit, freqHz) {
       if (el.a >= 0 && el.cb >= 0) A[el.a][el.cb] = sub(A[el.a][el.cb], g);
       if (el.b >= 0 && el.ca >= 0) A[el.b][el.ca] = sub(A[el.b][el.ca], g);
       if (el.b >= 0 && el.cb >= 0) A[el.b][el.cb] = add(A[el.b][el.cb], g);
+    } else if (el.type === 'T') {
+      // unknowns: I1 into port 1 at a (out at b), I2 into port 2 at c (out at d)
+      const r1 = el.row, r2 = el.row2;
+      const { A: a, B: bb, C: cc, D: dd } = lineABCD(el, freqHz);
+      const put = (r, c, v) => { if (r >= 0 && c >= 0) A[r][c] = add(A[r][c], v); };
+      const one = cx(1), neg = v => cx(-v.re, -v.im);
+      put(el.a, r1, one); put(el.b, r1, neg(one));
+      put(el.c, r2, one); put(el.d, r2, neg(one));
+      // V1 - A V2 + B I2 = 0, with I2 into port 2 the negative of I2'
+      put(r1, el.a, one); put(r1, el.b, neg(one));
+      put(r1, el.c, neg(a)); put(r1, el.d, a);
+      put(r1, r2, bb);
+      // I1 - C V2 + D I2 = 0
+      put(r2, r1, one);
+      put(r2, el.c, neg(cc)); put(r2, el.d, cc);
+      put(r2, r2, dd);
+    } else if (el.type === 'L' && el.row !== undefined) {
+      // a coupled inductor: its current leaves a and arrives at b, and
+      // V(a) - V(b) - jwL I, less the mutual terms stamped by its K, is zero
+      const k = el.row;
+      if (el.a >= 0) { A[el.a][k] = add(A[el.a][k], cx(1)); A[k][el.a] = add(A[k][el.a], cx(1)); }
+      if (el.b >= 0) { A[el.b][k] = sub(A[el.b][k], cx(1)); A[k][el.b] = sub(A[k][el.b], cx(1)); }
+      A[k][k] = sub(A[k][k], cx(0, w * el.value));
+    } else if (el.type === 'K') {
+      const jwm = cx(0, w * el.m), r1 = el.p.row, r2 = el.q.row;
+      A[r1][r2] = sub(A[r1][r2], jwm);
+      A[r2][r1] = sub(A[r2][r1], jwm);
     } else if (el.type === 'I') {
       // SPICE convention: positive current flows from a, through the source, to b.
       if (el.a >= 0) z[el.a] = sub(z[el.a], cx(el.value, 0));
@@ -703,6 +838,9 @@ function voltageAcross(sol, name) {
 function currentThrough(sol, name) {
   const el = byName(sol.circuit, name);
   if (el.type === 'V') return sol.x[el.row];
+  if (el.type === 'T') return sol.x[el.row];
+  if (el.type === 'L' && el.row !== undefined) return sol.x[el.row];
+  if (el.type === 'K') return cx(0, 0);          // a coupling carries no current of its own
   if (el.type === 'I') return cx(el.value, 0);
   if (el.type === 'G') {
     const va = el.ca >= 0 ? sol.x[el.ca] : cx(0, 0);
@@ -710,6 +848,36 @@ function currentThrough(sol, name) {
     return mul(sub(va, vb), cx(el.value, 0));
   }
   return mul(voltageAcross(sol, name), admittance(el, sol.w));
+}
+
+/**
+ * Both ends of a line: the voltage across each port and the current into
+ * port 1 and out of port 2 (into whatever port 2 feeds), all as solved.
+ */
+function linePorts(sol, name) {
+  const el = byName(sol.circuit, name);
+  if (el.type !== 'T') throw new Error(name + ' is not a line');
+  const at = k => (k >= 0 ? sol.x[k] : cx(0, 0));
+  const i2 = sol.x[el.row2];
+  return { v1: sub(at(el.a), at(el.b)), i1: sol.x[el.row],
+           v2: sub(at(el.c), at(el.d)), i2: cx(-i2.re, -i2.im) };
+}
+
+/**
+ * Voltage and current at a distance z metres from port 1 of a solved line,
+ * from the line equations and the solved values at port 1:
+ *     V(z) = V1 cosh(gamma z) - I1 Z0 sinh(gamma z)
+ *     I(z) = I1 cosh(gamma z) - (V1 / Z0) sinh(gamma z)
+ * The tests check this against a line cut into sections and solved node by
+ * node, so the standing wave a page draws is the circuit's.
+ */
+function lineAt(sol, name, z) {
+  const el = byName(sol.circuit, name);
+  const { v1, i1 } = linePorts(sol, name);
+  const g = lineGamma(el, sol.f);
+  const gz = cx(g.re * z, g.im * z), ch = cosh(gz), sh = sinh(gz), z0 = cx(el.value);
+  return { v: sub(mul(v1, ch), mul(mul(i1, z0), sh)),
+           i: sub(mul(i1, ch), mul(div(v1, z0), sh)) };
 }
 
 /** Frequency sweep. Returns an array of solutions. */
@@ -726,9 +894,617 @@ function sweep(circuit, fStart, fStop, points = 400, log = true) {
 }
 
 const API = { cx, add, sub, mul, div, abs, arg, parseValue, parseNetlist,
-              admittance, solveAt, sweep, voltageAcross, currentThrough, nodeV };
+              admittance, solveAt, sweep, voltageAcross, currentThrough, nodeV,
+              lineGamma, lineABCD, lineDbPerMetre, linePorts, lineAt, cosh, sinh,
+              C_LIGHT, NEPER_DB };
 
 if (typeof window !== 'undefined') window.MNA = API;
+})();
+
+/* ---- engine/tran.js ---- */
+(function () {
+/*
+ * tran.js - time-step nodal analysis for small nonlinear circuits.
+ *
+ * mna.js solves a linear circuit at one frequency. A rectifier is neither
+ * linear nor at one frequency: a diode is off for most of each cycle and on
+ * for a short burst near the peak, and what the reservoir capacitor holds
+ * depends on everything that happened before. So this steps the circuit
+ * through time, a small step h at a time, and at each step solves the
+ * nonlinear nodal equations by Newton's method. No dependencies; it runs
+ * unchanged in Node and in the browser. Written from the textbook method
+ * (companion models and Newton-Raphson); no other simulator was consulted.
+ *
+ * Netlist syntax follows mna.js: one element per line, nodes by name, '0' or
+ * 'gnd' is ground, values take the case-sensitive suffixes p n u m k M G
+ * (there is no f for femto: write 1e-14).
+ *
+ *     R1 a b 10            resistor, ohms
+ *     C1 a b 4.7m ic=12    capacitor, farads, optional starting voltage a to b
+ *     L1 a b 10m ic=0      inductor, henries, optional starting current a to b
+ *     V1 a b 12            voltage source, a positive; opts.sources.V1 = t => v
+ *                          replaces the value with a function of time
+ *     I1 a b 1m            current source, from a through the source to b
+ *     D1 a k is=9.9n n=1.68 rs=30m
+ *                          diode, anode a, cathode k: I = Is(e^(V/nVt) - 1)
+ *                          through a series resistance rs, folded into the
+ *                          diode's own tangent so it adds no node
+ *     Z1 a k 6.8 izt=10m nz=1.93
+ *                          Zener: a diode forward, and in reverse a current
+ *                          of izt at a reverse voltage of exactly vz, rising
+ *                          e-fold for every nz x Vt beyond it
+ *     Q1 c b e is=1e-14 bf=100 br=1
+ *                          NPN transistor, the Ebers-Moll transport model, so
+ *                          it is cut off, active or saturated as the circuit
+ *                          demands
+ *
+ * Capacitors and inductors become companion models: at each step a
+ * capacitor is a conductance with a current source beside it that remembers
+ * its voltage at the last step. Backward Euler (the default) is
+ *
+ *     i = (C / h)(v - v_prev)
+ *
+ * which is first order and heavily damped, so a diode switching on cannot
+ * set it ringing. The trapezoidal rule ('trap') is second order:
+ *
+ *     i = (2C / h)(v - v_prev) - i_prev
+ *
+ * A diode or transistor junction is replaced, at each Newton iteration, by
+ * the tangent to its exponential at the present guess: a conductance and a
+ * current source. The guess for the next iteration is limited the way SPICE
+ * limits it, so an exponential cannot overflow, and a small conductance
+ * (GMIN) across every junction keeps a node that only diodes reach from
+ * floating when they are all off.
+ *
+ * Currents are reported positive from a to b as written: for a diode, anode
+ * to cathode; for a Zener in breakdown, negative; for a source, from a
+ * through the source to b, as in mna.js. A transistor reports its collector
+ * current under its own name, its base current as 'Q1.b' (into the base)
+ * and its emitter current as 'Q1.e' (out of the emitter).
+ */
+
+const MNA_ = (typeof window !== 'undefined' && window.MNA) ||
+             (typeof require === 'function' ? require('./mna.js') : null);
+const parseValue = MNA_.parseValue;
+
+const VT = 0.025852;       // kT/q at 300 K, volts
+const GMIN = 1e-6;         // siemens across every junction: a megohm, a real rectifier's leakage
+const DIODE = { is: 9.9e-9, n: 1.68, rs: 0.03 };   // about 0.7 V at 0.1 A, 0.8 V at 1 A
+const ZENER = { is: 1e-12, n: 1, izt: 0.01, nz: 1.934 };   // 5 ohms slope at 10 mA
+const NPN = { is: 1e-14, bf: 100, br: 1 };
+
+/* ---------------- parsing ---------------- */
+
+function options(tokens, defaults, line) {
+  const o = Object.assign({}, defaults);
+  for (const kv of tokens) {
+    const m = /^([a-z]+)=(.+)$/i.exec(kv);
+    if (!m) throw new Error('expected key=value, got ' + kv + ' in: ' + line);
+    o[m[1].toLowerCase()] = parseValue(m[2]);
+  }
+  return o;
+}
+
+function parse(text) {
+  const elements = [], nodeNames = [], nodeIndex = new Map();
+  const nodeOf = name => {
+    if (name === '0' || name.toLowerCase() === 'gnd') return -1;
+    if (!nodeIndex.has(name)) { nodeIndex.set(name, nodeNames.length); nodeNames.push(name); }
+    return nodeIndex.get(name);
+  };
+  let nBranch = 0;
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.replace(/[*;#].*$/, '').trim();
+    if (!line) continue;
+    const tok = line.split(/\s+/);
+    const name = tok[0], type = name[0].toUpperCase();
+    if (type === 'Q') {
+      if (tok.length < 4) throw new Error('a transistor needs collector, base and emitter: ' + line);
+      const o = options(tok.slice(4), NPN, line);
+      elements.push({ name, type, c: nodeOf(tok[1]), b: nodeOf(tok[2]), e: nodeOf(tok[3]),
+                      is: o.is, bf: o.bf, br: o.br, vbe: 0, vbc: 0 });
+      continue;
+    }
+    if (type === 'D') {
+      if (tok.length < 3) throw new Error('a diode needs anode and cathode: ' + line);
+      const o = options(tok.slice(3), DIODE, line);
+      // v is the junction's own voltage, inside the series resistance; gk and
+      // ik are the tangent the last iteration used, conductance and current
+      elements.push({ name, type, a: nodeOf(tok[1]), b: nodeOf(tok[2]), is: o.is, n: o.n, rs: o.rs,
+                      v: 0, gk: GMIN, ik: 0 });
+      continue;
+    }
+    if (tok.length < 4) throw new Error('need "name nodeA nodeB value": ' + line);
+    if (type === 'Z') {
+      const o = options(tok.slice(4), ZENER, line);
+      elements.push({ name, type, a: nodeOf(tok[1]), b: nodeOf(tok[2]), vz: parseValue(tok[3]),
+                      is: o.is, n: o.n, izt: o.izt, nz: o.nz, v: 0 });
+      continue;
+    }
+    if (!'RCLVI'.includes(type)) throw new Error('unknown element type in: ' + name);
+    const o = options(tok.slice(4), {}, line);
+    const el = { name, type, a: nodeOf(tok[1]), b: nodeOf(tok[2]), value: parseValue(tok[3]) };
+    if (type === 'C' || type === 'L') el.ic = o.ic || 0;
+    if (type === 'V') el.row = nBranch++;
+    elements.push(el);
+  }
+  const n = nodeNames.length;
+  for (const el of elements) if (el.type === 'V') el.row += n;
+  return { elements, nodeNames, nodeIndex, size: n + nBranch };
+}
+
+/* ---------------- junction limiting ---------------- */
+
+// SPICE's pnjlim: keep a junction's next guess within reach of the last one
+// once it is conducting, so the exponential neither overflows nor oscillates
+function pnjlim(vnew, vold, vt, vcrit) {
+  if (vnew > vcrit && Math.abs(vnew - vold) > 2 * vt) {
+    if (vold > 0) {
+      const arg = 1 + (vnew - vold) / vt;
+      return arg > 0 ? vold + vt * Math.log(arg) : vcrit;
+    }
+    return vt * Math.log(vnew / vt);
+  }
+  return vnew;
+}
+const vcritOf = (is, vt) => vt * Math.log(vt / (Math.SQRT2 * is));
+
+// exp that cannot overflow: beyond 80 it carries on as a straight line
+function safeExp(x) {
+  if (x < 80) return Math.exp(x);
+  const e = Math.exp(80);
+  return e * (1 + x - 80);
+}
+
+/*
+ * The junction's share of the voltage v across a diode and its series
+ * resistance: vj + rs Is (e^(vj / vt) - 1) = v. The left side only ever
+ * rises, so a Newton step kept inside a bracket always finds it.
+ */
+function junction(el, v, vt) {
+  if (!(el.rs > 0)) return v;
+  let lo = Math.min(v, 0) - 1e-9, hi = Math.max(v, 0) + 1e-9;
+  let vj = Math.min(Math.max(el.v, lo), hi);
+  for (let k = 0; k < 60; k++) {
+    const e = safeExp(vj / vt), f = vj + el.rs * el.is * (e - 1) - v;
+    if (Math.abs(f) < 1e-12) break;
+    if (f > 0) hi = vj; else lo = vj;
+    let next = vj - f / (1 + el.rs * el.is * e / vt);
+    if (!(next > lo && next < hi)) next = (lo + hi) / 2;
+    if (Math.abs(next - vj) < 1e-13) { vj = next; break; }
+    vj = next;
+  }
+  return vj;
+}
+
+/* ---------------- the solver ---------------- */
+
+/** A dense linear solve with partial pivoting, in place. Returns false if singular. */
+function solveDense(A, z, N, x) {
+  for (let col = 0; col < N; col++) {
+    let piv = col, best = Math.abs(A[col * N + col]);
+    for (let r = col + 1; r < N; r++) {
+      const m = Math.abs(A[r * N + col]);
+      if (m > best) { best = m; piv = r; }
+    }
+    if (best < 1e-300) return false;
+    if (piv !== col) {
+      for (let c = 0; c < N; c++) { const t = A[col * N + c]; A[col * N + c] = A[piv * N + c]; A[piv * N + c] = t; }
+      const t = z[col]; z[col] = z[piv]; z[piv] = t;
+    }
+    const d = A[col * N + col];
+    for (let r = col + 1; r < N; r++) {
+      const f = A[r * N + col] / d;
+      if (f === 0) continue;
+      for (let c = col; c < N; c++) A[r * N + c] -= f * A[col * N + c];
+      z[r] -= f * z[col];
+    }
+  }
+  for (let r = N - 1; r >= 0; r--) {
+    let s = z[r];
+    for (let c = r + 1; c < N; c++) s -= A[r * N + c] * x[c];
+    x[r] = s / A[r * N + r];
+  }
+  return true;
+}
+
+/*
+ * The same solve, followed by two rounds of iterative refinement: the
+ * residual z - A x is worked out against the original matrix and solved for
+ * a correction. Needed when the matrix is badly conditioned, as it is when a
+ * big capacitor and a small step (C / h of thousands of siemens) sit beside a
+ * winding that only GMIN holds while every diode is off: rounding then moves
+ * the floating nodes by microvolts from one Newton iteration to the next,
+ * more than the convergence test allows, and the step never converges. The
+ * step falls back on this only after ten iterations, so ordinary steps pay
+ * nothing for it.
+ */
+function refinedSolve(A, z, N, x, work) {
+  const A0 = work.A0 || (work.A0 = new Float64Array(N * N));
+  const A1 = work.A1 || (work.A1 = new Float64Array(N * N));
+  const z0 = work.z0 || (work.z0 = new Float64Array(N));
+  const r = work.r || (work.r = new Float64Array(N));
+  const d = work.d || (work.d = new Float64Array(N));
+  A0.set(A); z0.set(z);
+  if (!solveDense(A, z, N, x)) return false;
+  for (let pass = 0; pass < 2; pass++) {
+    for (let i = 0; i < N; i++) {
+      let s = z0[i];
+      for (let j = 0; j < N; j++) s -= A0[i * N + j] * x[j];
+      r[i] = s;
+    }
+    A1.set(A0);
+    if (!solveDense(A1, r, N, d)) break;
+    for (let i = 0; i < N; i++) x[i] += d[i];
+  }
+  return true;
+}
+
+/** The state carried from one step to the next: every unknown, and each store's history. */
+function initialState(ckt) {
+  // fresh: the first step has no true history of the capacitor currents, so
+  // it is taken by backward Euler, which needs none, whatever the method
+  const st = { x: new Float64Array(ckt.size), vc: {}, ic: {}, il: {}, vl: {}, vj: {}, fresh: true };
+  for (const el of ckt.elements) {
+    if (el.type === 'C') { st.vc[el.name] = el.ic; st.ic[el.name] = 0; }
+    if (el.type === 'L') { st.il[el.name] = el.ic; st.vl[el.name] = 0; }
+  }
+  // capacitors with a starting voltage put it on their nodes for the first guess
+  for (const el of ckt.elements) {
+    if (el.type === 'C' && el.ic) {
+      if (el.a >= 0 && el.b < 0) st.x[el.a] = el.ic;
+      if (el.b >= 0 && el.a < 0) st.x[el.b] = -el.ic;
+    }
+  }
+  return st;
+}
+
+function copyState(st) {
+  return { x: Float64Array.from(st.x), vc: Object.assign({}, st.vc), ic: Object.assign({}, st.ic),
+           il: Object.assign({}, st.il), vl: Object.assign({}, st.vl), vj: Object.assign({}, st.vj),
+           fresh: !!st.fresh };
+}
+
+const volt = (x, i) => i >= 0 ? x[i] : 0;
+
+/*
+ * One time step of size h ending at time t, from state st. Returns the new
+ * state, or null if Newton would not converge (the caller then halves h).
+ */
+function step(ckt, st, t, h, opts, work) {
+  const N = ckt.size, A = work.A, z = work.z, x = work.x, xn = work.xn;
+  const trap = opts.method === 'trap' && !st.fresh;
+  const src = opts.sources || {};
+  x.set(st.x);
+  // the junction voltages the last iteration used, for limiting
+  for (const el of ckt.elements) {
+    // a diode's junction sits inside its series resistance, so its voltage is
+    // carried from the last step rather than read off the nodes
+    if (el.type === 'D') {
+      el.vx = volt(x, el.a) - volt(x, el.b);
+      if (st.vj[el.name] !== undefined) el.v = st.vj[el.name];
+    }
+    else if (el.type === 'Z') el.v = volt(x, el.a) - volt(x, el.b);
+    else if (el.type === 'Q') { el.vbe = volt(x, el.b) - volt(x, el.e); el.vbc = volt(x, el.b) - volt(x, el.c); }
+  }
+  const put = (r, c, g) => { if (r >= 0 && c >= 0) A[r * N + c] += g; };
+  const conduct = (a, b, g) => { put(a, a, g); put(b, b, g); put(a, b, -g); put(b, a, -g); };
+  // a current i flowing from a to b through an element, as a source term
+  const inject = (a, b, i) => { if (a >= 0) z[a] -= i; if (b >= 0) z[b] += i; };
+
+  for (let it = 0; it < 120; it++) {
+    A.fill(0); z.fill(0);
+    for (const el of ckt.elements) {
+      switch (el.type) {
+        case 'R': conduct(el.a, el.b, 1 / el.value); break;
+        case 'C': {
+          const g = (trap ? 2 : 1) * el.value / h;
+          conduct(el.a, el.b, g);
+          inject(el.a, el.b, -(g * st.vc[el.name] + (trap ? st.ic[el.name] : 0)));
+          break;
+        }
+        case 'L': {
+          const g = (trap ? 0.5 : 1) * h / el.value;
+          conduct(el.a, el.b, g);
+          inject(el.a, el.b, st.il[el.name] + (trap ? g * st.vl[el.name] : 0));
+          break;
+        }
+        case 'V': {
+          const k = el.row, v = src[el.name] ? src[el.name](t) : el.value;
+          put(el.a, k, 1); put(k, el.a, 1); put(el.b, k, -1); put(k, el.b, -1);
+          z[k] = v;
+          break;
+        }
+        case 'I': inject(el.a, el.b, src[el.name] ? src[el.name](t) : el.value); break;
+        case 'D': {
+          // the diode and its series resistance as one part: at the voltage
+          // vx across both, find the junction's share, then the tangent of
+          // the whole, di/dv = g / (1 + g rs)
+          const vt = el.n * VT, vj = junction(el, el.vx, vt);
+          el.v = vj;
+          const e = safeExp(vj / vt), g = el.is * e / vt;
+          const gk = g / (1 + g * el.rs) + GMIN, i = el.is * (e - 1) + GMIN * el.vx;
+          el.gk = gk; el.ik = i - gk * el.vx;
+          conduct(el.a, el.b, el.gk);
+          inject(el.a, el.b, el.ik);
+          break;
+        }
+        case 'Z': {
+          const vt = el.n * VT, vtz = el.nz * VT;
+          const ef = safeExp(el.v / vt), er = safeExp((-el.v - el.vz) / vtz);
+          const i = el.is * (ef - 1) - el.izt * er;
+          const g = el.is * ef / vt + el.izt * er / vtz + GMIN;
+          conduct(el.a, el.b, g);
+          inject(el.a, el.b, i - g * el.v + GMIN * el.v);
+          break;
+        }
+        case 'Q': {
+          const ebe = safeExp(el.vbe / VT), ebc = safeExp(el.vbc / VT);
+          const ifw = el.is * (ebe - 1), irv = el.is * (ebc - 1);
+          const gbe = el.is * ebe / VT, gbc = el.is * ebc / VT;
+          const ic = ifw - irv - irv / el.br, ib = ifw / el.bf + irv / el.br;
+          // ic = Icq + gmE vbe + gmC vbc, ib likewise, vbe = Vb - Ve, vbc = Vb - Vc
+          const gmE = gbe, gmC = -gbc * (1 + 1 / el.br);
+          const gpE = gbe / el.bf, gpC = gbc / el.br;
+          const Icq = ic - gmE * el.vbe - gmC * el.vbc;
+          const Ibq = ib - gpE * el.vbe - gpC * el.vbc;
+          conduct(el.b, el.e, GMIN); conduct(el.b, el.c, GMIN);
+          const row = (r, s, gE, gC, q) => {
+            put(r, el.b, s * (gE + gC)); put(r, el.e, -s * gE); put(r, el.c, -s * gC);
+            if (r >= 0) z[r] -= s * q;
+          };
+          row(el.c, 1, gmE, gmC, Icq);
+          row(el.b, 1, gpE, gpC, Ibq);
+          row(el.e, -1, gmE + gpE, gmC + gpC, Icq + Ibq);
+          break;
+        }
+      }
+    }
+    if (it < 10) {
+      if (!solveDense(A, z, N, xn)) return null;
+    } else if (!refinedSolve(A, z, N, xn, work)) return null;
+    // converged when nothing moved more than a microvolt or so
+    let worst = 0;
+    for (let i = 0; i < N; i++) {
+      const d = Math.abs(xn[i] - x[i]);
+      const tol = 1e-6 + 1e-6 * Math.abs(xn[i]);
+      if (d / tol > worst) worst = d / tol;
+    }
+    // limit each junction's next guess
+    let limited = false;
+    for (const el of ckt.elements) {
+      if (el.type === 'D') {
+        // with no series resistance the exponential needs SPICE's limiting;
+        // with some, the part is a straight line above its knee, and only a
+        // jump far past the knee is reined in
+        const vt = el.n * VT, want = volt(xn, el.a) - volt(xn, el.b);
+        let got = want;
+        if (!(el.rs > 0)) got = pnjlim(want, el.vx, vt, vcritOf(el.is, vt));
+        else if (want > 0.6 && want - el.vx > 0.5) got = Math.max(el.vx, 0.6) + 0.5;
+        if (got !== want) limited = true;
+        el.vx = got;
+      } else if (el.type === 'Z') {
+        const vt = el.n * VT, vtz = el.nz * VT, want = volt(xn, el.a) - volt(xn, el.b);
+        let got = want;
+        if (want > 0) got = pnjlim(want, el.v, vt, vcritOf(el.is, vt));
+        else if (-want > el.vz) {
+          // the breakdown side: the same limiting, on the voltage past vz
+          const u = pnjlim(-want - el.vz, -el.v - el.vz, vtz, vcritOf(el.izt, vtz));
+          got = -u - el.vz;
+        }
+        if (got !== want) limited = true;
+        el.v = got;
+      } else if (el.type === 'Q') {
+        const vc = vcritOf(el.is, VT);
+        const wbe = volt(xn, el.b) - volt(xn, el.e), wbc = volt(xn, el.b) - volt(xn, el.c);
+        const gbe = pnjlim(wbe, el.vbe, VT, vc), gbc = pnjlim(wbc, el.vbc, VT, vc);
+        if (gbe !== wbe || gbc !== wbc) limited = true;
+        el.vbe = gbe; el.vbc = gbc;
+      }
+    }
+    x.set(xn);
+    if (worst <= 1 && !limited && it > 0) return finish(ckt, st, x, h, t, opts);
+  }
+  return null;
+}
+
+/* The new state after a converged step, and every branch current at it. */
+function finish(ckt, st, x, h, t, opts) {
+  const trap = opts.method === 'trap' && !st.fresh;
+  const nst = { x: Float64Array.from(x), vc: {}, ic: {}, il: {}, vl: {}, vj: {}, cur: {}, fresh: false };
+  for (const el of ckt.elements) {
+    const va = volt(x, el.a), vb = volt(x, el.b);
+    switch (el.type) {
+      case 'R': nst.cur[el.name] = (va - vb) / el.value; break;
+      case 'C': {
+        const v = va - vb;
+        const i = trap ? 2 * el.value / h * (v - st.vc[el.name]) - st.ic[el.name]
+                       : el.value / h * (v - st.vc[el.name]);
+        nst.vc[el.name] = v; nst.ic[el.name] = i; nst.cur[el.name] = i;
+        break;
+      }
+      case 'L': {
+        const v = va - vb;
+        const i = trap ? st.il[el.name] + h / (2 * el.value) * (v + st.vl[el.name])
+                       : st.il[el.name] + h / el.value * v;
+        nst.il[el.name] = i; nst.vl[el.name] = v; nst.cur[el.name] = i;
+        break;
+      }
+      case 'V': nst.cur[el.name] = x[el.row]; break;
+      case 'I': nst.cur[el.name] = (opts.sources || {})[el.name] ? opts.sources[el.name](t) : el.value; break;
+      case 'D': {
+        // the current the converged tangent gives, which is what the nodal
+        // equations balanced; the junction voltage follows from it
+        const v = va - vb, i = el.gk * v + el.ik;
+        nst.cur[el.name] = i; nst.vj[el.name] = v - i * el.rs;
+        break;
+      }
+      case 'Z': {
+        const v = va - vb;
+        nst.cur[el.name] = el.is * (safeExp(v / (el.n * VT)) - 1) -
+                           el.izt * safeExp((-v - el.vz) / (el.nz * VT)) + GMIN * v;
+        break;
+      }
+      case 'Q': {
+        const vbe = volt(x, el.b) - volt(x, el.e), vbc = volt(x, el.b) - volt(x, el.c);
+        const ifw = el.is * (safeExp(vbe / VT) - 1), irv = el.is * (safeExp(vbc / VT) - 1);
+        const ic = ifw - irv - irv / el.br + GMIN * -vbc;
+        const ib = ifw / el.bf + irv / el.br + GMIN * (vbe + vbc);
+        nst.cur[el.name] = ic; nst.cur[el.name + '.b'] = ib; nst.cur[el.name + '.e'] = ic + ib;
+        break;
+      }
+    }
+  }
+  return nst;
+}
+
+/*
+ * Run the circuit from t0 to tStop in steps of dt, halving a step that will
+ * not converge (down to dt / 1024). Records every `every`th step from
+ * recordFrom onwards.
+ *
+ * opts = { dt, tStop, t0 = 0, sources: { V1: t => volts }, method: 'be' | 'trap',
+ *          recordFrom = t0, every = 1, state }
+ * Returns { t: Float64Array, v: { node: Float64Array }, i: { name: Float64Array },
+ *           state, steps } where state continues the run.
+ */
+function run(ckt, opts) {
+  const N = ckt.size;
+  const work = { A: new Float64Array(N * N), z: new Float64Array(N),
+                 x: new Float64Array(N), xn: new Float64Array(N) };
+  let st = opts.state ? copyState(opts.state) : initialState(ckt);
+  const t0 = opts.t0 || 0, dt = opts.dt;
+  const nSteps = Math.round((opts.tStop - t0) / dt);
+  const from = opts.recordFrom === undefined ? t0 : opts.recordFrom;
+  const every = opts.every || 1;
+  const T = [], V = {}, I = {};
+  ckt.nodeNames.forEach(n => { V[n] = []; });
+  let steps = 0;
+  const advance = (s, t, h, depth) => {
+    const next = step(ckt, s, t, h, opts, work);
+    if (next) { steps++; return next; }
+    if (depth > 10) throw new Error('no convergence at t = ' + t);
+    const mid = advance(s, t - h / 2, h / 2, depth + 1);
+    return advance(mid, t, h / 2, depth + 1);
+  };
+  for (let k = 1; k <= nSteps; k++) {
+    const t = t0 + k * dt;
+    st = advance(st, t, dt, 0);
+    if (t >= from - dt * 1e-6 && (k % every === 0)) {
+      T.push(t);
+      ckt.nodeNames.forEach((n, i) => V[n].push(st.x[i]));
+      for (const name of Object.keys(st.cur)) (I[name] = I[name] || []).push(st.cur[name]);
+    }
+  }
+  const f64 = o => { const r = {}; for (const k of Object.keys(o)) r[k] = Float64Array.from(o[k]); return r; };
+  return { t: Float64Array.from(T), v: f64(V), i: f64(I), state: st, steps };
+}
+
+/*
+ * Run a circuit driven by sources of period `period` until it settles into
+ * a repeating cycle, then record the last `keep` cycles. Settled means the
+ * unknowns at the end of a cycle agree with those a cycle earlier to within
+ * tol (volts or amperes), or `cycles` cycles have run.
+ *
+ * opts = { period, stepsPerCycle = 400, sources, method, cycles = 60, keep = 2,
+ *          tol = 1e-4, minCycles = 2, extrapolate = true }
+ * extrapolate: false turns off the jump ahead described below.
+ * Returns run()'s record, with t measured from the start of the kept cycles,
+ * plus cyclesRun and settled.
+ */
+function settle(ckt, opts) {
+  const P = opts.period, dt = P / (opts.stepsPerCycle || 400);
+  const maxC = opts.cycles || 60, keep = opts.keep || 2, tol = opts.tol || 1e-4;
+  const caps = opts.extrapolate === false ? [] : ckt.elements.filter(el => el.type === 'C');
+  let state = null, t = 0, n = 0, settled = false;
+  let hist = [], rPrev = NaN, sinceJump = 99;
+  while (n < maxC) {
+    const r = run(ckt, Object.assign({}, opts, { dt, t0: t, tStop: t + P, state, recordFrom: Infinity }));
+    n++; t += P; sinceJump++;
+    if (state) {
+      let worst = 0;
+      for (let i = 0; i < r.state.x.length; i++) worst = Math.max(worst, Math.abs(r.state.x[i] - state.x[i]));
+      if (worst < tol && n >= (opts.minCycles || 2) && sinceJump >= 2) { state = r.state; settled = true; break; }
+    }
+    state = r.state;
+    /*
+     * A big reservoir on a light load, or one topped up thousands of times a
+     * second, creeps towards its steady charge by the same small fraction
+     * each cycle, and could take thousands of cycles to get there; a change
+     * per cycle under tol is then no proof of being there. So once three
+     * cycles show the capacitor voltages closing in geometrically, by a
+     * steady ratio q a cycle, jump to where that series ends, adding
+     * d q / (1 - q) to each, and carry on from there. The jump is checked by
+     * the cycles that follow: settled still needs two more that agree.
+     */
+    if (caps.length) {
+      hist.push(caps.map(el => state.vc[el.name]));
+      if (hist.length > 3) hist.shift();
+      if (hist.length === 3) {
+        let num = 0, den = 0, big = 0;
+        const d2 = caps.map((el, i) => hist[2][i] - hist[1][i]);
+        caps.forEach((el, i) => { const d1 = hist[1][i] - hist[0][i]; num += d2[i] * d1; den += d1 * d1; big = Math.max(big, Math.abs(d2[i])); });
+        const q = den > 0 ? num / den : NaN;
+        if (q > 0.5 && q < 0.9995 && Math.abs(q - rPrev) < 0.1 * (1 - q) && big > 1e-9) {
+          const k = q / (1 - q);
+          state = copyState(state);
+          caps.forEach((el, i) => {
+            const dv = d2[i] * k;
+            state.vc[el.name] += dv;
+            if (el.a >= 0 && el.b < 0) state.x[el.a] += dv;
+            else if (el.b >= 0 && el.a < 0) state.x[el.b] -= dv;
+          });
+          state.fresh = true;   // the capacitor currents' history no longer applies
+          hist = []; rPrev = NaN; sinceJump = 0;
+        } else rPrev = q;
+      }
+    }
+  }
+  const r = run(ckt, Object.assign({}, opts, { dt, t0: t, tStop: t + keep * P, state, recordFrom: t }));
+  const tt = r.t.map(x => x - t);
+  return Object.assign(r, { t: tt, cyclesRun: n, settled });
+}
+
+/* ---------------- reading a record ---------------- */
+
+/** The value of a recorded series at time t, by straight lines between samples. */
+function at(rec, series, t) {
+  const T = rec.t, n = T.length;
+  if (!n) return 0;
+  if (t <= T[0]) return series[0];
+  if (t >= T[n - 1]) return series[n - 1];
+  let lo = 0, hi = n - 1;
+  while (hi - lo > 1) { const m = (lo + hi) >> 1; if (T[m] <= t) lo = m; else hi = m; }
+  const f = (t - T[lo]) / (T[hi] - T[lo]);
+  return series[lo] + f * (series[hi] - series[lo]);
+}
+
+/** Largest, smallest and mean of a series, the mean by the trapezium rule over time. */
+function stats(rec, series) {
+  let max = -Infinity, min = Infinity, area = 0;
+  for (let k = 0; k < series.length; k++) {
+    max = Math.max(max, series[k]); min = Math.min(min, series[k]);
+    if (k) area += 0.5 * (series[k] + series[k - 1]) * (rec.t[k] - rec.t[k - 1]);
+  }
+  const span = rec.t[rec.t.length - 1] - rec.t[0];
+  return { max, min, mean: span > 0 ? area / span : series[0], pp: max - min };
+}
+
+/** A node's voltage series ('0' is ground, all zeros). */
+function node(rec, name) {
+  if (name === '0' || name === 'gnd') return new Float64Array(rec.t.length);
+  if (!rec.v[name]) throw new Error('no node named ' + name);
+  return rec.v[name];
+}
+
+/** The voltage between two nodes, as a series. */
+function across(rec, a, b) {
+  const va = node(rec, a), vb = node(rec, b);
+  return va.map((v, k) => v - vb[k]);
+}
+
+const API = { parse, run, settle, at, stats, node, across, VT, GMIN, DIODE, ZENER, NPN };
+if (typeof window !== 'undefined') window.Tran = API;
 })();
 
 /* ---- engine/dsp.js ---- */
@@ -1440,7 +2216,32 @@ if (typeof window !== 'undefined') window.Plot = API;
  *                        { reading: 0..1 } draws a needle instead of the letter
  *   T  transformer       four terminals, see TRANSFORMER_PINS; { humps: [4, 8] }
  *                        draws the turns ratio, { core: 'air' } drops the iron
- *                        core lines, { dots: true } marks the phasing
+ *                        core lines, { dots: true } marks the phasing,
+ *                        { inductors: true } draws it in the inductance colour,
+ *                        { tap: true } adds a fifth terminal at the middle of
+ *                        the secondary, and the secondary's two halves then
+ *                        carry a current each: flow: ['IP', 'top', 'bottom']
+ *   U  three terminal regulator, a box: in on the left, out on the right,
+ *                        common below, see REGULATOR_PINS; { text: '7812' }
+ *                        is written inside. Like a transistor, its body is not
+ *                        wire, so it carries no drawn charge of its own
+ *   TL a length of feeder, always drawn across the page: { len: 120 } in
+ *                        layout units (default 120), { twin: true } for twin
+ *                        or ladder line rather than coax. Four terminals, see
+ *                        linePins: the inner and the screen at the left end,
+ *                        then at the right. { flow: ['in', 'out'] } names the
+ *                        current into the left end and the current out of the
+ *                        right end, which differ on a line; { along: [...] }
+ *                        names the current at the start of each equal section,
+ *                        so the charge shows the standing wave of current
+ * A transistor takes { mirror: true } to face the other way: base on the
+ * right, collector up and left, emitter down and left; and labelAt: 'left'
+ * or 'right' to be labelled beside its circle rather than above it.
+ *
+ * layout.labelPx: the size every label is drawn at on screen, in pixels,
+ * whatever scale the drawing is fitted at (never smaller than the 13 layout
+ * units used otherwise). Leave it out and labels scale with the drawing.
+ *
  * pins(el) gives the terminal positions that the checkers and the junction
  * dots use, so a symbol and its checks cannot disagree about where its leads
  * end, and runs(el) the stretches its charge is drawn along.
@@ -1462,6 +2263,22 @@ const TRANSISTOR_PINS = [[-30, 0], [12, -32], [12, 32]];
 // primary bottom, secondary top, secondary bottom. Each winding carries its
 // own current, positive from its top terminal to its bottom one.
 const TRANSFORMER_PINS = [[-20, -30], [-20, 30], [20, -30], [20, 30]];
+// a tapped secondary adds its middle, on the winding itself
+const TAPPED_PINS = TRANSFORMER_PINS.concat([[20, 0]]);
+
+// A three terminal regulator: in, out, common.
+const REGULATOR_PINS = [[-30, 0], [30, 0], [0, 30]];
+
+/*
+ * A feeder runs left to right. Relative to its centre, which is on the inner
+ * conductor (or the upper wire of twin feeder): inner in, screen in, inner
+ * out, screen out. The screen terminals sit LINE_GAP below the inner ones.
+ */
+const LINE_GAP = 16, LINE_TUBE = 7, LINE_END = 6;
+function linePins(el) {
+  const h = (el.len || 120) / 2;
+  return [[-h, 0], [-h, LINE_GAP], [h, 0], [h, LINE_GAP]];
+}
 
 /** Rotate a point clockwise by rot degrees, on the canvas axes (y down). */
 function turn(pt, deg) {
@@ -1472,8 +2289,10 @@ function turn(pt, deg) {
 
 /** Where an element's terminals land, in layout units, rounded to the grid. */
 function pins(el) {
-  const local = el.type === 'Q' ? TRANSISTOR_PINS
-              : el.type === 'T' ? TRANSFORMER_PINS
+  const local = el.type === 'Q' ? (el.mirror ? TRANSISTOR_PINS.map(([x, y]) => [-x, y]) : TRANSISTOR_PINS)
+              : el.type === 'T' ? (el.tap ? TAPPED_PINS : TRANSFORMER_PINS)
+              : el.type === 'TL' ? linePins(el)
+              : el.type === 'U' ? REGULATOR_PINS
               : null;
   if (local) {
     return local.map(pt => {
@@ -1497,9 +2316,10 @@ function pins(el) {
  * writing in it.
  */
 function runs(el, forDrawing) {
-  if (el.type === 'V' || el.type === 'B' || el.type === 'Q') return [];
+  if (el.type === 'V' || el.type === 'B' || el.type === 'Q' || el.type === 'U') return [];
   if (el.type === 'S' && el.open) return [];
   const p = pins(el);
+  if (el.type === 'TL') return lineRuns(el, p, forDrawing);
   if (el.type === 'T') {
     // flowReversed: [false, true] turns one winding round, for a secondary
     // that drives its current out of its top terminal
@@ -1508,6 +2328,8 @@ function runs(el, forDrawing) {
     const run = (a, b, name, back) => back
       ? [p[b][0], p[b][1], p[a][0], p[a][1], name]
       : [p[a][0], p[a][1], p[b][0], p[b][1], name];
+    // a tapped secondary: its top half and its bottom half, each with its own
+    if (el.tap) return [run(0, 1, f[0], rev[0]), run(2, 4, f[1], rev[1]), run(4, 3, f[2], rev[2])];
     return [run(0, 1, f[0], rev[0]), run(2, 3, f[1], rev[1])];
   }
   const name = el.flow || el.name;
@@ -1526,6 +2348,46 @@ function runs(el, forDrawing) {
   const ux = (x2 - x1) / len, uy = (y2 - y1) / len, mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
   return [[x1, y1, mx - ux * body, my - uy * body, name],
           [mx + ux * body, my + uy * body, x2, y2, name]];
+}
+
+/*
+ * A feeder's runs. For the checkers it is a two port, like a transformer:
+ * the current named first goes in at the inner and comes back out of the
+ * screen at the left end, and the current named second leaves the inner at
+ * the right end and returns into the screen. Those two differ, because a
+ * line stores charge along its length, so nothing is balanced inside it.
+ *
+ * For drawing, the inner is cut into the sections `along` names, each
+ * carrying its own current left to right, and the return current on the
+ * inside of the screen runs back under it, section by section; on twin
+ * feeder the second wire carries the return.
+ */
+function lineRuns(el, p, forDrawing) {
+  const f = Array.isArray(el.flow) ? el.flow : [];
+  if (!forDrawing) {
+    return [[p[0][0], p[0][1], p[1][0], p[1][1], f[0]],
+            [p[3][0], p[3][1], p[2][0], p[2][1], f[1]]];
+  }
+  const names = (el.along && el.along.length) ? el.along : [f[0]];
+  const x0 = p[0][0], x1 = p[2][0], y = p[0][1];
+  const n = names.length, out = [];
+  // the coax screen is the tube's lower wall, between its leads; twin is the
+  // second wire, the whole length
+  const twin = !!el.twin;
+  const sy = twin ? y + LINE_GAP : y + LINE_TUBE;
+  const sa = twin ? x0 : x0 + LINE_END, sb = twin ? x1 : x1 - LINE_END;
+  for (let k = 0; k < n; k++) {
+    out.push([x0 + (x1 - x0) * k / n, y, x0 + (x1 - x0) * (k + 1) / n, y, names[k]]);
+  }
+  for (let k = n - 1; k >= 0; k--) {
+    out.push([sa + (sb - sa) * (k + 1) / n, sy, sa + (sb - sa) * k / n, sy, names[k]]);
+  }
+  if (!twin) {
+    // the screen's leads: in at the right end, out at the left
+    out.push([x1, y + LINE_GAP, sb, y + LINE_GAP, f[1]], [sb, y + LINE_GAP, sb, sy, f[1]]);
+    out.push([sa, sy, sa, y + LINE_GAP, f[0]], [sa, y + LINE_GAP, x0, y + LINE_GAP, f[0]]);
+  }
+  return out;
 }
 
 const NEON_GLOW = '255,122,26';   // the orange of a struck neon, as r,g,b
@@ -1812,6 +2674,73 @@ const SYMBOL = {
   },
 
   /*
+   * A feeder. Coax is a tube, the screen, with the inner conductor along its
+   * axis and a lead down from each end of the screen to its terminal. Twin
+   * feeder is two wires held apart by spacers.
+   */
+  TL(ctx, el) {
+    const h = (el.len || 120) / 2;
+    if (el.twin) {
+      ctx.beginPath();
+      ctx.moveTo(-h, 0); ctx.lineTo(h, 0);
+      ctx.moveTo(-h, LINE_GAP); ctx.lineTo(h, LINE_GAP);
+      ctx.stroke();
+      const lw = ctx.lineWidth;
+      ctx.lineWidth = lw * 0.7;
+      ctx.beginPath();
+      for (let x = -h + 14; x < h - 6; x += 22) { ctx.moveTo(x, 0); ctx.lineTo(x, LINE_GAP); }
+      ctx.stroke();
+      ctx.lineWidth = lw;
+      return;
+    }
+    const a = -h + LINE_END, b = h - LINE_END, r = LINE_TUBE;
+    ctx.beginPath();
+    ctx.moveTo(a, -r); ctx.lineTo(b, -r);
+    ctx.ellipse(b, 0, 3, r, 0, -Math.PI / 2, Math.PI / 2, false);
+    ctx.lineTo(a, r);
+    ctx.ellipse(a, 0, 3, r, 0, Math.PI / 2, Math.PI * 3 / 2, false);
+    ctx.closePath();
+    ctx.fillStyle = ctx._surface;
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(b, 0, 3, r, 0, Math.PI / 2, Math.PI * 3 / 2, false);
+    ctx.stroke();
+    // inner conductor, end to end
+    ctx.beginPath();
+    ctx.moveTo(-h, 0); ctx.lineTo(h, 0);
+    ctx.stroke();
+    // the screen's leads
+    ctx.beginPath();
+    ctx.moveTo(a, r); ctx.lineTo(a, LINE_GAP); ctx.lineTo(-h, LINE_GAP);
+    ctx.moveTo(b, r); ctx.lineTo(b, LINE_GAP); ctx.lineTo(h, LINE_GAP);
+    ctx.stroke();
+  },
+
+  /*
+   * Three terminal regulator: a box with its input on the left, its output
+   * on the right and its common lead out of the bottom. What it is, such as
+   * 7812, is written inside at the label size.
+   */
+  U(ctx, el) {
+    const w = 46, h = 30;
+    ctx.beginPath();
+    ctx.rect(-w / 2, -h / 2, w, h);
+    ctx.fillStyle = ctx._surface;
+    ctx.fill();
+    ctx.stroke();
+    lead(ctx, -SPAN / 2, -w / 2);
+    lead(ctx, w / 2, SPAN / 2);
+    ctx.beginPath(); ctx.moveTo(0, h / 2); ctx.lineTo(0, 30); ctx.stroke();
+    if (el && el.text) {
+      ctx.fillStyle = ctx._ink || ctx.strokeStyle;
+      ctx.font = '600 ' + Math.min(14, ctx._labelUnits || 13) + 'px ' + (ctx._font || 'sans-serif');
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(el.text, 0, 1);
+    }
+  },
+
+  /*
    * Transformer: two windings facing each other across the core. The number
    * of humps on each side can follow the turns ratio, so a step down
    * transformer looks like one.
@@ -1936,6 +2865,10 @@ function draw(canvas, layout, opts) {
   ctx.scale(scale, scale);
 
   ctx._surface = t.surface || '#fff';
+  ctx._ink = t.ink; ctx._font = t.font;
+  // labels at a set size on screen, if the layout asks for one
+  const LU = layout.labelPx ? Math.max(13, layout.labelPx / scale) : 13;
+  ctx._labelUnits = LU;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 
@@ -1957,7 +2890,7 @@ function draw(canvas, layout, opts) {
   const bump = (x, y) => { const k = x + ',' + y; ends[k] = (ends[k] || 0) + 1; };
   for (const [x1, y1, x2, y2] of (layout.wires || [])) { bump(x1, y1); bump(x2, y2); }
   for (const el of layout.elements) {
-    if (el.type === 'Q') continue;          // its leads end inside the device drawing
+    if (el.type === 'Q' || el.type === 'U') continue;   // its leads end inside the device drawing
     for (const [x, y] of pins(el)) bump(x, y);
   }
   ctx.fillStyle = t.wire || '#444';
@@ -1976,7 +2909,7 @@ function draw(canvas, layout, opts) {
     ctx.arc(term.at[0], term.at[1], 3, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = t.soft || '#666';
-    ctx.font = '600 13px ' + (t.font || 'sans-serif');
+    ctx.font = '600 ' + LU + 'px ' + (t.font || 'sans-serif');
     ctx.textAlign = term.align || 'left';
     ctx.textBaseline = 'middle';
     ctx.fillText(term.label, term.at[0] + (term.align === 'right' ? -8 : 8), term.at[1]);
@@ -1989,13 +2922,16 @@ function draw(canvas, layout, opts) {
     // any token a caller did not supply, in the wire colour. A highlighted
     // part keeps that meaning and is drawn heavier, with its label in bold;
     // a part with no quantity colour is picked out in ink. t.hot overrides.
-    const own = el.type === 'R' ? t.r : el.type === 'L' ? t.l
+    // a transformer marked inductors: true, a pair of tuned coils such as an
+    // IF transformer, is drawn as the inductors it is
+    const own = el.type === 'R' ? t.r : (el.type === 'L' || (el.type === 'T' && el.inductors)) ? t.l
               : (el.type === 'C' || el.type === 'CP') ? t.c : null;
     const colour = hot ? (t.hot || own || t.ink || '#111')
                        : (own || t.wire || '#444');
     ctx.strokeStyle = colour;
     ctx.lineWidth = hot ? 2.6 : 1.6;
     rotated(ctx, el.at[0], el.at[1], el.rot || 0, () => {
+      if (el.type === 'Q' && el.mirror) ctx.scale(-1, 1);
       (SYMBOL[el.type] || SYMBOL.R)(ctx, el);
     });
     if (el.type === 'M') meterFace(ctx, el, t, colour);
@@ -2004,10 +2940,21 @@ function draw(canvas, layout, opts) {
     const label = el.label || el.name;
     const value = opts.labels ? opts.labels[el.name] : null;
     if (label || value) {
+      // a transistor given labelAt is labelled beside its circle, clear of
+      // its leads, rather than above it where the collector lead runs
+      if (el.type === 'Q' && (el.labelAt === 'left' || el.labelAt === 'right')) {
+        const right = el.labelAt === 'right';
+        ctx.fillStyle = hot ? colour : (t.ink || '#111');
+        ctx.font = (hot ? '600 ' : '') + LU + 'px ' + (t.font || 'sans-serif');
+        ctx.textAlign = right ? 'left' : 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(label, el.at[0] + (right ? 28 : -28), el.at[1]);
+        continue;
+      }
       const vertical = (el.rot || 0) % 180 !== 0;
       const leftOf = el.labelAt === 'left';
       ctx.fillStyle = hot ? colour : (t.ink || '#111');
-      ctx.font = (hot ? '600 ' : '') + '13px ' + (t.font || 'sans-serif');
+      ctx.font = (hot ? '600 ' : '') + LU + 'px ' + (t.font || 'sans-serif');
       ctx.textAlign = vertical ? (leftOf ? 'right' : 'left') : 'center';
       ctx.textBaseline = vertical ? 'middle' : 'bottom';
       const off = el.type === 'T' ? 36 : (el.type === 'M' || el.type === 'N') ? 24 : 20;
@@ -2015,12 +2962,12 @@ function draw(canvas, layout, opts) {
       // clear of the body, with a value under it; a transformer's terminals
       // reach 30 above its centre, so its name sits above those
       const ly = el.at[1] + (vertical ? 0 : (el.type === 'T' ? -36 : el.type === 'M' ? -24
-                                             : el.type === 'LP' ? -26 : -22));
+                                             : el.type === 'LP' ? -26 : el.type === 'TL' ? -24 : -22));
       ctx.fillText(label, lx, ly);
       if (value) {
         ctx.fillStyle = hot ? colour : (t.soft || '#666');
-        ctx.font = '13px ' + (t.mono || 'monospace');
-        ctx.fillText(value, lx, ly + (vertical ? 15 : 14));
+        ctx.font = LU + 'px ' + (t.mono || 'monospace');
+        ctx.fillText(value, lx, ly + (vertical ? LU + 2 : LU + 1));
       }
     }
   }
@@ -2031,7 +2978,8 @@ function draw(canvas, layout, opts) {
   }
 }
 
-const API = { draw, pins, runs, SPAN, BODY, R_LEN, R_THK, TRANSISTOR_PINS, TRANSFORMER_PINS };
+const API = { draw, pins, runs, SPAN, BODY, R_LEN, R_THK, TRANSISTOR_PINS, TRANSFORMER_PINS,
+              REGULATOR_PINS, LINE_GAP };
 if (typeof window !== 'undefined') window.Schematic = API;
 })();
 
@@ -2213,6 +3161,9 @@ function peakOf(fn, duration, names) {
  *                           // t = 0, exact where the integral is known
  *   iMax,                   // largest current drawn, for scaling
  *   compress,               // dc and time: scale speed compressively
+ *   hideStill,              // time: a branch carrying nothing at this moment
+ *                           // draws no dots, so only what conducts is seen
+ *                           // (a rectifier's diodes); off by default
  *   colour
  * }
  * A wire carries the current of whichever element the layout names in its
@@ -2257,6 +3208,7 @@ function draw(ctx, layout, flow, span) {
       const m = Math.abs(realOf(now[name])) / flow.iMax;
       const q = passes * (qPass[name] || 0) + (qNow[name] || 0);
       if (!isFinite(m) || (m <= 0 && !q)) return null;
+      if (flow.hideStill && m <= 0) return null;
       // compress acts on the distance moved, which keeps the order of branches
       const off = flow.compress
         ? Math.sign(q) * DRIFT * loop * squash(Math.abs(q) / (flow.duration * flow.iMax))
@@ -3466,7 +4418,8 @@ const QUESTIONS = [{"code": "2F1", "ref": "2025-Full6015", "q": "To digitize an 
       }
       return { mode: mode, currents: fl.currents, duration: fl.duration, loop: fl.loop,
                iMax: fl.iMax || window.Flow.peakOf(fl.currents, fl.duration, shown),
-               compress: !!fl.compress, note: fl.note, label: fl.label, colour: t.i };
+               compress: !!fl.compress, note: fl.note, label: fl.label, colour: t.i,
+               hideStill: !!fl.hideStill };
     }
     let currents = {};
     if (fl && fl.currents) {

@@ -109,7 +109,19 @@ function checkLayout(entry, MNA) {
   };
 
   for (const el of (layout.elements || [])) {
-    if (el.type === 'V' || el.type === 'B' || el.type === 'Q') continue;   // sources and devices
+    if (el.type === 'V' || el.type === 'B' || el.type === 'Q' || el.type === 'U') continue;   // sources and devices
+    if (el.type === 'T' && el.tap) {
+      // a tapped secondary: each half carries its own current
+      if (!Array.isArray(el.flow) || el.flow.length !== 3) {
+        problems.push(`${name}: tapped transformer ${el.name} must name the current in its ` +
+                      `primary and in each half of its secondary, as flow: ['primary', 'top', 'bottom']`);
+        continue;
+      }
+      resolve(`${el.name} primary`, el.flow[0]);
+      resolve(`${el.name} secondary, top half`, el.flow[1]);
+      resolve(`${el.name} secondary, bottom half`, el.flow[2]);
+      continue;
+    }
     if (el.type === 'T') {
       // a transformer has two windings, and each carries its own current
       if (!Array.isArray(el.flow) || el.flow.length !== 2) {
@@ -119,6 +131,19 @@ function checkLayout(entry, MNA) {
       }
       resolve(`${el.name} primary`, el.flow[0]);
       resolve(`${el.name} secondary`, el.flow[1]);
+      continue;
+    }
+    if (el.type === 'TL') {
+      // a feeder is a two port: the current into one end and out of the
+      // other differ, and each section it is drawn in carries its own
+      if (!Array.isArray(el.flow) || el.flow.length !== 2) {
+        problems.push(`${name}: feeder ${el.name} must name the current into its ` +
+                      `left end and out of its right end, as flow: ['in', 'out']`);
+        continue;
+      }
+      resolve(`${el.name} input`, el.flow[0]);
+      resolve(`${el.name} output`, el.flow[1]);
+      (el.along || []).forEach((n, k) => resolve(`${el.name} section ${k + 1}`, n));
       continue;
     }
     if (el.type === 'S' && el.open) {
@@ -149,7 +174,7 @@ function balance(name, layout, samples) {
   const skip = new Set();
   const key = (x, y) => Math.round(x) + ',' + Math.round(y);
   for (const el of (layout.elements || [])) {
-    if (el.type === 'V' || el.type === 'B' || el.type === 'Q') {
+    if (el.type === 'V' || el.type === 'B' || el.type === 'Q' || el.type === 'U') {
       for (const [x, y] of Schematic.pins(el)) skip.add(key(x, y));
     }
   }
@@ -197,7 +222,7 @@ function main() {
 
   const MNA = require('./mna.js');
   global.window = {
-    Fmt: require('./format.js'), MNA: MNA,
+    Fmt: require('./format.js'), MNA: MNA, Tran: require('./tran.js'),
     DSP: require('./dsp.js'), DC: require('./dc.js'),
     Plot: require('./plot.js'), Schematic: require('./schematic.js')
   };

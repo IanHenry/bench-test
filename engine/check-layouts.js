@@ -64,6 +64,7 @@ function main() {
   global.window = {
     Fmt: require('./format.js'),
     MNA: require('./mna.js'),
+    Tran: require('./tran.js'),
     DSP: require('./dsp.js'),
     DC: require('./dc.js'),
     Plot: require('./plot.js'),

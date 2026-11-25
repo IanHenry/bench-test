@@ -41,14 +41,21 @@ is derived from our own phasor solution. Keep it that way.
 
 ```
 engine/       the simulation and drawing engines, no dependencies
-  mna.js         complex modified nodal analysis, R L C V I and G (VCCS)
+  mna.js         complex modified nodal analysis, R L C V I, G (VCCS), T
+                 (a lossy transmission line, stamped from its ABCD parameters)
+                 and K (coupling between two inductors, M = k√(L1 L2))
+  tran.js        time-step nodal analysis for nonlinear circuits: R L C V I,
+                 diodes, Zeners and NPN transistors, backward Euler or
+                 trapezoidal, Newton with junction limiting; settle() runs a
+                 mains-driven circuit until it repeats, jumping ahead when a
+                 big capacitor closes in on its charge only slowly
   dsp.js         FFT, spectrum, aliasing, quantisation
   dc.js          diode and operating point maths, conduction angle, classes
   format.js      engineering notation and rounding
   plot.js        the plotting engine: bands, dual axes, cursors, labels
   schematic.js   circuit symbols and wiring, and where each terminal lands
   flow.js        animated charge: AC slosh, DC drift, and time series
-  test-*.js      149 assertions across mna, dsp, dc and flow
+  test-*.js      284 assertions across mna, dsp, dc, flow and tran
   check-*.js     the two circuit checkers, described below
   fixtures/      layouts using the newer symbols and modes, for the tests
 content/      one file per bench, plus descriptions.json
@@ -67,7 +74,7 @@ python build.py
 Tests and checkers separately:
 
 ```bash
-node engine/test-mna.js && node engine/test-dsp.js && node engine/test-dc.js && node engine/test-flow.js
+node engine/test-mna.js && node engine/test-dsp.js && node engine/test-dc.js && node engine/test-flow.js && node engine/test-tran.js
 python test_build.py
 ```
 
@@ -159,6 +166,11 @@ is given.
 | `{ mode: 'time', duration, currents: t => ({ R1: i }) }` | charge and discharge: fast at the switch, creeping to a halt | a function of circuit time in seconds over `duration` |
 | `{ mode: 'ac', currents: { IP: {re, im} } }` | AC slosh | the panel's own phasors (numbers allowed) |
 
+A time series may also carry `hideStill: true`: a branch carrying nothing at
+that moment then draws no dots at all, so a rectifier shows charge only in
+the diodes that are conducting (2J). It is off by default, and a page that
+leaves it out animates exactly as before.
+
 Options: `compress: true` scales speed as `pow(m, 0.32)` when branches span
 orders of magnitude (it gives up the visible Kirchhoff balance that linear
 speed gives); `loop` is the screen seconds one time-series pass takes
@@ -178,13 +190,20 @@ cleanly.
 | `N` | neon lamp | `lit: true` fills the envelope with its glow |
 | `LP` | filament lamp, a circle with a cross | model it as a resistor in the netlist; the drawn charge stops at the glass, so the filament stays readable |
 | `M` | moving coil meter | `meter: 'mA'` (the letter inside, drawn upright), or `reading: 0..1` for a needle instead; name it `RM` and model it as a small resistor in the netlist |
-| `T` | transformer | four pins: primary top and bottom at x &minus;20, secondary at x +20, y &plusmn;30 from its centre; `flow: ['IP', 'IS']` names each winding's current, positive top to bottom; `flowReversed: [false, true]` for a secondary that drives current out of its top; `humps: [8, 4]` shows the turns ratio; `core: 'air'`; `dots: true` |
+| `TL` | a length of feeder, drawn across the page | four pins: inner and screen at the left end, then at the right, the screens `LINE_GAP` (16) below; `len: 120` in layout units; `twin: true` for twin or ladder line; `flow: ['in', 'out']` names the current into the left end and out of the right end, which differ on a line; `along: ['T1', 'T2', ...]` names the current at the start of each section the netlist cuts the feeder into, so the charge shows the standing wave; the screen current runs back under the inner. See `engine/fixtures/line.js` |
+| `U` | three terminal regulator, a box | three pins: in at x &minus;30, out at x +30, common at y +30; `text: '7812'` is written inside. Like a transistor it has no drawn charge of its own, so its pins are where current enters and leaves the drawing |
+| `T` | transformer | four pins: primary top and bottom at x &minus;20, secondary at x +20, y &plusmn;30 from its centre; `flow: ['IP', 'IS']` names each winding's current, positive top to bottom; `flowReversed: [false, true]` for a secondary that drives current out of its top; `humps: [8, 4]` shows the turns ratio; `core: 'air'`; `dots: true`; `inductors: true` draws it in the inductance colour, for a pair of tuned coils such as an IF transformer, whose windings are coupled L elements with a K between them; `tap: true` adds a fifth pin at the middle of the secondary (x +20, y 0), and the secondary's halves then carry a current each, `flow: ['IP', 'top', 'bottom']` |
 
 Every two terminal part runs from its first terminal (left at rot 0, top at
 rot 90) to its second, and a diode's first terminal is its anode: a forward
 biased diode points the way its current goes. A reverse biased Zener drawn
 cathode up (rot 270) carries its current downward, so mark it
-`flowReversed: true`. `Schematic.pins(el)` gives the terminal positions the
+`flowReversed: true`. A transistor (`Q`) takes `mirror: true` to face the other way, base on the
+right, and `labelAt: 'left'` or `'right'` to be labelled beside its circle
+rather than above it, where the collector lead runs. A layout may carry
+`labelPx: 15` to draw every label at that size on screen whatever scale it is
+fitted at (never below the usual 13 layout units); 2J uses it.
+`Schematic.pins(el)` gives the terminal positions the
 checkers use, so a layout can be checked against them while it is drawn. The
 resistor body is 28 by 10 layout units, the house proportion of 56 by 20
 (2.8 : 1); the circuit is scaled to the canvas. At a capacitor (`C` or `CP`)
@@ -350,13 +369,14 @@ displays were broken for most of one session.
 
 ## Where it stands
 
-Seven benches are built: **2A to 2C** resistance, power and tolerance,
+Ten benches are built: **2A to 2C** resistance, power and tolerance,
 **2D** reactive components, **2E** AC theory, **2F** sampling and conversion,
-**2H** tuned circuits and filters, **2I** semiconductors, and **3F** RF power
-amplifiers. 2F, 2H and 2I are live at https://bench.g0lft.org; the other four
+**2H** tuned circuits and filters, **2I** semiconductors, **2J** power supplies, **3F** RF power
+amplifiers, **3I** the superhet receiver, and **4A, 4B, 4E and 4F** feeders, SWR and matching (page `4A`).
+2F, 2H and 2I are live at https://bench.g0lft.org; the other seven
 are built and checked here but not yet pushed. Each links back to the course
 sessions that use it, at course.g0lft.org, and those sessions link to it. The engine
-tests carry 149 assertions, and `test_build.py` checks the page and group
+tests carry 284 assertions, and `test_build.py` checks the page and group
 handling. The Colpitts oscillator is drawn and solved.
 
 `overview.html` is the outward facing description, for sending to someone whose
@@ -369,9 +389,10 @@ to put on a public page.
 Outstanding, in rough order of value:
 
 1. **The remaining syllabus groups.** 126 items, 221 level entries in
-   `content/descriptions.json`; nine groups are covered (2A to 2F, 2H, 2I
-   and 3F). Next: 4E/4F feeders (needs a transmission-line element), then 2J
-   power supplies (needs a transient solver).
+   `content/descriptions.json`; fifteen groups are covered (2A to 2F, 2H,
+   2I, 2J, 3F, 3I, 4A, 4B, 4E and 4F). Next: 4C and 4D antennas, which can
+   reuse the line element. 2J brought in `tran.js`, a time-step solver, which
+   other time-domain items (AGC, oscillator start-up) could use.
 2. **Audio.** Deferred deliberately. The DSP engine must emit a plain sample
    buffer with playback as a thin adapter; nothing visual may depend on an
    AudioContext.

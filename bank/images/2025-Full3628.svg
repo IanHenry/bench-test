@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.1"
+   width="416.2836"
+   height="393.09531"
+   id="svg2">
+  <defs
+     id="defs4" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     transform="translate(-157.57095,-312.95837)"
+     id="layer1">
+    <g
+       transform="translate(145.44673,299.27165)"
+       id="g2989">
+      <path
+         d="m 100.62231,89.374583 203.74457,0 0,128.749397 -203.74457,0 0,-128.749397 3.7499,3.749983 0,121.249434 196.24477,0 0,-121.249434 -196.24477,0 -3.7499,-3.749983 z"
+         id="path2991"
+         style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:0.31249166px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1;stroke-dasharray:none" />
+      <path
+         d="m 102.49726,155.62427 -64.373278,0 0,-140.780589 3.7499,0 0,137.030609 60.623378,0 0,3.74998 z"
+         id="path2993"
+         style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:0.31249166px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1;stroke-dasharray:none" />
+      <path
+         d="m 16.562058,15.312429 23.436874,46.718532 23.280629,-46.718532 3.281162,1.718742 -26.249299,52.499755 -0.781229,0 -26.249299,-52.499755 3.281162,-1.718742 z"
+         id="path2995"
+         style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:0.31249166px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1;stroke-dasharray:none" />
+      <path
+         d="m 200.61965,278.7487 0,-62.49971 3.7499,0 0,62.49971 -3.7499,0 z"
+         id="path2997"
+         style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:0.31249166px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1;stroke-dasharray:none" />
+      <text
+         x="394.67697"
+         y="213.12401"
+         id="text2999"
+         xml:space="preserve"
+         style="font-size:52.34235382px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;font-family:Arial">IF</text>
+      <path
+         d="m 302.49193,151.87429 101.40354,0 0,3.74998 -101.40354,0 0,-3.74998 z"
+         id="path3001"
+         style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:0.15624583px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1;stroke-dasharray:none" />
+      <path
+         d="m 380.61484,144.37433 46.7175,9.37495 -46.7175,9.37496 0,-18.74991 z"
+         id="path3003"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.15624583px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1;stroke-dasharray:none" />
+      <text
+         x="200.93214"
+         y="333.43594"
+         id="text3005"
+         xml:space="preserve"
+         style="font-size:43.59258652px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;font-family:Arial">LO at</text>
+      <text
+         x="200.93214"
+         y="380.31073"
+         id="text3007"
+         xml:space="preserve"
+         style="font-size:43.59258652px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;font-family:Arial">426 kHz</text>
+      <path
+         d="m 100.62231,276.87371 203.74457,0 0,128.7494 -203.74457,0 0,-128.7494 3.7499,3.74998 0,121.24944 196.24477,0 0,-121.24944 -196.24477,0 -3.7499,-3.74998 z"
+         id="path3009"
+         style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:0.31249166px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1;stroke-dasharray:none" />
+      <text
+         x="202.80708"
+         y="164.84299"
+         id="text3011"
+         xml:space="preserve"
+         style="font-size:52.34235382px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;font-family:Arial">Mixer</text>
+    </g>
+  </g>
+</svg>

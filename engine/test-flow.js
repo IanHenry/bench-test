@@ -203,5 +203,67 @@ console.log('\ncheckers');
   is('a transformer lead left loose is caught', has(joined('x', loose), 'nothing joins'), true);
 }
 
+/* ---- 7. a feeder, drawn with the TL symbol ---- */
+console.log('\nfeeder');
+{
+  const LX = require('./fixtures/line.js');
+  const lay = LX.lineLayout(false), tl = lay.elements.find(e => e.type === 'TL');
+  is('a feeder has four pins: inner and screen at each end', S.pins(tl),
+     [[130, 30], [130, 46], [250, 30], [250, 46]]);
+  is('to the checkers it is a two port, in at the left and out at the right',
+     S.runs(tl).map(r => r[4]), ['T1', 'RL']);
+  const drawn = S.runs(tl, true);
+  is('drawn, the inner and the screen wall each carry every section',
+     drawn.filter(r => /^T\d$/.test(r[4]) && r[1] === r[3] && (r[1] === 30 || r[1] === 37)).length,
+     2 * LX.SECTIONS);
+  is('and the screen leads carry the current at each end',
+     drawn.filter(r => r[1] !== r[3] || r[1] === 46).map(r => r[4]), ['RL', 'RL', 'T1', 'T1']);
+  is('the screen current runs back under the inner, right to left',
+     drawn.filter(r => r[4] === 'T6').map(r => Math.sign(r[2] - r[0])), [1, -1]);
+  const all = LX.allLayouts();
+  is('both feeder fixtures are joined up', all.map(e => joined(e.name, e.layout)).flat(), []);
+  is('every section is alive, and the ends balance', all.map(e => alive(e, MNA)).flat(), []);
+  const bad = LX.lineLayout(false);
+  bad.elements.find(e => e.type === 'TL').flow = 'T1';
+  is('a feeder must name the current at each end',
+     has(alive({ name: 'x', layout: bad, netlist: LX.lineNet(50, 100) }, MNA), 'left end'), true);
+  // on a mismatched lossless line the current is not the same along it: the
+  // sections carry a standing wave, which is what the dots are drawn from
+  const sol = MNA.solveAt(MNA.parseNetlist(LX.lineNet(50, 100).replace(/ db=4 at=10M/g, '')), 14e6);
+  const mags = [1, 2, 3, 4, 5, 6].map(k => MNA.abs(MNA.currentThrough(sol, 'T' + k)));
+  is('a mismatched feeder carries different currents section by section',
+     Math.max(...mags) / Math.min(...mags) > 1.3, true);
+}
+
+/* ---- 8. the power supply symbols, and charge that stops when a diode does ---- */
+console.log('\npower supply symbols');
+{
+  is('a tapped transformer has a fifth pin, the middle of its secondary',
+     S.pins({ type: 'T', tap: true, at: [100, 100] }), [[80, 70], [80, 130], [120, 70], [120, 130], [120, 100]]);
+  is('and each half of the secondary carries its own current',
+     S.runs({ type: 'T', tap: true, at: [100, 100], flow: ['IP', 'D1', 'D2'], flowReversed: [false, true, false] }),
+     [[80, 70, 80, 130, 'IP'], [120, 100, 120, 70, 'D1'], [120, 100, 120, 130, 'D2']]);
+  is('a mirrored transistor has its base on the right',
+     S.pins({ type: 'Q', mirror: true, at: [100, 100] }), [[130, 100], [88, 68], [88, 132]]);
+  is('a regulator box: in, out, common', S.pins({ type: 'U', at: [100, 100] }),
+     [[70, 100], [130, 100], [100, 130]]);
+  is('and, like a transistor, no drawn charge of its own', S.runs({ type: 'U', at: [100, 100] }), []);
+  const tapped = { elements: [{ name: 'TX', type: 'T', tap: true, at: [100, 100], flow: ['IP', 'D1'] }], wires: [] };
+  is('a tapped transformer must name three currents',
+     has(alive({ name: 'x', layout: tapped, flow: { mode: 'dc', currents: { IP: 1, D1: 1 } } }, MNA), 'each half'), true);
+  // a time series in which W carries nothing for the second half of the pass
+  const pulse = t => ({ W: t < 0.5 ? 1 : 0 });
+  const at = (time, hide) => firstDot({ mode: 'time', duration: 1, loop: 1, iMax: 1, currents: pulse,
+                                        time, hideStill: hide });
+  is('without hideStill, a branch that has stopped still shows its dots', at(0.75, false) !== null, true);
+  is('with hideStill, it shows none while it carries nothing', at(0.75, true), null);
+  is('and shows them again while it conducts', at(0.25, true) !== null, true);
+  const PX = require('./fixtures/psu.js');
+  const all = PX.allLayouts();
+  is('the power supply fixtures are joined up', all.map(e => joined(e.name, e.layout)).flat(), []);
+  is('and every conductor, solved in time, is accounted for and balances',
+     all.map(e => alive(e, MNA)).flat(), []);
+}
+
 console.log(`\n${pass} passed, ${fail} failed\n`);
 process.exit(fail ? 1 : 0);

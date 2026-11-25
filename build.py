@@ -24,7 +24,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).parent
-ENGINE = ['format.js', 'mna.js', 'dsp.js', 'dc.js', 'plot.js', 'schematic.js', 'flow.js']
+ENGINE = ['format.js', 'mna.js', 'tran.js', 'dsp.js', 'dc.js', 'plot.js', 'schematic.js', 'flow.js']
 TEMPLATE = ROOT / 'template' / 'bench.html'
 SITEBAR = ROOT / 'template' / 'site-bar.html'   # shared g0lft.org header and footer
 

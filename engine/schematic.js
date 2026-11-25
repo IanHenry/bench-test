@@ -34,7 +34,32 @@
  *                        { reading: 0..1 } draws a needle instead of the letter
  *   T  transformer       four terminals, see TRANSFORMER_PINS; { humps: [4, 8] }
  *                        draws the turns ratio, { core: 'air' } drops the iron
- *                        core lines, { dots: true } marks the phasing
+ *                        core lines, { dots: true } marks the phasing,
+ *                        { inductors: true } draws it in the inductance colour,
+ *                        { tap: true } adds a fifth terminal at the middle of
+ *                        the secondary, and the secondary's two halves then
+ *                        carry a current each: flow: ['IP', 'top', 'bottom']
+ *   U  three terminal regulator, a box: in on the left, out on the right,
+ *                        common below, see REGULATOR_PINS; { text: '7812' }
+ *                        is written inside. Like a transistor, its body is not
+ *                        wire, so it carries no drawn charge of its own
+ *   TL a length of feeder, always drawn across the page: { len: 120 } in
+ *                        layout units (default 120), { twin: true } for twin
+ *                        or ladder line rather than coax. Four terminals, see
+ *                        linePins: the inner and the screen at the left end,
+ *                        then at the right. { flow: ['in', 'out'] } names the
+ *                        current into the left end and the current out of the
+ *                        right end, which differ on a line; { along: [...] }
+ *                        names the current at the start of each equal section,
+ *                        so the charge shows the standing wave of current
+ * A transistor takes { mirror: true } to face the other way: base on the
+ * right, collector up and left, emitter down and left; and labelAt: 'left'
+ * or 'right' to be labelled beside its circle rather than above it.
+ *
+ * layout.labelPx: the size every label is drawn at on screen, in pixels,
+ * whatever scale the drawing is fitted at (never smaller than the 13 layout
+ * units used otherwise). Leave it out and labels scale with the drawing.
+ *
  * pins(el) gives the terminal positions that the checkers and the junction
  * dots use, so a symbol and its checks cannot disagree about where its leads
  * end, and runs(el) the stretches its charge is drawn along.
@@ -56,6 +81,22 @@ const TRANSISTOR_PINS = [[-30, 0], [12, -32], [12, 32]];
 // primary bottom, secondary top, secondary bottom. Each winding carries its
 // own current, positive from its top terminal to its bottom one.
 const TRANSFORMER_PINS = [[-20, -30], [-20, 30], [20, -30], [20, 30]];
+// a tapped secondary adds its middle, on the winding itself
+const TAPPED_PINS = TRANSFORMER_PINS.concat([[20, 0]]);
+
+// A three terminal regulator: in, out, common.
+const REGULATOR_PINS = [[-30, 0], [30, 0], [0, 30]];
+
+/*
+ * A feeder runs left to right. Relative to its centre, which is on the inner
+ * conductor (or the upper wire of twin feeder): inner in, screen in, inner
+ * out, screen out. The screen terminals sit LINE_GAP below the inner ones.
+ */
+const LINE_GAP = 16, LINE_TUBE = 7, LINE_END = 6;
+function linePins(el) {
+  const h = (el.len || 120) / 2;
+  return [[-h, 0], [-h, LINE_GAP], [h, 0], [h, LINE_GAP]];
+}
 
 /** Rotate a point clockwise by rot degrees, on the canvas axes (y down). */
 function turn(pt, deg) {
@@ -66,8 +107,10 @@ function turn(pt, deg) {
 
 /** Where an element's terminals land, in layout units, rounded to the grid. */
 function pins(el) {
-  const local = el.type === 'Q' ? TRANSISTOR_PINS
-              : el.type === 'T' ? TRANSFORMER_PINS
+  const local = el.type === 'Q' ? (el.mirror ? TRANSISTOR_PINS.map(([x, y]) => [-x, y]) : TRANSISTOR_PINS)
+              : el.type === 'T' ? (el.tap ? TAPPED_PINS : TRANSFORMER_PINS)
+              : el.type === 'TL' ? linePins(el)
+              : el.type === 'U' ? REGULATOR_PINS
               : null;
   if (local) {
     return local.map(pt => {
@@ -91,9 +134,10 @@ function pins(el) {
  * writing in it.
  */
 function runs(el, forDrawing) {
-  if (el.type === 'V' || el.type === 'B' || el.type === 'Q') return [];
+  if (el.type === 'V' || el.type === 'B' || el.type === 'Q' || el.type === 'U') return [];
   if (el.type === 'S' && el.open) return [];
   const p = pins(el);
+  if (el.type === 'TL') return lineRuns(el, p, forDrawing);
   if (el.type === 'T') {
     // flowReversed: [false, true] turns one winding round, for a secondary
     // that drives its current out of its top terminal
@@ -102,6 +146,8 @@ function runs(el, forDrawing) {
     const run = (a, b, name, back) => back
       ? [p[b][0], p[b][1], p[a][0], p[a][1], name]
       : [p[a][0], p[a][1], p[b][0], p[b][1], name];
+    // a tapped secondary: its top half and its bottom half, each with its own
+    if (el.tap) return [run(0, 1, f[0], rev[0]), run(2, 4, f[1], rev[1]), run(4, 3, f[2], rev[2])];
     return [run(0, 1, f[0], rev[0]), run(2, 3, f[1], rev[1])];
   }
   const name = el.flow || el.name;
@@ -120,6 +166,46 @@ function runs(el, forDrawing) {
   const ux = (x2 - x1) / len, uy = (y2 - y1) / len, mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
   return [[x1, y1, mx - ux * body, my - uy * body, name],
           [mx + ux * body, my + uy * body, x2, y2, name]];
+}
+
+/*
+ * A feeder's runs. For the checkers it is a two port, like a transformer:
+ * the current named first goes in at the inner and comes back out of the
+ * screen at the left end, and the current named second leaves the inner at
+ * the right end and returns into the screen. Those two differ, because a
+ * line stores charge along its length, so nothing is balanced inside it.
+ *
+ * For drawing, the inner is cut into the sections `along` names, each
+ * carrying its own current left to right, and the return current on the
+ * inside of the screen runs back under it, section by section; on twin
+ * feeder the second wire carries the return.
+ */
+function lineRuns(el, p, forDrawing) {
+  const f = Array.isArray(el.flow) ? el.flow : [];
+  if (!forDrawing) {
+    return [[p[0][0], p[0][1], p[1][0], p[1][1], f[0]],
+            [p[3][0], p[3][1], p[2][0], p[2][1], f[1]]];
+  }
+  const names = (el.along && el.along.length) ? el.along : [f[0]];
+  const x0 = p[0][0], x1 = p[2][0], y = p[0][1];
+  const n = names.length, out = [];
+  // the coax screen is the tube's lower wall, between its leads; twin is the
+  // second wire, the whole length
+  const twin = !!el.twin;
+  const sy = twin ? y + LINE_GAP : y + LINE_TUBE;
+  const sa = twin ? x0 : x0 + LINE_END, sb = twin ? x1 : x1 - LINE_END;
+  for (let k = 0; k < n; k++) {
+    out.push([x0 + (x1 - x0) * k / n, y, x0 + (x1 - x0) * (k + 1) / n, y, names[k]]);
+  }
+  for (let k = n - 1; k >= 0; k--) {
+    out.push([sa + (sb - sa) * (k + 1) / n, sy, sa + (sb - sa) * k / n, sy, names[k]]);
+  }
+  if (!twin) {
+    // the screen's leads: in at the right end, out at the left
+    out.push([x1, y + LINE_GAP, sb, y + LINE_GAP, f[1]], [sb, y + LINE_GAP, sb, sy, f[1]]);
+    out.push([sa, sy, sa, y + LINE_GAP, f[0]], [sa, y + LINE_GAP, x0, y + LINE_GAP, f[0]]);
+  }
+  return out;
 }
 
 const NEON_GLOW = '255,122,26';   // the orange of a struck neon, as r,g,b
@@ -406,6 +492,73 @@ const SYMBOL = {
   },
 
   /*
+   * A feeder. Coax is a tube, the screen, with the inner conductor along its
+   * axis and a lead down from each end of the screen to its terminal. Twin
+   * feeder is two wires held apart by spacers.
+   */
+  TL(ctx, el) {
+    const h = (el.len || 120) / 2;
+    if (el.twin) {
+      ctx.beginPath();
+      ctx.moveTo(-h, 0); ctx.lineTo(h, 0);
+      ctx.moveTo(-h, LINE_GAP); ctx.lineTo(h, LINE_GAP);
+      ctx.stroke();
+      const lw = ctx.lineWidth;
+      ctx.lineWidth = lw * 0.7;
+      ctx.beginPath();
+      for (let x = -h + 14; x < h - 6; x += 22) { ctx.moveTo(x, 0); ctx.lineTo(x, LINE_GAP); }
+      ctx.stroke();
+      ctx.lineWidth = lw;
+      return;
+    }
+    const a = -h + LINE_END, b = h - LINE_END, r = LINE_TUBE;
+    ctx.beginPath();
+    ctx.moveTo(a, -r); ctx.lineTo(b, -r);
+    ctx.ellipse(b, 0, 3, r, 0, -Math.PI / 2, Math.PI / 2, false);
+    ctx.lineTo(a, r);
+    ctx.ellipse(a, 0, 3, r, 0, Math.PI / 2, Math.PI * 3 / 2, false);
+    ctx.closePath();
+    ctx.fillStyle = ctx._surface;
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(b, 0, 3, r, 0, Math.PI / 2, Math.PI * 3 / 2, false);
+    ctx.stroke();
+    // inner conductor, end to end
+    ctx.beginPath();
+    ctx.moveTo(-h, 0); ctx.lineTo(h, 0);
+    ctx.stroke();
+    // the screen's leads
+    ctx.beginPath();
+    ctx.moveTo(a, r); ctx.lineTo(a, LINE_GAP); ctx.lineTo(-h, LINE_GAP);
+    ctx.moveTo(b, r); ctx.lineTo(b, LINE_GAP); ctx.lineTo(h, LINE_GAP);
+    ctx.stroke();
+  },
+
+  /*
+   * Three terminal regulator: a box with its input on the left, its output
+   * on the right and its common lead out of the bottom. What it is, such as
+   * 7812, is written inside at the label size.
+   */
+  U(ctx, el) {
+    const w = 46, h = 30;
+    ctx.beginPath();
+    ctx.rect(-w / 2, -h / 2, w, h);
+    ctx.fillStyle = ctx._surface;
+    ctx.fill();
+    ctx.stroke();
+    lead(ctx, -SPAN / 2, -w / 2);
+    lead(ctx, w / 2, SPAN / 2);
+    ctx.beginPath(); ctx.moveTo(0, h / 2); ctx.lineTo(0, 30); ctx.stroke();
+    if (el && el.text) {
+      ctx.fillStyle = ctx._ink || ctx.strokeStyle;
+      ctx.font = '600 ' + Math.min(14, ctx._labelUnits || 13) + 'px ' + (ctx._font || 'sans-serif');
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(el.text, 0, 1);
+    }
+  },
+
+  /*
    * Transformer: two windings facing each other across the core. The number
    * of humps on each side can follow the turns ratio, so a step down
    * transformer looks like one.
@@ -530,6 +683,10 @@ function draw(canvas, layout, opts) {
   ctx.scale(scale, scale);
 
   ctx._surface = t.surface || '#fff';
+  ctx._ink = t.ink; ctx._font = t.font;
+  // labels at a set size on screen, if the layout asks for one
+  const LU = layout.labelPx ? Math.max(13, layout.labelPx / scale) : 13;
+  ctx._labelUnits = LU;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 
@@ -551,7 +708,7 @@ function draw(canvas, layout, opts) {
   const bump = (x, y) => { const k = x + ',' + y; ends[k] = (ends[k] || 0) + 1; };
   for (const [x1, y1, x2, y2] of (layout.wires || [])) { bump(x1, y1); bump(x2, y2); }
   for (const el of layout.elements) {
-    if (el.type === 'Q') continue;          // its leads end inside the device drawing
+    if (el.type === 'Q' || el.type === 'U') continue;   // its leads end inside the device drawing
     for (const [x, y] of pins(el)) bump(x, y);
   }
   ctx.fillStyle = t.wire || '#444';
@@ -570,7 +727,7 @@ function draw(canvas, layout, opts) {
     ctx.arc(term.at[0], term.at[1], 3, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = t.soft || '#666';
-    ctx.font = '600 13px ' + (t.font || 'sans-serif');
+    ctx.font = '600 ' + LU + 'px ' + (t.font || 'sans-serif');
     ctx.textAlign = term.align || 'left';
     ctx.textBaseline = 'middle';
     ctx.fillText(term.label, term.at[0] + (term.align === 'right' ? -8 : 8), term.at[1]);
@@ -583,13 +740,16 @@ function draw(canvas, layout, opts) {
     // any token a caller did not supply, in the wire colour. A highlighted
     // part keeps that meaning and is drawn heavier, with its label in bold;
     // a part with no quantity colour is picked out in ink. t.hot overrides.
-    const own = el.type === 'R' ? t.r : el.type === 'L' ? t.l
+    // a transformer marked inductors: true, a pair of tuned coils such as an
+    // IF transformer, is drawn as the inductors it is
+    const own = el.type === 'R' ? t.r : (el.type === 'L' || (el.type === 'T' && el.inductors)) ? t.l
               : (el.type === 'C' || el.type === 'CP') ? t.c : null;
     const colour = hot ? (t.hot || own || t.ink || '#111')
                        : (own || t.wire || '#444');
     ctx.strokeStyle = colour;
     ctx.lineWidth = hot ? 2.6 : 1.6;
     rotated(ctx, el.at[0], el.at[1], el.rot || 0, () => {
+      if (el.type === 'Q' && el.mirror) ctx.scale(-1, 1);
       (SYMBOL[el.type] || SYMBOL.R)(ctx, el);
     });
     if (el.type === 'M') meterFace(ctx, el, t, colour);
@@ -598,10 +758,21 @@ function draw(canvas, layout, opts) {
     const label = el.label || el.name;
     const value = opts.labels ? opts.labels[el.name] : null;
     if (label || value) {
+      // a transistor given labelAt is labelled beside its circle, clear of
+      // its leads, rather than above it where the collector lead runs
+      if (el.type === 'Q' && (el.labelAt === 'left' || el.labelAt === 'right')) {
+        const right = el.labelAt === 'right';
+        ctx.fillStyle = hot ? colour : (t.ink || '#111');
+        ctx.font = (hot ? '600 ' : '') + LU + 'px ' + (t.font || 'sans-serif');
+        ctx.textAlign = right ? 'left' : 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(label, el.at[0] + (right ? 28 : -28), el.at[1]);
+        continue;
+      }
       const vertical = (el.rot || 0) % 180 !== 0;
       const leftOf = el.labelAt === 'left';
       ctx.fillStyle = hot ? colour : (t.ink || '#111');
-      ctx.font = (hot ? '600 ' : '') + '13px ' + (t.font || 'sans-serif');
+      ctx.font = (hot ? '600 ' : '') + LU + 'px ' + (t.font || 'sans-serif');
       ctx.textAlign = vertical ? (leftOf ? 'right' : 'left') : 'center';
       ctx.textBaseline = vertical ? 'middle' : 'bottom';
       const off = el.type === 'T' ? 36 : (el.type === 'M' || el.type === 'N') ? 24 : 20;
@@ -609,12 +780,12 @@ function draw(canvas, layout, opts) {
       // clear of the body, with a value under it; a transformer's terminals
       // reach 30 above its centre, so its name sits above those
       const ly = el.at[1] + (vertical ? 0 : (el.type === 'T' ? -36 : el.type === 'M' ? -24
-                                             : el.type === 'LP' ? -26 : -22));
+                                             : el.type === 'LP' ? -26 : el.type === 'TL' ? -24 : -22));
       ctx.fillText(label, lx, ly);
       if (value) {
         ctx.fillStyle = hot ? colour : (t.soft || '#666');
-        ctx.font = '13px ' + (t.mono || 'monospace');
-        ctx.fillText(value, lx, ly + (vertical ? 15 : 14));
+        ctx.font = LU + 'px ' + (t.mono || 'monospace');
+        ctx.fillText(value, lx, ly + (vertical ? LU + 2 : LU + 1));
       }
     }
   }
@@ -625,6 +796,7 @@ function draw(canvas, layout, opts) {
   }
 }
 
-const API = { draw, pins, runs, SPAN, BODY, R_LEN, R_THK, TRANSISTOR_PINS, TRANSFORMER_PINS };
+const API = { draw, pins, runs, SPAN, BODY, R_LEN, R_THK, TRANSISTOR_PINS, TRANSFORMER_PINS,
+              REGULATOR_PINS, LINE_GAP };
 if (typeof module !== 'undefined' && module.exports) module.exports = API;
 if (typeof window !== 'undefined') window.Schematic = API;

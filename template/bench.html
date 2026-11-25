@@ -283,7 +283,7 @@
   .work sub, .work-lead sub, .work-note sub, .q-work sub,
   .work sup, .work-lead sup, .work-note sup, .q-work sup { font-size:15px; line-height:0; }
   /* and everywhere else in the items: readout labels, legends and the prose */
-  #items sub, #items sup { font-size:15px; line-height:0; }
+  #items sub, #items sup, .bench-intro sub, .bench-intro sup, .bench-outro sub, .bench-outro sup { font-size:15px; line-height:0; }
 
   .qlink { display:flex; flex-wrap:wrap; align-items:baseline; gap:8px;
            font-size:15px; color:var(--ink-soft);
@@ -754,7 +754,8 @@
       }
       return { mode: mode, currents: fl.currents, duration: fl.duration, loop: fl.loop,
                iMax: fl.iMax || window.Flow.peakOf(fl.currents, fl.duration, shown),
-               compress: !!fl.compress, note: fl.note, label: fl.label, colour: t.i };
+               compress: !!fl.compress, note: fl.note, label: fl.label, colour: t.i,
+               hideStill: !!fl.hideStill };
     }
     let currents = {};
     if (fl && fl.currents) {
